@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منصة القوائم | لوحة التحكم</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --primary: #24b47e; --dark: #2f3542; --bg: #f4f7f6; --edit: #3498db; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; padding: 20px; direction: rtl; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        
+        /* الهيدر */
+        .header { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 25px; }
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .welcome-msg { font-size: 1.2em; font-weight: bold; color: var(--dark); }
+        
+        .header-main { display: flex; align-items: center; gap: 15px; border-top: 1px solid #eee; pt: 15px; padding-top: 15px; }
+        h2 { margin: 0; color: var(--dark); font-size: 1.4em; }
+
+        /* الأزرار */
+        .btn { padding: 8px 18px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; text-decoration: none; font-size: 13px; transition: 0.3s; }
+        .btn-profile { background: var(--edit); color: white; }
+        .btn-logout { background: #ff4757; color: white; }
+        .btn:hover { opacity: 0.8; transform: translateY(-2px); }
+        
+        /* شبكة الأزرار */
+        .menu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 20px; }
+        
+        .nav-card { 
+            background: white; padding: 25px 15px; border-radius: 15px; text-align: center; 
+            text-decoration: none; color: var(--dark); font-weight: bold;
+            transition: 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+            border: 2px solid transparent; display: flex; flex-direction: column; align-items: center; gap: 12px;
+        }
+        
+        .nav-card:hover { border-color: var(--primary); transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.08); }
+        .nav-card span { font-size: 32px; }
+        
+        @media (max-width: 600px) {
+            .header-top { flex-direction: column; gap: 10px; text-align: center; }
+            .header-main { flex-direction: column; text-align: center; }
+            .menu-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+            .nav-card { padding: 20px 10px; font-size: 14px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <div class="header-top">
+            <div class="welcome-msg" id="user-welcome">جاري التحميل...</div>
+            <button class="btn btn-logout" onclick="logout()">تسجيل الخروج</button>
+        </div>
+
+        <div class="header-main">
+            <h2>لوحة التحكم الرئيسية</h2>
+            <a href="profile.html" class="btn btn-profile">إعدادات الملف الشخصي</a>
+        </div>
+    </div>
+
+    <div class="menu-grid">
+        <a href="store_settings.html" class="nav-card">
+            <span>⚙️</span> إعدادات المتجر
+        </a>
+        <a href="products.html" class="nav-card">
+            <span>📦</span> إدارة المنتجات
+        </a>
+        <a href="categories.html" class="nav-card">
+            <span>📂</span> التصنيفات
+        </a>
+        <a href="orders.html" class="nav-card">
+            <span>📝</span> سجل الطلبات
+        </a>
+        <a href="analytics.html" class="nav-card">
+            <span>📊</span> التحليلات
+        </a>
+        <a href="transactions.html" class="nav-card">
+            <span>💰</span> المالية
+        </a>
+        <a href="commissions.html" class="nav-card">
+            <span>🤝</span> العمولات
+        </a>
+        <a href="otp_status.html" class="nav-card">
+            <span>📱</span> حالة الواتساب
+        </a>
+    </div>
+</div>
+
+<script>
+    const SB_URL = 'https://wnvyqvwuzmxzzhilgidh.supabase.co'; 
+    const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indudnlxdnd1em14enpoaWxnaWRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MTg1MDEsImV4cCI6MjA5MTQ5NDUwMX0.AyD4CYqA0cz9mC-bcOt16uUpueL_cAWT26Q92l574r0';
+    const _supabase = supabase.createClient(SB_URL, SB_KEY);
+    const userPhone = (localStorage.getItem('user_phone') || "").trim();
+
+    async function initDashboard() {
+        // فحص الجلسة
+        if (!userPhone) {
+            window.location.href = "login.html";
+            return;
+        }
+        await fetchUserInfo();
+    }
+
+    async function fetchUserInfo() {
+        try {
+            const { data, error } = await _supabase
+                .from('profiles')
+                .select('username')
+                .eq('phone_number', userPhone)
+                .single();
+
+            if (data && data.username) {
+                document.getElementById('user-welcome').innerText = `مرحباً، ${data.username}`;
+            } else {
+                document.getElementById('user-welcome').innerText = `مرحباً بك`;
+            }
+        } catch (err) {
+            document.getElementById('user-welcome').innerText = `مرحباً`;
+        }
+    }
+
+    function logout() {
+        localStorage.clear();
+        window.location.href = "login.html";
+    }
+
+    initDashboard();
+</script>
+
+</body>
+</html>
