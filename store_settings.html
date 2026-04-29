@@ -129,7 +129,7 @@
     const userPhone = (localStorage.getItem('user_phone') || "").trim();
 
     async function init() {
-        if (!userPhone) { window.location.href = 'login.html'; return; }
+        if (!userPhone) { window.location.href = 'index.html'; return; }
         await fetchUserInfo();
         await loadStores();
     }
@@ -302,7 +302,7 @@
 
     async function deleteStore(id) { if (confirm("حذف المتجر نهائياً؟")) { await _supabase.from('store_settings').delete().eq('id', id); location.reload(); } }
 
-    function logout() { localStorage.removeItem('user_phone'); window.location.href='login.html'; }
+    function logout() { localStorage.removeItem('user_phone'); window.location.href='index.html'; }
 
     init();
 </script>
