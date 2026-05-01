@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="page-title">منيو المتجر - الإصدار النهائي</title>
+    <title id="page-title">منيو المتجر - الإصدار المتكامل</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root { --main-color: #24b47e; } 
@@ -15,21 +15,22 @@
         @keyframes marquee { 0% { transform: translate(0, 0); } 100% { transform: translate(100%, 0); } }
 
         /* الهيدر الثابت */
-        .sticky-top-container { position: fixed; top: 0; width: 100%; z-index: 1000; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: flex; flex-direction: column; align-items: center; transition: top 0.3s; }
+        .sticky-top-container { position: fixed; top: 0; width: 100%; z-index: 1000; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: flex; flex-direction: column; align-items: center; }
         .store-header-compact { display: flex; align-items: center; justify-content: flex-start; padding: 15px; gap: 15px; width: 95%; max-width: 570px; border-bottom: 1px solid #f0f0f0; }
         .store-logo-square { width: 60px; height: 60px; border-radius: 12px; object-fit: cover; display: none; border: 1px solid #eee; }
         .store-name-large { font-size: 1.3em; font-weight: 800; color: #222; }
 
+        /* التبويبات */
         .categories-nav { display: flex; overflow-x: auto; white-space: nowrap; padding: 10px; scrollbar-width: none; background: white; gap: 8px; width: 100%; justify-content: center; }
         .categories-nav::-webkit-scrollbar { display: none; }
-        .cat-item { padding: 7px 18px; border-radius: 20px; background: #f1f2f6; color: #555; cursor: pointer; font-size: 0.85em; font-weight: bold; transition: 0.25s; }
-        .cat-item.active { background: var(--main-color); color: white; }
+        .cat-item { padding: 7px 18px; border-radius: 20px; background: #f1f2f6; color: #555; cursor: pointer; font-size: 0.85em; font-weight: bold; transition: 0.25s; border: 2px solid transparent; }
+        .cat-item.active { background: var(--main-color); color: white; border-color: var(--main-color); }
 
-        /* الحاوية الأساسية مع مسافة علوية ديناميكية */
+        /* الحاوية والعناوين */
         .container { max-width: 600px; margin: auto; padding: 150px 15px 120px; box-sizing: border-box; }
-        .category-title { font-size: 1.1em; font-weight: bold; margin: 20px 0 10px; color: #333; padding-right: 10px; border-right: 4px solid var(--main-color); }
+        .category-title { font-size: 1.1em; font-weight: bold; margin: 20px 0 10px; color: #333; padding-right: 10px; border-right: 4px solid var(--main-color); scroll-margin-top: 160px; }
         
-        /* كرت المنتج */
+        /* كروت المنتجات */
         .product-card { background: white; border-radius: 15px; padding: 12px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; flex-direction: column; cursor: pointer; }
         .product-top-row { display: flex; align-items: center; width: 100%; pointer-events: none; } 
         .product-img { width: 80px; height: 80px; border-radius: 12px; object-fit: cover; margin-left: 12px; }
@@ -44,7 +45,7 @@
         .qty-box { display: flex; align-items: center; background: #f1f2f6; border-radius: 25px; padding: 5px 12px; gap: 12px; pointer-events: auto; } 
         .btn-qty { width: 30px; height: 30px; border-radius: 50%; border: none; background: white; color: var(--main-color); font-weight: bold; cursor: pointer; font-size: 1.2em; }
 
-        /* شريط السلة */
+        /* شريط السلة السفلي */
         .cart-bar { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 92%; max-width: 550px; background: var(--main-color); color: white; padding: 12px 20px; border-radius: 20px; display: none; justify-content: space-between; align-items: center; z-index: 1001; box-shadow: 0 8px 25px rgba(0,0,0,0.2); cursor: pointer; }
         
         /* مودال السلة */
@@ -54,7 +55,6 @@
         
         .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 15px; }
         .cart-item-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f9f9f9; }
-        
         .clear-cart-btn { background: #fee2e2; color: #dc2626; border: none; padding: 6px 12px; border-radius: 10px; font-size: 0.85em; font-weight: bold; cursor: pointer; }
         .notes-area { width: 100%; border: 1px solid #eee; border-radius: 12px; padding: 12px; font-family: inherit; margin: 15px 0; resize: none; background: #f9f9f9; box-sizing: border-box; }
         .whatsapp-btn { background: #25D366; color: white; border: none; padding: 15px; border-radius: 15px; font-weight: bold; cursor: pointer; width: 100%; font-size: 1.1em; }
@@ -93,11 +93,8 @@
             </div>
             <button onclick="document.getElementById('modal-overlay').style.display='none'" style="border:none; background:none; font-size:1.8em; cursor:pointer; color:#999;">&times;</button>
         </div>
-        
         <div id="cart-items-list"></div>
-
         <textarea id="order-notes" class="notes-area" rows="3" placeholder="أضف ملاحظاتك هنا (مثلاً: بمرك آخذهم)"></textarea>
-
         <div style="background: #f1f2f6; padding: 15px; border-radius: 12px; margin-bottom: 15px;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9em; color: #555;">
                 <span>عدد الأصناف :</span>
@@ -108,7 +105,6 @@
                 <span><span id="modal-total-price">0</span> ريال</span>
             </div>
         </div>
-
         <button class="whatsapp-btn" onclick="sendToWhatsApp()">إرسال الطلب عبر الواتساب</button>
     </div>
 </div>
@@ -122,34 +118,29 @@
 
     async function init() {
         if (!slug) return;
-        try {
-            const { data: store } = await _supabase.from('store_settings').select('*').eq('store_slug', slug).single();
-            if (!store) return;
-            document.getElementById('display-store-name').innerText = store.store_name;
-            if(store.logo_url) { const img = document.getElementById('display-logo'); img.src = store.logo_url; img.style.display = 'block'; }
-            
-            if(store.welcome_msg) { 
-                const bar = document.getElementById('announcement-bar');
-                bar.style.display = 'flex';
-                document.getElementById('display-welcome').innerText = store.welcome_msg;
-                document.getElementById('top-header').style.top = "35px";
-            } else {
-                document.getElementById('top-header').style.top = "0";
-            }
-
-            document.documentElement.style.setProperty('--main-color', store.primary_color || '#24b47e');
-            const { data: profile } = await _supabase.from('profiles').select('phone_number').eq('id', store.user_id).single();
-            merchantPhone = profile?.phone_number || "";
-            const { data: prods } = await _supabase.from('products').select('*, categories(category_name)').eq('store_id', store.id).eq('is_available', true).order('category_id');
-            productsList = prods || [];
-            renderMenu(productsList);
-            
-            // حل مشكلة الانزلاق: تحديث المسافة العلوية بعد تحميل البيانات
-            setTimeout(updateHeaderMetrics, 100); 
-        } finally {
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('main-content').style.display = 'block';
+        const { data: store } = await _supabase.from('store_settings').select('*').eq('store_slug', slug).single();
+        if (!store) return;
+        document.getElementById('display-store-name').innerText = store.store_name;
+        if(store.logo_url) { const img = document.getElementById('display-logo'); img.src = store.logo_url; img.style.display = 'block'; }
+        if(store.welcome_msg) { 
+            document.getElementById('announcement-bar').style.display = 'flex';
+            document.getElementById('display-welcome').innerText = store.welcome_msg;
+            document.getElementById('top-header').style.top = "35px";
         }
+        document.documentElement.style.setProperty('--main-color', store.primary_color || '#24b47e');
+        const { data: profile } = await _supabase.from('profiles').select('phone_number').eq('id', store.user_id).single();
+        merchantPhone = profile?.phone_number || "";
+        const { data: prods } = await _supabase.from('products').select('*, categories(category_name)').eq('store_id', store.id).eq('is_available', true).order('category_id');
+        productsList = prods || [];
+        renderMenu(productsList);
+        
+        setTimeout(() => {
+            updateHeaderMetrics();
+            setupScrollObserver();
+        }, 200);
+
+        document.getElementById('loader').style.display = 'none';
+        document.getElementById('main-content').style.display = 'block';
     }
 
     function renderMenu(products) {
@@ -166,9 +157,10 @@
             navHtml += `<div class="cat-item ${i===0?'active':''}" id="tab-${id}" onclick="scrollToSection('${id}')">${cat}</div>`;
             menuHtml += `<div id="${id}" class="menu-section"><div class="category-title">${cat}</div>`;
             groups[cat].forEach(p => {
+                let currentPrice = (p.sale_price || p.price).toFixed(2);
                 let priceDisplay = (p.sale_price && p.sale_price < p.price) 
-                    ? `<span class="sale-price">${p.sale_price} ريال</span> <span class="original-price">${p.price} ريال</span>`
-                    : `<span class="sale-price">${p.price} ريال</span>`;
+                    ? `<span class="sale-price">${currentPrice} ريال</span> <span class="original-price">${p.price.toFixed(2)} ريال</span>`
+                    : `<span class="sale-price">${currentPrice} ريال</span>`;
 
                 menuHtml += `
                     <div class="product-card" onclick="this.classList.toggle('open')">
@@ -208,12 +200,47 @@
             total += (p.sale_price || p.price) * cart[pid];
             count += cart[pid];
         });
-        document.getElementById('total-price-bar').innerText = total;
+        const finalPrice = total.toFixed(2);
+        document.getElementById('total-price-bar').innerText = finalPrice;
         document.getElementById('items-count-bar').innerText = count;
-        document.getElementById('modal-total-price').innerText = total;
+        document.getElementById('modal-total-price').innerText = finalPrice;
         document.getElementById('modal-total-qty').innerText = count;
         document.getElementById('cart-bar').style.display = count > 0 ? 'flex' : 'none';
         if (count === 0) document.getElementById('modal-overlay').style.display = 'none';
+    }
+
+    function scrollToSection(id) {
+        document.querySelectorAll('.cat-item').forEach(item => item.classList.remove('active'));
+        document.getElementById('tab-' + id).classList.add('active');
+        const el = document.getElementById(id);
+        const headerHeight = document.getElementById('top-header').offsetHeight;
+        const announceHeight = (document.getElementById('announcement-bar').style.display !== 'none') ? 35 : 0;
+        window.scrollTo({ top: el.offsetTop - headerHeight - announceHeight - 10, behavior: 'smooth' });
+    }
+
+    function setupScrollObserver() {
+        const sections = document.querySelectorAll('.menu-section');
+        const observerOptions = { root: null, rootMargin: '-180px 0px -60% 0px', threshold: 0 };
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    document.querySelectorAll('.cat-item').forEach(item => item.classList.remove('active'));
+                    const activeTab = document.getElementById('tab-' + entry.target.id);
+                    if (activeTab) {
+                        activeTab.classList.add('active');
+                        activeTab.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                    }
+                }
+            });
+        }, observerOptions);
+        sections.forEach(s => observer.observe(s));
+    }
+
+    function updateHeaderMetrics() {
+        const header = document.getElementById('top-header');
+        const totalHeight = header.offsetHeight + (document.getElementById('announcement-bar').style.display !== 'none' ? 35 : 0);
+        document.querySelector('.container').style.paddingTop = (totalHeight + 10) + "px";
+        document.querySelectorAll('.category-title').forEach(title => { title.style.scrollMarginTop = (totalHeight + 10) + "px"; });
     }
 
     function clearCart() {
@@ -237,7 +264,7 @@
                     <div class="cart-item-row">
                         <div>
                             <div style="font-weight:bold; font-size: 0.95em;">${p.product_name}</div>
-                            <div style="font-size:0.85em; color:var(--main-color);">${p.sale_price || p.price} ريال</div>
+                            <div style="font-size:0.85em; color:var(--main-color);">${(p.sale_price || p.price).toFixed(2)} ريال</div>
                         </div>
                         <div class="qty-box">
                             <button class="btn-qty" onclick="updateQty('${p.id}', 1)">+</button>
@@ -250,27 +277,7 @@
         document.getElementById('modal-overlay').style.display = 'flex';
     }
 
-    function closeCartModal(e) {
-        if(e.target.id === 'modal-overlay') e.target.style.display = 'none';
-    }
-
-    // تعديل الارتفاع بشكل ديناميكي لمنع اختفاء أول كرت
-    function updateHeaderMetrics() {
-        const header = document.getElementById('top-header');
-        const announcement = document.getElementById('announcement-bar');
-        const headerHeight = header.offsetHeight;
-        const announceHeight = (announcement.style.display !== 'none') ? announcement.offsetHeight : 0;
-        
-        // إعطاء مساحة كافية للكونتينر بناءً على الارتفاع الفعلي للهيدر
-        document.querySelector('.container').style.paddingTop = (headerHeight + announceHeight + 20) + "px";
-    }
-
-    function scrollToSection(id) {
-        const el = document.getElementById(id);
-        const headerHeight = document.getElementById('top-header').offsetHeight;
-        const announceHeight = (document.getElementById('announcement-bar').style.display !== 'none') ? 35 : 0;
-        window.scrollTo({ top: el.offsetTop - headerHeight - announceHeight - 10, behavior: 'smooth' });
-    }
+    function closeCartModal(e) { if(e.target.id === 'modal-overlay') e.target.style.display = 'none'; }
 
     function sendToWhatsApp() {
         const notes = document.getElementById('order-notes').value.trim();
@@ -279,19 +286,16 @@
         Object.keys(cart).forEach(id => {
             if(cart[id] > 0) {
                 const p = productsList.find(x => x.id == id);
-                msg += `🔹 ${cart[id]} ${p.product_name} ==>  ${(p.sale_price || p.price) * cart[id]} ريال\n`;
+                msg += `🔹 ${cart[id]} ${p.product_name} ==>  ${((p.sale_price || p.price) * cart[id]).toFixed(2)} ريال\n`;
             }
         });
         msg += `\n📝 *ملاحظات :*\n${notes ? notes : "لا يوجد"}\n`;
         msg += `\n📊 *عدد الأصناف: ${document.getElementById('modal-total-qty').innerText}*`;
         msg += `\n💰 *إجمالي السعر : ${document.getElementById('modal-total-price').innerText} ريال*`;
-        const phone = merchantPhone.replace(/\D/g, '');
-        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`);
+        window.open(`https://wa.me/${merchantPhone.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`);
     }
 
-    // إعادة ضبط المسافات عند تغيير حجم الشاشة
     window.addEventListener('resize', updateHeaderMetrics);
-
     init();
 </script>
 </body>
