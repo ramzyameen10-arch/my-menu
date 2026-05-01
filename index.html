@@ -3,254 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="page-title">منيو المتجر</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <title>منصة تجار رمزي - دخول</title>
     <style>
-        :root { --main-color: #24b47e; } 
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f9f9f9; margin: 0; direction: rtl; text-align: right; overflow-x: hidden; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 380px; text-align: center; }
         
-        /* شريط الترحيب العلوي */
-        .announcement-bar {
-            background-color: var(--main-color); color: white; width: 95%; max-width: 570px;
-            height: 35px; display: none; overflow: hidden; position: fixed; top: 0; left: 50%; transform: translateX(-50%);
-            z-index: 1100; white-space: nowrap; align-items: center; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px;
-        }
-        .announcement-text { display: inline-block; padding-right: 100%; animation: marquee 15s linear infinite; font-size: 0.9em; font-weight: bold; line-height: 35px; }
-        @keyframes marquee { 0% { transform: translate(0, 0); } 100% { transform: translate(100%, 0); } }
+        /* تنسيق الهيدر الجديد مع الصورة */
+        .profile-header { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 20px; }
+        .profile-img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #25D366; }
+        .profile-header h2 { margin: 0; font-size: 1.4rem; color: #333; }
 
-        /* الهيدر */
-        .sticky-top-container { position: fixed; top: 0; width: 100%; z-index: 1000; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: flex; flex-direction: column; align-items: center; }
-        .store-header-compact { display: flex; align-items: center; justify-content: flex-start; padding: 15px; gap: 15px; width: 95%; max-width: 570px; border-bottom: 1px solid #f0f0f0; }
-        .store-logo-square { width: 75px; height: 75px; border-radius: 12px; object-fit: cover; border: 1px solid #eee; display: none; }
-        .store-name-large { font-size: 1.6em; font-weight: 800; color: #222; }
-
-        .categories-nav { display: flex; overflow-x: auto; white-space: nowrap; padding: 10px; scrollbar-width: none; background: white; gap: 8px; width: 100%; justify-content: center; }
-        .categories-nav::-webkit-scrollbar { display: none; }
-        @media (max-width: 600px) { .categories-nav { justify-content: flex-start; } }
-
-        .cat-item { padding: 7px 18px; border-radius: 20px; background: #f1f2f6; color: #555; cursor: pointer; font-size: 0.9em; font-weight: bold; transition: all 0.25s; }
-        .cat-item.active { background: var(--main-color); color: white; }
-
-        .container { max-width: 600px; margin: auto; padding: 190px 15px 150px; }
-        .menu-section { scroll-margin-top: 200px; } 
-        .category-title { font-size: 1.1em; font-weight: bold; margin: 15px 0; color: #333; padding-right: 10px; border-right: 4px solid var(--main-color); }
-        
-        /* تصميم الكرت ليكون قابلاً للنقر */
-        .product-card { 
-            background: white; border-radius: 15px; padding: 12px; margin-bottom: 12px; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; flex-direction: column;
-            max-width: 570px; margin-left: auto; margin-right: auto;
-            cursor: pointer; transition: background 0.2s;
-        }
-        .product-card:active { background: #fcfcfc; }
-        
-        .product-top-row { display: flex; align-items: center; width: 100%; pointer-events: none; } /* نمنع تداخل النقر مع المحتوى الداخلي */
-        .product-img { width: 80px; height: 80px; border-radius: 12px; object-fit: cover; margin-left: 12px; }
-        .product-info-content { flex: 1; min-width: 0; }
-        
-        .product-name { font-weight: bold; font-size: 1.05em; color: #222; margin-bottom: 2px; }
-        .price-container { display: flex; align-items: center; gap: 8px; }
-        .sale-price { color: var(--main-color); font-weight: bold; font-size: 1.1em; }
-        .original-price { color: #999; text-decoration: line-through; font-size: 0.85em; }
-        
-        /* إعدادات الوصف المخفي (Accordion) */
-        .product-desc-row { 
-            max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out, padding 0.3s ease;
-            font-size: 0.85em; color: #666; line-height: 1.5; width: 100%; border-top: 0px dashed #eee;
-        }
-        /* كلاس يضاف عند النقر ليظهر الوصف */
-        .product-card.open .product-desc-row { 
-            max-height: 200px; /* القيمة القصوى المتوقعة للوصف */
-            padding-top: 10px; margin-top: 10px; border-top-width: 1px;
-        }
-
-        .qty-box { display: flex; align-items: center; background: #f1f2f6; border-radius: 25px; padding: 5px 12px; gap: 12px; pointer-events: auto; } /* السماح بالنقر على أزرار الكمية */
-        .btn-qty { width: 32px; height: 32px; border-radius: 50%; border: none; background: white; color: var(--main-color); font-weight: bold; cursor: pointer; font-size: 1.3em; display: flex; align-items: center; justify-content: center; }
-
-        .cart-bar { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 95%; max-width: 570px; background: var(--main-color); color: white; padding: 15px; border-radius: 18px; display: none; flex-direction: column; gap: 12px; z-index: 1001; box-shadow: 0 8px 25px rgba(0,0,0,0.2); }
-        .cart-info { display: flex; justify-content: space-between; align-items: center; width: 100%; font-weight: bold; font-size: 1.1em; }
-        .whatsapp-btn { background: #25D366; color: white; border: none; padding: 13px; border-radius: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; }
+        input { width: 100%; padding: 12px; margin: 15px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 1.1rem; text-align: center; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background-color: #25D366; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: bold; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        .timer-text { font-size: 0.9rem; color: #666; margin-top: 10px; }
+        #resend-link { color: #007bff; cursor: pointer; display: none; text-decoration: underline; margin-top: 10px; font-size: 0.9rem; }
+        #step-2 { display: none; }
     </style>
 </head>
 <body>
 
-<div id="loader" style="text-align:center; padding-top:100px; font-weight: bold;">جاري التحميل...</div>
-
-<div id="announcement-bar" class="announcement-bar">
-    <div id="display-welcome" class="announcement-text"></div>
-</div>
-
-<div id="main-content" style="display: none;">
-    <div class="sticky-top-container" id="top-header">
-        <div class="store-header-compact">
-            <img id="display-logo" class="store-logo-square" src="">
-            <div id="display-store-name" class="store-name-large"></div>
+<div class="card">
+    <div id="step-1">
+        <div class="profile-header">
+            <img src="https://via.placeholder.com/50" alt="البروفايل" class="profile-img" id="login-logo">
+            <h2>منصة تجار رمزي</h2>
         </div>
-        <nav class="categories-nav" id="cat-nav"></nav>
+        
+        <p>أدخل رقم الواتساب</p>
+        <input type="tel" id="phone" placeholder="9665XXXXXXXX" value="966552806414">
+        <button id="send-btn" onclick="requestOTP()">إرسال كود التحقق</button>
     </div>
-    <div class="container" id="menu-data"></div>
+
+    <div id="step-2">
+        <div class="profile-header">
+            <img src="https://via.placeholder.com/50" alt="البروفايل" class="profile-img" id="verify-logo">
+            <h2>تحقق من الرمز</h2>
+        </div>
+        <p id="target-phone"></p>
+        <input type="number" id="otp" placeholder="أدخل الكود المكون من 4 أرقام">
+        <button id="verify-btn" onclick="verifyOTP()">تأكيد الدخول</button>
+        
+        <div class="timer-text" id="timer-container">يمكنك إعادة الإرسال خلال: <span id="seconds">60</span> ثانية</div>
+        <div id="resend-link" onclick="requestOTP()">إعادة إرسال الكود؟</div>
+        
+        <p style="color:red; cursor:pointer; margin-top:20px;" onclick="location.reload()">تغيير الرقم</p>
+    </div>
 </div>
 
-<div id="cart-bar" class="cart-bar">
-    <div class="cart-info">
-        <span>الإجمالي: <span id="total-price">0</span> ريال</span>
-        <span>(<span id="items-count">0</span> أصناف)</span>
-    </div>
-    <button class="whatsapp-btn" onclick="sendToWhatsApp()">إرسال الطلب عبر الواتساب</button>
-</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
+    // الرابط الصحيح والمؤكد
     const SB_URL = 'https://wnvyqvwuzmxzzhilgidh.supabase.co'; 
     const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indudnlxdnd1em14enpoaWxnaWRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MTg1MDEsImV4cCI6MjA5MTQ5NDUwMX0.AyD4CYqA0cz9mC-bcOt16uUpueL_cAWT26Q92l574r0';
-    const _supabase = supabase.createClient(SB_URL, SB_KEY);
+    
+    const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
+    let timerInterval;
 
-    const slug = new URLSearchParams(window.location.search).get('s'); 
-    let cart = {}; let productsList = []; let merchantPhone = "";
-    let isAutoScrolling = false;
+    // ملاحظة لرمزي: يمكنك وضع رابط صورتك الحقيقي هنا
+    const myProfileImageUrl = "https://via.placeholder.com/50"; 
+    document.getElementById('login-logo').src = myProfileImageUrl;
+    document.getElementById('verify-logo').src = myProfileImageUrl;
 
-    async function init() {
-        if (!slug) return;
+    function startTimer() {
+        let timeLeft = 60;
+        const secondsSpan = document.getElementById('seconds');
+        const timerContainer = document.getElementById('timer-container');
+        const resendLink = document.getElementById('resend-link');
+
+        timerContainer.style.display = 'block';
+        resendLink.style.display = 'none';
+
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            secondsSpan.innerText = timeLeft;
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                timerContainer.style.display = 'none';
+                resendLink.style.display = 'block';
+            }
+        }, 1000);
+    }
+
+    async function requestOTP() {
+        const phone = document.getElementById('phone').value.trim();
+        const btn = document.getElementById('send-btn');
+        
+        if (!phone) return alert("الرجاء إدخال الرقم");
+
+        btn.disabled = true;
+        btn.innerText = "جاري الإرسال...";
+
         try {
-            const { data: store } = await _supabase.from('store_settings').select('*').eq('store_slug', slug).single();
-            if (!store) return;
-            document.getElementById('display-store-name').innerText = store.store_name;
-            if(store.logo_url) { const img = document.getElementById('display-logo'); img.src = store.logo_url; img.style.display = 'block'; }
-            if(store.welcome_msg) { 
-                const bar = document.getElementById('announcement-bar');
-                document.getElementById('display-welcome').innerText = store.welcome_msg;
-                bar.style.display = 'flex';
-                document.getElementById('top-header').style.top = "35px";
-            }
-            document.documentElement.style.setProperty('--main-color', store.primary_color || '#24b47e');
-            const { data: profile } = await _supabase.from('profiles').select('phone_number').eq('id', store.user_id).single();
-            if (profile) merchantPhone = profile.phone_number;
+            const { error } = await supabaseClient.rpc('request_whatsapp_otp', { input_phone: phone });
+            if (error) throw error;
+
+            document.getElementById('step-1').style.display = 'none';
+            document.getElementById('step-2').style.display = 'block';
+            document.getElementById('target-phone').innerText = "تم الإرسال إلى: " + phone;
+            document.getElementById('otp').value = ""; 
             
-            const { data: prods } = await _supabase.from('products').select('*, categories(category_name)').eq('store_id', store.id).eq('is_available', true).order('category_id');
-            productsList = prods || [];
-            
-            renderMenu(productsList);
-            setTimeout(updateHeaderMetrics, 200);
-        } catch (e) { console.error(e); } 
-        finally {
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('main-content').style.display = 'block';
+            startTimer();
+
+        } catch (err) {
+            alert("خطأ: " + err.message);
+            btn.disabled = false;
+            btn.innerText = "إعادة المحاولة";
         }
     }
 
-    function renderMenu(products) {
-        const groups = products.reduce((acc, p) => {
-            const cName = p.categories ? p.categories.category_name : "عام";
-            if (!acc[cName]) acc[cName] = [];
-            acc[cName].push(p);
-            return acc;
-        }, {});
+    async function verifyOTP() {
+        const code = document.getElementById('otp').value.trim();
+        const phone = document.getElementById('phone').value.trim();
+        const btn = document.getElementById('verify-btn');
 
-        let menuHtml = ''; let navHtml = '';
-        Object.keys(groups).forEach((cat, i) => {
-            const id = "section-" + i;
-            navHtml += `<div class="cat-item ${i===0?'active':''}" id="tab-${id}" onclick="scrollToSection('${id}')">${cat}</div>`;
-            menuHtml += `<div id="${id}" class="menu-section"><div class="category-title">${cat}</div>`;
-            
-            groups[cat].forEach(p => {
-                const hasDiscount = p.sale_price && p.sale_price < p.price;
-                const pDesc = p.description ? p.description.trim() : ""; 
+        if (!code) return alert("أدخل الكود أولاً");
+        btn.disabled = true;
 
-                menuHtml += `
-                    <div class="product-card" onclick="toggleDescription(this)">
-                        <div class="product-top-row">
-                            <img class="product-img" src="${p.image_url || ''}">
-                            <div class="product-info-content">
-                                <div class="product-name">${p.product_name}</div>
-                                <div class="price-container">
-                                    <span class="sale-price">${p.sale_price || p.price} ريال</span>
-                                    ${hasDiscount ? `<span class="original-price">${p.price} ريال</span>` : ''}
-                                </div>
-                            </div>
-                            <div class="qty-box" onclick="event.stopPropagation()">
-                                <button class="btn-qty" onclick="updateQty('${p.id}', 1)">+</button>
-                                <span style="font-weight:bold; min-width:20px; text-align:center;" id="qty-${p.id}">0</span>
-                                <button class="btn-qty" onclick="updateQty('${p.id}', -1)">-</button>
-                            </div>
-                        </div>
-                        ${pDesc ? `<div class="product-desc-row">${pDesc}</div>` : ''}
-                    </div>`;
-            });
-            menuHtml += `</div>`;
-        });
-        document.getElementById('menu-data').innerHTML = menuHtml;
-        document.getElementById('cat-nav').innerHTML = navHtml;
-    }
+        try {
+            const { data, error } = await supabaseClient
+                .from('whatsapp_otp')
+                .select('*')
+                .eq('phone_number', phone)
+                .eq('otp_code', code)
+                .eq('is_verified', false)
+                .maybeSingle();
 
-    // دالة لفتح وإغلاق الوصف
-    function toggleDescription(card) {
-        card.classList.toggle('open');
-    }
-
-    function scrollToSection(id) {
-        isAutoScrolling = true;
-        const el = document.getElementById(id);
-        const h = document.getElementById('top-header').offsetHeight + (document.getElementById('announcement-bar').offsetHeight || 0);
-        document.querySelectorAll('.cat-item').forEach(item => item.classList.remove('active'));
-        document.getElementById('tab-' + id).classList.add('active');
-        window.scrollTo({ top: el.offsetTop - h - 10, behavior: 'smooth' });
-        setTimeout(() => { isAutoScrolling = false; }, 1000);
-    }
-
-    window.addEventListener('scroll', () => {
-        if (isAutoScrolling) return;
-        const sections = document.querySelectorAll('.menu-section');
-        const h = document.getElementById('top-header').offsetHeight + (document.getElementById('announcement-bar').offsetHeight || 0);
-        let activeId = "";
-        sections.forEach(sec => {
-            if (sec.getBoundingClientRect().top <= h + 80) activeId = sec.getAttribute('id');
-        });
-        if (activeId) {
-            document.querySelectorAll('.cat-item').forEach(item => {
-                item.classList.remove('active');
-                if (item.id === 'tab-' + activeId) {
-                    item.classList.add('active');
-                    item.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-                }
-            });
-        }
-    });
-
-    function updateHeaderMetrics() {
-        const hTotal = document.getElementById('top-header').offsetHeight + (document.getElementById('announcement-bar').offsetHeight || 0);
-        document.querySelector('.container').style.paddingTop = (hTotal + 20) + "px";
-        document.querySelectorAll('.menu-section').forEach(s => s.style.scrollMarginTop = (hTotal + 10) + "px");
-    }
-
-    function updateQty(id, change) {
-        cart[id] = (cart[id] || 0) + change;
-        if (cart[id] < 0) cart[id] = 0;
-        document.getElementById(`qty-${id}`).innerText = cart[id];
-        let total = 0, count = 0;
-        Object.keys(cart).forEach(pid => {
-            const p = productsList.find(x => x.id == pid);
-            total += (p.sale_price || p.price) * cart[pid];
-            count += cart[pid];
-        });
-        document.getElementById('total-price').innerText = total;
-        document.getElementById('items-count').innerText = count;
-        document.getElementById('cart-bar').style.display = count > 0 ? 'flex' : 'none';
-    }
-
-    function sendToWhatsApp() {
-        let storeName = document.getElementById('display-store-name').innerText;
-        let msg = `*طلب جديد من متجر: ${storeName}*\n\n`;
-        Object.keys(cart).forEach(id => {
-            if(cart[id] > 0) {
-                const p = productsList.find(x => x.id == id);
-                msg += `▪️ *${p.product_name}*\n   الكمية: ${cart[id]} | السعر: ${(p.sale_price || p.price) * cart[id]} ريال\n`;
+            if (data) {
+                await supabaseClient.from('whatsapp_otp').update({ is_verified: true }).eq('phone_number', phone);
+                localStorage.setItem('user_phone', phone);
+                localStorage.setItem('is_logged_in', 'true');
+                window.location.href = "dashboard.html"; 
+            } else {
+                alert("الكود غير صحيح أو مستخدم مسبقاً");
+                btn.disabled = false;
             }
-        });
-        msg += `\n💰 *الإجمالي النهائي: ${document.getElementById('total-price').innerText} ريال*`;
-        const phone = merchantPhone.replace(/\D/g, '');
-        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`);
+        } catch (err) {
+            alert("فشل التحقق");
+            btn.disabled = false;
+        }
     }
-
-    init();
 </script>
 </body>
 </html>
