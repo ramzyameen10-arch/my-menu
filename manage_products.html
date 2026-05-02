@@ -15,162 +15,94 @@
     <style>
         :root { --primary: #24b47e; --danger: #e74c3c; --edit: #3498db; --bg: #f4f7f6; --dark: #2f3542; --gray: #95a5a6; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); direction: rtl; padding: 20px; margin: 0; }
-        .container { max-width: 1000px; margin: auto; }
-        
-        #loader-container { 
-            display: none; 
-            text-align: center; 
-            padding: 40px; 
-            background: white; 
-            border-radius: 15px; 
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
-        }
-        .spinner {
-            width: 40px; height: 40px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid var(--primary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
+        .container { max-width: 950px; margin: auto; }
         .header-box { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
         .top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .nav-links { display: flex; gap: 10px; }
-        
+        #loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.7); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; }
+        .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .btn-main { background: var(--primary); color: white; border: none; padding: 10px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .btn-main:hover { opacity: 0.8; }
         .btn-outline { background: transparent; border: 1px solid #ddd; color: #666; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-size: 13px; text-decoration: none; display: flex; align-items: center; }
         .btn-logout { background: var(--danger); color: white; border: none; }
-
         .filter-bar { background: white; padding: 15px; border-radius: 12px; margin-bottom: 20px; display: grid; grid-template-columns: 2fr 1.2fr 1.2fr 1.5fr auto; gap: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); align-items: center; }
         .filter-bar input, .filter-bar select { padding: 9px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; outline: none; background: #fff; }
         .btn-reset { background: #f1f2f6; border: 1px solid #ddd; color: #555; padding: 9px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
-
-        #product-form-container { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); margin-bottom: 25px; display: none; animation: slideDown 0.3s ease-out; }
-        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-
+        #product-form-container { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); margin-bottom: 25px; display: none; }
         .clickable-preview { width: 100px; height: 100px; border-radius: 15px; border: 2px dashed #ccc; margin: 0 auto 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #fafafa; }
         .clickable-preview img { width: 100%; height: 100%; object-fit: cover; }
-        #p-file { display: none; }
-
         .form-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
         .full { grid-column: span 3; }
         input, select, textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-
-        /* تعديلات الجدول للاحتواء والتحريك */
-        .table-card { 
-            background: white; 
-            border-radius: 15px; 
-            overflow-x: auto; /* السماح بالتحريك الأفقي */
-            -webkit-overflow-scrolling: touch; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
-        }
-        table { width: 100%; border-collapse: collapse; min-width: 1000px; } /* ضمان عرض كافٍ لعدم تداخل العناصر */
-        th { background: #f8f9fa; padding: 15px; text-align: right; color: #555; font-size: 13px; white-space: nowrap; }
-        td { padding: 10px 15px; border-bottom: 1px solid #eee; vertical-align: middle; font-size: 14px; }
-        
-        .table-input { width: 75px; padding: 6px; border: 1px solid #eee; border-radius: 6px; font-size: 13px; text-align: center; }
-        .table-input-text { width: 130px; text-align: right; }
-        .table-select { width: 110px; padding: 6px; border: 1px solid #eee; border-radius: 6px; font-size: 12px; }
-
+        input:required { border-right: 4px solid var(--danger); } /* تمييز الحقول الإجبارية */
+        .table-card { background: white; border-radius: 15px; overflow-x: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; min-width: 750px; }
+        th { background: #f8f9fa; padding: 15px; text-align: right; color: #555; font-size: 13px; }
+        td { padding: 12px 15px; border-bottom: 1px solid #eee; vertical-align: middle; font-size: 14px; }
         .row-img { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; cursor: pointer; border: 1px solid #eee; }
-        
-        .actions { display: flex; gap: 6px; align-items: center; flex-wrap: nowrap; }
-        .btn-opt { padding: 7px 10px; border: none; border-radius: 6px; cursor: pointer; color: white; font-weight: bold; font-size: 11px; white-space: nowrap; flex-shrink: 0; }
-        .btn-save-inline { background: #27ae60; display: none; }
-        .edit { background: var(--edit); }
-        .delete { background: var(--danger); }
-        .status-btn { min-width: 90px; }
-        .status-available { background: var(--primary); }
-        .status-unavailable { background: var(--gray); }
-
-        @media (max-width: 850px) { .filter-bar { grid-template-columns: 1fr 1fr; } .form-grid { grid-template-columns: 1fr; } .full { grid-column: auto; } }
+        .price-tag { font-weight: bold; color: var(--primary); }
+        .old-price { font-size: 11px; color: #aaa; text-decoration: line-through; margin-left: 5px; }
+        .actions { display: flex; gap: 6px; }
+        .btn-opt { padding: 7px 10px; border: none; border-radius: 6px; cursor: pointer; color: white; font-weight: bold; font-size: 11px; }
+        .edit { background: var(--edit); } .delete { background: var(--danger); }
+        .status-available { background: var(--primary); } .status-unavailable { background: var(--gray); }
+        @media (max-width: 850px) { .filter-bar { grid-template-columns: 1fr 1fr; } .form-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
+<div id="loading-overlay"><div class="spinner"></div><p style="color:var(--primary); font-weight:bold; margin-top:10px;">جاري المعالجة...</p></div>
 
 <div class="container">
     <div class="header-box">
         <div class="top-row">
             <h3 id="store-display-title" style="margin:0; color:var(--dark)">إدارة المنتجات</h3>
-            <div class="nav-links">
-                <button onclick="history.back()" class="btn-outline">⬅ عودة</button>
-                <button onclick="logout()" class="btn-outline btn-logout">خروج</button>
-            </div>
+            <div class="nav-links"><button onclick="history.back()" class="btn-outline">⬅ عودة</button><button onclick="logout()" class="btn-outline btn-logout">خروج</button></div>
         </div>
         <button class="btn-main" onclick="toggleForm()">+ إضافة منتج جديد</button>
-    </div>
-
-    <div id="loader-container">
-        <div class="spinner"></div>
-        <div style="color:var(--primary); font-weight:bold;">جاري التحميل...</div>
     </div>
 
     <div class="filter-bar">
         <input type="text" id="search-name" placeholder="بحث بالاسم..." oninput="filterData()">
         <select id="filter-cat" onchange="filterData()"><option value="">كل التصنيفات</option></select>
-        <select id="filter-status" onchange="filterData()">
-            <option value="">كل الحالات</option>
-            <option value="true">متوفر ✅</option>
-            <option value="false">معطل ❌</option>
-        </select>
+        <select id="filter-status" onchange="filterData()"><option value="">كل الحالات</option><option value="true">متوفر ✅</option><option value="false">معطل ❌</option></select>
         <select id="sort-main" onchange="filterData()">
-            <option value="">فرز حسب...</option>
-            <option value="order">رقم الترتيب (الأصغر أولاً)</option>
-            <option value="alpha">الأبجدية (أ-ي)</option>
-            <option value="category">التصنيف</option>
-            <option value="price-low">السعر: الأقل</option>
-            <option value="price-high">السعر: الأعلى</option>
-            <option value="avail-first">المتوفر أولاً</option>
-            <option value="unavail-first">غير المتوفر أولاً</option> 
-        </select>
+    <option value="">فرز حسب...</option>
+    <option value="alpha">الأبجدية (أ-ي)</option>
+    <option value="price-low">السعر: الأقل</option>
+    <option value="price-high">السعر: الأعلى</option>
+    <option value="avail-first">متوفر ✅</option>
+    <option value="unavail-first">معطل ❌</option>
+    <option value="category">التصنيف</option>
+    <option value="order">رقم الترتيب</option></select>
         <button class="btn-reset" onclick="resetFilters()">✖ مسح</button>
     </div>
 
     <div id="product-form-container">
         <h4 id="form-title" style="margin:0 0 20px 0">تفاصيل المنتج</h4>
         <input type="hidden" id="edit-id">
+        
         <div class="clickable-preview" onclick="document.getElementById('p-file').click()">
             <img id="preview-img" src="" style="display:none">
             <div id="placeholder-text" style="color:#aaa; text-align:center; font-size:12px">📷<br>ارفع صورة</div>
         </div>
-        <input type="file" id="p-file" accept="image/*" onchange="previewImage(this)">
+        
+        <input type="file" id="p-file" accept="image/*" onchange="previewImage(this)" style="display: none;">
 
         <div class="form-grid">
-            <div class="full"><input type="text" id="p-name" placeholder="اسم المنتج"></div>
-            <div><input type="number" id="p-price" step="0.01" placeholder="السعر"></div>
+            <div class="full"><input type="text" id="p-name" placeholder="اسم المنتج (إجباري)" required></div>
+            <div><input type="number" id="p-price" step="0.01" placeholder="السعر (إجباري)" required></div>
             <div><input type="number" id="p-sale" step="0.01" placeholder="السعر بعد الخصم"></div>
             <div><select id="p-cat"></select></div>
-            <div><input type="number" id="p-order" placeholder="رقم الترتيب"></div>
+            <div><input type="number" id="p-order" placeholder="الترتيب"></div>
             <div class="full" style="grid-column: span 2;"><textarea id="p-desc" rows="2" placeholder="وصف المنتج"></textarea></div>
         </div>
         <button class="btn-main" id="btn-save" style="width:100%; margin-top:15px;" onclick="handleSave()">حفظ المنتج</button>
         <button class="btn-outline" style="width:100%; margin-top:8px; justify-content: center;" onclick="toggleForm()">إلغاء</button>
     </div>
 
-    <div class="table-card" id="main-table-card">
-        <table>
-            <thead>
-                <tr>
-                    <th width="60">الصورة</th>
-                    <th>المنتج</th>
-                    <th>الوصف</th>
-                    <th>التصنيف</th>
-                    <th>السعر</th>
-                    <th>بعد الخصم</th>
-                    <th>الترتيب</th>
-                    <th>الإجراءات</th>
-                </tr>
-            </thead>
-            <tbody id="prod-list"></tbody>
-        </table>
-    </div>
+    <div class="table-card"><table><thead><tr><th width="60">الصورة</th><th>المنتج</th><th>التصنيف</th><th>السعر</th><th>الترتيب</th><th>الإجراءات</th></tr></thead><tbody id="prod-list"></tbody></table></div>
 </div>
-
-<input type="file" id="inline-file-input" style="display:none" accept="image/*">
+<input type="file" id="table-file-input" style="display:none" accept="image/*">
 
 <script>
     const SB_URL = 'https://wnvyqvwuzmxzzhilgidh.supabase.co'; 
@@ -178,123 +110,127 @@
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
     const storeId = new URLSearchParams(window.location.search).get('store_id');
     const userPhone = localStorage.getItem('user_phone');
-    let allProducts = [], categoriesData = [], currentImgUrl = "";
+    let allProducts = [], currentImgUrl = "", activeTableId = null;
+    let storeLogoUrl = "";
 
     async function init() {
         if (!storeId) return;
-        const { data: store } = await _supabase.from('store_settings').select('store_name').eq('id', storeId).single();
-        if (store) document.getElementById('store-display-title').innerText = "متجر: " + store.store_name;
-        await loadCategories(); await loadProducts();
+        const { data: store } = await _supabase.from('store_settings').select('store_name, logo_url').eq('id', storeId).single();
+        if (store) {
+            document.getElementById('store-display-title').innerText = "متجر: " + store.store_name;
+            storeLogoUrl = store.logo_url || "";
+        }
+        loadCategories(); loadProducts();
     }
-
     async function loadCategories() {
         const { data } = await _supabase.from('categories').select('id, category_name').eq('store_id', storeId);
-        categoriesData = data || [];
         const pCat = document.getElementById('p-cat'), fCat = document.getElementById('filter-cat');
         pCat.innerHTML = '<option value="">اختر التصنيف</option>';
-        categoriesData.forEach(c => {
-            const opt = `<option value="${c.id}">${c.category_name}</option>`;
-            pCat.innerHTML += opt; fCat.innerHTML += opt;
-        });
+        if (data) data.forEach(c => { const opt = `<option value="${c.id}">${c.category_name}</option>`; pCat.innerHTML += opt; fCat.innerHTML += opt; });
     }
-
     async function loadProducts() {
-        document.getElementById('loader-container').style.display = 'block';
-        document.getElementById('main-table-card').style.opacity = '0.3';
+        showLoader(true);
         const { data } = await _supabase.from('products').select('*, categories(category_name)').eq('store_id', storeId).order('product_order', {ascending: true});
-        allProducts = data || []; renderTable(allProducts);
-        document.getElementById('loader-container').style.display = 'none';
-        document.getElementById('main-table-card').style.opacity = '1';
+        allProducts = data || []; renderTable(allProducts); showLoader(false);
     }
-
-    function renderTable(data) {
+    function showLoader(s) { document.getElementById('loading-overlay').style.display = s ? 'flex' : 'none'; }
+   
+   function renderTable(data) {
         const list = document.getElementById('prod-list'); list.innerHTML = '';
+        const fallback = "https://via.placeholder.com/150?text=No+Image";
+
         data.forEach(p => {
+            const hasSale = p.sale_price > 0 && p.sale_price !== null;
+            const displayPrice = (hasSale ? p.sale_price : p.price).toFixed(2);
             const isAvail = p.is_available !== false;
-            let catOpts = `<option value="">بلا تصنيف</option>`;
-            categoriesData.forEach(c => catOpts += `<option value="${c.id}" ${p.category_id == c.id ? 'selected' : ''}>${c.category_name}</option>`);
-            list.innerHTML += `
-                <tr id="tr-${p.id}">
-                    <td><img src="${p.image_url || ''}" class="row-img" onclick="triggerInlineFile('${p.id}')"></td>
-                    <td><input type="text" class="table-input table-input-text" value="${p.product_name}" oninput="showSaveInline('${p.id}')" id="in-name-${p.id}"></td>
-                    <td><input type="text" class="table-input table-input-text" value="${p.description || ''}" placeholder="-" oninput="showSaveInline('${p.id}')" id="in-desc-${p.id}"></td>
-                    <td><select class="table-select" onchange="showSaveInline('${p.id}')" id="in-cat-${p.id}">${catOpts}</select></td>
-                    <td><input type="number" step="0.01" class="table-input" value="${p.price}" oninput="showSaveInline('${p.id}')" id="in-price-${p.id}"></td>
-                    <td><input type="number" step="0.01" class="table-input" value="${p.sale_price || ''}" placeholder="-" oninput="showSaveInline('${p.id}')" id="in-sale-${p.id}"></td>
-                    <td><input type="number" class="table-input" style="width:45px" value="${p.product_order || 0}" oninput="showSaveInline('${p.id}')" id="in-order-${p.id}"></td>
-                    <td>
-                        <div class="actions">
-                            <button class="btn-opt btn-save-inline" id="btn-in-save-${p.id}" onclick="saveInlineChanges('${p.id}')">حفظ ✅</button>
-                            <button class="btn-opt status-btn ${isAvail?'status-available':'status-unavailable'}" onclick="toggleAvailability('${p.id}', ${isAvail})">${isAvail?'متوفر ✅':'معطل ❌'}</button>
-                            <button class="btn-opt edit" onclick='setupEdit(${JSON.stringify(p).replace(/'/g, "&apos;")})'>تعديل</button>
-                            <button class="btn-opt delete" onclick="deleteProd('${p.id}')">حذف</button>
-                        </div>
-                    </td>
-                </tr>`;
+            const productImg = (p.image_url && p.image_url !== "") ? p.image_url : (storeLogoUrl || fallback);
+
+            list.innerHTML += `<tr id="row-${p.id}">
+                <td><img src="${productImg}" id="img-${p.id}" class="row-img" onclick="changeImageInTable('${p.id}')"></td>
+                <td><strong>${p.product_name}</strong></td>
+                <td><small>${p.categories ? p.categories.category_name : 'عام'}</small></td>
+                <td>
+                    ${hasSale ? `<span class="old-price">${Number(p.price).toFixed(2)}</span>` : ''}
+                    <span class="price-tag">${displayPrice}</span>
+                </td>
+                <td><span style="background:#eee; padding:2px 8px; border-radius:4px;">${p.product_order || 0}</span></td>
+                <td><div class="actions">
+                    <button class="btn-opt status-btn ${isAvail?'status-available':'status-unavailable'}" onclick="toggleAvailability('${p.id}', ${isAvail})">${isAvail?'متوفر':'معطل'}</button>
+                    <button class="btn-opt edit" onclick='setupEdit(${JSON.stringify(p).replace(/'/g, "&apos;")})'>تعديل</button>
+                    <button class="btn-opt delete" onclick="deleteProd('${p.id}')">حذف</button>
+                </div></td></tr>`;
         });
     }
 
-    function showSaveInline(id) { document.getElementById(`btn-in-save-${id}`).style.display = 'block'; document.getElementById(`tr-${id}`).style.backgroundColor = '#fffde7'; }
-
-    async function saveInlineChanges(id) {
-        const btn = document.getElementById(`btn-in-save-${id}`); btn.innerText = "...";
-        const payload = {
-            product_name: document.getElementById(`in-name-${id}`).value,
-            description: document.getElementById(`in-desc-${id}`).value,
-            category_id: document.getElementById(`in-cat-${id}`).value || null,
-            price: parseFloat(document.getElementById(`in-price-${id}`).value) || 0,
-            sale_price: document.getElementById(`in-sale-${id}`).value ? parseFloat(document.getElementById(`in-sale-${id}`).value) : null,
-            product_order: parseInt(document.getElementById(`in-order-${id}`).value) || 0
-        };
-        const { error } = await _supabase.from('products').update(payload).eq('id', id);
-        if (!error) { btn.style.display = 'none'; btn.innerText = "حفظ ✅"; document.getElementById(`tr-${id}`).style.backgroundColor = 'transparent'; loadProducts(); }
-    }
-
-    let currentInlineId = "";
-    function triggerInlineFile(id) { currentInlineId = id; document.getElementById('inline-file-input').click(); }
-    document.getElementById('inline-file-input').onchange = async function(e) {
-        const file = e.target.files[0]; if (!file || !currentInlineId) return;
-        document.getElementById('loader-container').style.display = 'block';
-        const ext = file.name.split('.').pop();
-        const fName = `${Date.now()}.${ext}`;
+    function changeImageInTable(id) { activeTableId = id; document.getElementById('table-file-input').click(); }
+    document.getElementById('table-file-input').onchange = async function(e) {
+        const file = e.target.files[0]; if (!file || !activeTableId) return;
+        showLoader(true);
+        const fName = `${Date.now()}.${file.name.split('.').pop()}`;
         await _supabase.storage.from('product-images').upload(fName, file);
         const url = _supabase.storage.from('product-images').getPublicUrl(fName).data.publicUrl;
-        await _supabase.from('products').update({ image_url: url }).eq('id', currentInlineId);
-        loadProducts(); e.target.value = "";
+        await _supabase.from('products').update({ image_url: url }).eq('id', activeTableId);
+        document.getElementById(`img-${activeTableId}`).src = url;
+        showLoader(false);
     };
-
-    function filterData() {
-        const name = document.getElementById('search-name').value.toLowerCase(), cat = document.getElementById('filter-cat').value, status = document.getElementById('filter-status').value, sort = document.getElementById('sort-main').value;
-        let filtered = allProducts.filter(p => {
-            const mName = p.product_name.toLowerCase().includes(name), mCat = cat === "" || p.category_id == cat, pAvail = p.is_available !== false, mStatus = status === "" || String(pAvail) === status;
-            return mName && mCat && mStatus;
-        });
-        if (sort === "order") filtered.sort((a, b) => (a.product_order || 0) - (b.product_order || 0));
-        else if (sort === "alpha") filtered.sort((a, b) => a.product_name.localeCompare(b.product_name, 'ar'));
-        else if (sort === "category") filtered.sort((a, b) => (a.categories?.category_name || "").localeCompare(b.categories?.category_name || "", 'ar'));
-        else if (sort === "price-low") filtered.sort((a, b) => (a.sale_price || a.price) - (b.sale_price || b.price));
-        else if (sort === "price-high") filtered.sort((a, b) => (b.sale_price || b.price) - (a.sale_price || a.price));
-        else if (sort === "avail-first") filtered.sort((a, b) => (b.is_available === false ? -1 : 1) - (a.is_available === false ? -1 : 1));
-        else if (sort === "unavail-first") filtered.sort((a, b) => (a.is_available === false ? -1 : 1) - (b.is_available === false ? -1 : 1));
-        renderTable(filtered);
+    async function toggleAvailability(id, current) { showLoader(true); await _supabase.from('products').update({ is_available: !current }).eq('id', id); await loadProducts(); }
+    function toggleForm() { 
+        const f = document.getElementById('product-form-container'); 
+        f.style.display = (f.style.display === 'block') ? 'none' : 'block';
+        if(f.style.display === 'none') {
+            document.getElementById('edit-id').value = "";
+            document.getElementById('p-name').value = "";
+            document.getElementById('p-price').value = "";
+            document.getElementById('p-sale').value = "";
+            document.getElementById('preview-img').src = "";
+            document.getElementById('preview-img').style.display = 'none';
+            document.getElementById('placeholder-text').style.display = 'block';
+        }
     }
-
-    async function toggleAvailability(id, current) { await _supabase.from('products').update({ is_available: !current }).eq('id', id); loadProducts(); }
-    function toggleForm() { const f = document.getElementById('product-form-container'); f.style.display = (f.style.display === 'block') ? 'none' : 'block'; if(f.style.display === 'none') resetForm(); }
-    function resetForm() { document.getElementById('edit-id').value = ""; document.getElementById('p-name').value = ""; document.getElementById('p-price').value = ""; document.getElementById('p-sale').value = ""; document.getElementById('p-desc').value = ""; document.getElementById('p-cat').value = ""; document.getElementById('p-order').value = ""; document.getElementById('preview-img').style.display = 'none'; document.getElementById('placeholder-text').style.display = 'block'; currentImgUrl = ""; }
-    function previewImage(i) { if (i.files && i.files[0]) { const r = new FileReader(); r.onload = (e) => { document.getElementById('preview-img').src = e.target.result; document.getElementById('preview-img').style.display = 'block'; document.getElementById('placeholder-text').style.display = 'none'; }; r.readAsDataURL(i.files[0]); } }
-    function setupEdit(p) { toggleForm(); document.getElementById('edit-id').value = p.id; document.getElementById('p-name').value = p.product_name; document.getElementById('p-price').value = p.price; document.getElementById('p-sale').value = p.sale_price || ""; document.getElementById('p-cat').value = p.category_id || ""; document.getElementById('p-order').value = p.product_order || ""; document.getElementById('p-desc').value = p.description || ""; if (p.image_url) { currentImgUrl = p.image_url; document.getElementById('preview-img').src = p.image_url; document.getElementById('preview-img').style.display = 'block'; document.getElementById('placeholder-text').style.display = 'none'; } }
+    function previewImage(i) { if (i.files && i.files[0]) { const r = new FileReader(); r.onload = (e) => { const img = document.getElementById('preview-img'); img.src = e.target.result; img.style.display = 'block'; document.getElementById('placeholder-text').style.display = 'none'; }; r.readAsDataURL(i.files[0]); } }
+    function setupEdit(p) { toggleForm(); document.getElementById('edit-id').value = p.id; document.getElementById('p-name').value = p.product_name; document.getElementById('p-price').value = p.price; document.getElementById('p-sale').value = p.sale_price || ""; document.getElementById('p-order').value = p.product_order || ""; document.getElementById('p-desc').value = p.description || ""; if(p.image_url) { document.getElementById('preview-img').src = p.image_url; document.getElementById('preview-img').style.display = 'block'; document.getElementById('placeholder-text').style.display = 'none'; currentImgUrl = p.image_url; } }
+    
     async function handleSave() {
-        const id = document.getElementById('edit-id').value, file = document.getElementById('p-file').files[0], btn = document.getElementById('btn-save');
-        btn.disabled = true;
+        const name = document.getElementById('p-name').value;
+        const price = document.getElementById('p-price').value;
+        
+        // التحقق من الحقول الإجبارية
+        if(!name || !price) {
+            alert("يرجى إدخال اسم المنتج والسعر.");
+            return;
+        }
+
+        const id = document.getElementById('edit-id').value, file = document.getElementById('p-file').files[0];
+        showLoader(true);
         let url = currentImgUrl;
         if (file) { const fN = `${Date.now()}.${file.name.split('.').pop()}`; await _supabase.storage.from('product-images').upload(fN, file); url = _supabase.storage.from('product-images').getPublicUrl(fN).data.publicUrl; }
         const { data: prof } = await _supabase.from('profiles').select('id').eq('phone_number', userPhone).single();
-        const payload = { product_name: document.getElementById('p-name').value, price: parseFloat(document.getElementById('p-price').value), sale_price: document.getElementById('p-sale').value ? parseFloat(document.getElementById('p-sale').value) : null, product_order: parseInt(document.getElementById('p-order').value) || 0, description: document.getElementById('p-desc').value, category_id: document.getElementById('p-cat').value || null, image_url: url, store_id: storeId, user_id: prof.id };
+        const payload = { product_name: name, price: parseFloat(price), sale_price: document.getElementById('p-sale').value ? parseFloat(document.getElementById('p-sale').value) : null, product_order: parseInt(document.getElementById('p-order').value) || 0, description: document.getElementById('p-desc').value, category_id: document.getElementById('p-cat').value || null, image_url: url, store_id: storeId, user_id: prof.id };
         if (id) await _supabase.from('products').update(payload).eq('id', id); else await _supabase.from('products').insert([payload]);
-        toggleForm(); loadProducts(); btn.disabled = false;
+        toggleForm(); await loadProducts();
     }
-    async function deleteProd(id) { if (confirm("حذف المنتج؟")) { await _supabase.from('products').delete().eq('id', id); loadProducts(); } }
+
+    async function deleteProd(id) { if (confirm("حذف؟")) { showLoader(true); await _supabase.from('products').delete().eq('id', id); await loadProducts(); } }
+    function filterData() {
+        const n = document.getElementById('search-name').value.toLowerCase(), c = document.getElementById('filter-cat').value, s = document.getElementById('filter-status').value, sort = document.getElementById('sort-main').value;
+        let filtered = allProducts.filter(p => p.product_name.toLowerCase().includes(n) && (c === "" || p.category_id == c) && (s === "" || String(p.is_available !== false) === s));
+        if (sort === "alpha") {
+            filtered.sort((a, b) => a.product_name.localeCompare(b.product_name, 'ar'));
+        } else if (sort === "price-low") {
+            filtered.sort((a, b) => (a.sale_price || a.price) - (b.sale_price || b.price));
+        } else if (sort === "price-high") {
+            filtered.sort((a, b) => (b.sale_price || b.price) - (a.sale_price || a.price));
+        } else if (sort === "avail-first") {
+            filtered.sort((a, b) => (b.is_available !== false ? 1 : 0) - (a.is_available !== false ? 1 : 0));
+        } else if (sort === "unavail-first") {
+            filtered.sort((a, b) => (a.is_available == false ? 0 : 1) - (b.is_available == false ? 0 : 1));
+        } else if (sort === "category") {
+            filtered.sort((a, b) => (a.categories?.category_name || '').localeCompare(b.categories?.category_name || '', 'ar'));
+        } else if (sort === "order") {
+            filtered.sort((a, b) => (a.product_order || 0) - (b.product_order || 0));
+        }
+        renderTable(filtered);
+    }
     function resetFilters() { document.getElementById('search-name').value = ""; document.getElementById('filter-cat').value = ""; document.getElementById('filter-status').value = ""; document.getElementById('sort-main').value = ""; renderTable(allProducts); }
     function logout() { localStorage.clear(); window.location.href = 'index.html'; }
     init();
