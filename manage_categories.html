@@ -1,202 +1,135 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إدارة التصنيفات | نظام المنيو</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        :root { --primary: #24b47e; --danger: #e74c3c; --edit: #3498db; --bg: #f4f7f6; --dark: #2f3542; --success: #27ae60; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); direction: rtl; padding: 20px; margin: 0; }
-        .container { max-width: 800px; margin: auto; }
-        
-        .nav-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: white; padding: 15px 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        .user-meta { display: flex; align-items: center; gap: 12px; }
-        .user-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary); background: #eee; }
-        .welcome-section { font-weight: bold; color: var(--dark); }
-        
-        .btn-back { background: #34495e; color: white; padding: 8px 15px; border-radius: 8px; text-decoration: none; font-size: 13px; font-weight: bold; }
-
-        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        h2 { color: var(--dark); border-right: 4px solid var(--primary); padding-right: 10px; margin-bottom: 25px; font-size: 1.4em; }
-
-        .add-box { display: flex; gap: 10px; margin-bottom: 25px; }
-        input[type="text"] { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; }
-        .btn-add { background: var(--primary); color: white; border: none; padding: 0 25px; border-radius: 8px; cursor: pointer; font-weight: bold; }
-
-        .category-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #eee; transition: 0.2s; gap: 10px; }
-        .category-item:hover { background: #fafafa; }
-        
-        /* تنسيق حقل التعديل الداخلي */
-        .edit-input { flex: 1; padding: 8px; border: 2px solid var(--edit); border-radius: 6px; font-size: 15px; outline: none; }
-        .category-name { font-weight: 600; color: #444; flex-grow: 1; }
-        
-        .actions { display: flex; gap: 8px; }
-        .btn-action { border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; color: white; min-width: 60px; }
-        .btn-edit { background: var(--edit); }
-        .btn-delete { background: var(--danger); }
-        .btn-save { background: var(--success); }
-        .btn-cancel { background: #95a5a6; }
-        
-        #loading-msg { text-align: center; color: #999; padding: 20px; }
-    </style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>إدارة التصنيفات | نظام المنيو</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--primary:#24b47e;--danger:#e74c3c;--edit:#3498db;--bg:#f4f7f6;--dark:#2f3542;--success:#27ae60}
+body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl;padding:20px;margin:0}
+.container{max-width:800px;margin:auto}
+.nav-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;background:white;padding:15px 20px;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,0.05)}
+.user-meta{display:flex;align-items:center;gap:12px}
+.store-logo-nav{width:45px;height:45px;border-radius:10px;object-fit:cover;border:1px solid #eee;background:#fff;display:none}
+.welcome-section{font-weight:bold;color:var(--dark);font-size:15px}
+.nav-buttons{display:flex;gap:8px}
+.btn-nav{padding:8px 15px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:bold;border:none;cursor:pointer;display:flex;align-items:center;gap:5px}
+.btn-back{background:white;color:var(--dark);border:1px solid #ddd;box-shadow:0 2px 5px rgba(0,0,0,0.03)}
+.btn-prods{background:var(--edit);color:white}
+.btn-logout{background:var(--danger);color:white}
+.card{background:white;padding:25px;border-radius:15px;box-shadow:0 4px 15px rgba(0,0,0,0.05)}
+.header-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:25px}
+h2{color:var(--dark);border-right:4px solid var(--primary);padding-right:10px;margin:0;font-size:1.4em}
+.btn-toggle-add{background:var(--primary);color:white;border:none;padding:8px 15px;border-radius:8px;cursor:pointer;font-weight:bold;font-size:13px}
+.add-box{display:none;gap:15px;margin-bottom:25px;background:#f9f9f9;padding:20px;border-radius:10px;border:1px dashed #ddd;animation:slideDown 0.3s ease-out}
+@keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+.input-group{display:flex;flex-direction:column;gap:5px}
+.input-group label{font-size:12px;color:#777;font-weight:bold}
+input[type="text"],input[type="number"]{padding:12px;border:1px solid #ddd;border-radius:8px;font-size:15px}
+.order-input-add{width:100px;text-align:center;font-weight:bold}
+.cat-input-add{flex:1}
+.btn-save-new{background:var(--success);color:white;border:none;padding:0 25px;border-radius:8px;cursor:pointer;font-weight:bold;align-self:flex-end;height:45px}
+.table-header{display:flex;justify-content:space-between;align-items:center;padding:10px 15px;background:#f1f2f6;border-radius:8px;margin-bottom:5px;font-weight:bold;color:#57606f;font-size:14px}
+.sortable{cursor:pointer;display:flex;align-items:center;gap:5px;user-select:none}
+.sortable:hover{color:var(--primary)}
+.col-order{width:80px;text-align:center}
+.col-name{flex:1;padding-right:15px}
+.col-actions{width:140px;text-align:center}
+.category-item{display:flex;justify-content:space-between;align-items:center;padding:12px 15px;border-bottom:1px solid #eee;transition:0.2s;gap:10px}
+.category-item:hover{background:#fafafa}
+.edit-order{width:60px;text-align:center;border:2px solid var(--edit);border-radius:6px;padding:5px}
+.edit-input{flex:1;padding:8px;border:2px solid var(--edit);border-radius:6px;font-size:15px;outline:none}
+.order-val{width:80px;text-align:center;font-weight:bold;color:var(--primary)}
+.name-val{flex:1;font-weight:600;color:#444;padding-right:15px}
+.actions{display:flex;gap:8px;width:140px;justify-content:center}
+.btn-action{border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:bold;color:white;min-width:55px}
+.btn-edit{background:var(--edit)}.btn-delete{background:var(--danger)}.btn-save{background:var(--success)}.btn-cancel{background:#95a5a6}
+#loading-msg{text-align:center;color:#999;padding:20px}
+</style>
 </head>
 <body>
-
 <div class="container">
-    <div class="nav-bar">
-        <div class="user-meta">
-            <img id="user-avatar" class="user-avatar" src="https://via.placeholder.com/40" alt="Avatar">
-            <div class="welcome-section" id="welcome-msg-user">جاري التحميل...</div>
-        </div>
-        <a href="store_settings.html" class="btn-back">⬅ العودة للمتاجر</a>
-    </div>
-
-    <div class="card">
-        <h2 id="store-title">تصنيفات المتجر</h2>
-        
-        <div class="add-box">
-            <input type="text" id="cat-input" placeholder="أدخل اسم التصنيف (مثلاً: عطور صيفية)">
-            <button class="btn-add" id="btn-add-cat" onclick="handleAddCategory()">إضافة +</button>
-        </div>
-
-        <div id="loading-msg">جاري تحميل التصنيفات...</div>
-        <div id="categories-list"></div>
-    </div>
+<div class="nav-bar">
+<div class="user-meta">
+<img id="store-logo-img" class="store-logo-nav" src="">
+<div class="welcome-section" id="welcome-msg-store">جاري التحميل...</div>
 </div>
+<div class="nav-buttons">
+<button onclick="goToProducts()" class="btn-nav btn-prods">📦 إضافة منتجات</button>
 
+<button onclick="history.back()" class="btn-nav btn-back">⬅ رجوع</button>
+<button onclick="handleLogout()" class="btn-nav btn-logout">تسجيل خروج</button>
+</div>
+</div>
+<div class="card">
+<div class="header-row">
+<h2 id="store-title">تصنيفات المتجر</h2>
+<button class="btn-toggle-add" onclick="toggleAddBox()">+ إضافة تصنيف</button>
+</div>
+<div class="add-box" id="add-box">
+<div class="input-group"><label>رقم الترتيب</label><input type="number" id="order-input" class="order-input-add" value="0"></div>
+<div class="input-group" style="flex:1;"><label>اسم التصنيف</label><input type="text" id="cat-input" class="cat-input-add" placeholder="مثال: ركن القهوة"></div>
+<button class="btn-save-new" onclick="handleAddCategory()">حفظ التغيير</button>
+</div>
+<div class="table-header">
+<div class="col-order sortable" onclick="handleSort('display_order')">الترتيب <span id="sort-icon-display_order">↕</span></div>
+<div class="col-name sortable" onclick="handleSort('category_name')">اسم التصنيف <span id="sort-icon-category_name">↕</span></div>
+<div class="col-actions">العمليات</div>
+</div>
+<div id="loading-msg">جاري تحميل التصنيفات...</div>
+<div id="categories-list"></div>
+</div>
+</div>
 <script>
-    const SB_URL = 'https://wnvyqvwuzmxzzhilgidh.supabase.co'; 
-    const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indudnlxdnd1em14enpoaWxnaWRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MTg1MDEsImV4cCI6MjA5MTQ5NDUwMX0.AyD4CYqA0cz9mC-bcOt16uUpueL_cAWT26Q92l574r0';
-    const _supabase = supabase.createClient(SB_URL, SB_KEY);
+const SB_URL='https://wnvyqvwuzmxzzhilgidh.supabase.co',SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indudnlxdnd1em14enpoaWxnaWRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MTg1MDEsImV4cCI6MjA5MTQ5NDUwMX0.AyD4CYqA0cz9mC-bcOt16uUpueL_cAWT26Q92l574r0',_supabase=supabase.createClient(SB_URL,SB_KEY);
+const userPhone=(localStorage.getItem('user_phone')||"").trim(),urlParams=new URLSearchParams(window.location.search),currentStoreId=urlParams.get('store_id');
+let currentSortColumn='display_order',isAscending=true;
 
-    const userPhone = (localStorage.getItem('user_phone') || "").trim();
-    const urlParams = new URLSearchParams(window.location.search);
-    const currentStoreId = urlParams.get('store_id');
+async function initPage(){if(!userPhone||!currentStoreId){window.location.href='index.html';return}
+await loadStoreData();await loadCategories()}
 
-    async function initPage() {
-        if (!userPhone || !currentStoreId) {
-            window.location.href = 'store_settings.html';
-            return;
-        }
-        await fetchUserInfo();
-        await loadStoreName();
-        await loadCategories();
-    }
+function handleLogout(){if(confirm("هل تريد تسجيل الخروج؟")){localStorage.clear();window.location.href='index.html'}}
 
-    async function fetchUserInfo() {
-        try {
-            const { data } = await _supabase.from('profiles').select('username, profile_img_url').eq('phone_number', userPhone).single();
-            if (data) {
-                document.getElementById('welcome-msg-user').innerText = data.username || "مرحباً بك";
-                if (data.profile_img_url) document.getElementById('user-avatar').src = data.profile_img_url;
-            }
-        } catch (err) { console.error(err); }
-    }
+function goToProducts(){window.location.href=`manage_products.html?store_id=${currentStoreId}`}
 
-    async function loadStoreName() {
-        try {
-            const { data } = await _supabase.from('store_settings').select('store_name').eq('id', currentStoreId).single();
-            if (data) document.getElementById('store-title').innerText = "تصنيفات: " + data.store_name;
-        } catch (err) { console.error(err); }
-    }
+function toggleAddBox(){const box=document.getElementById('add-box');if(box.style.display==='flex'){box.style.display='none'}else{box.style.display='flex';document.getElementById('cat-input').focus()}}
 
-    async function loadCategories() {
-        const listDiv = document.getElementById('categories-list');
-        const loading = document.getElementById('loading-msg');
-        
-        try {
-            const { data, error } = await _supabase
-                .from('categories')
-                .select('*')
-                .eq('store_id', currentStoreId)
-                .order('display_order', { ascending: true });
+function handleSort(column){if(currentSortColumn===column){isAscending=!isAscending}else{currentSortColumn=column;isAscending=true}
+document.getElementById('sort-icon-display_order').innerText='↕';document.getElementById('sort-icon-category_name').innerText='↕';
+document.getElementById(`sort-icon-${column}`).innerText=isAscending?'↑':'↓';loadCategories()}
 
-            loading.style.display = 'none';
-            if (data && data.length > 0) {
-                listDiv.innerHTML = data.map(cat => `
-                    <div class="category-item" id="item-${cat.id}">
-                        <span class="category-name" id="name-${cat.id}">${cat.category_name}</span>
-                        <div class="actions" id="actions-${cat.id}">
-                            <button class="btn-action btn-edit" onclick="enableEdit('${cat.id}', '${cat.category_name}')">تعديل</button>
-                            <button class="btn-action btn-delete" onclick="deleteCategory('${cat.id}')">حذف</button>
-                        </div>
-                    </div>
-                `).join('');
-            } else {
-                listDiv.innerHTML = "<p style='text-align:center; color:#999;'>لا توجد تصنيفات مضافة.</p>";
-            }
-        } catch (err) { console.error(err); }
-    }
+async function loadStoreData(){try{const{data}=await _supabase.from('store_settings').select('store_name,logo_url').eq('id',currentStoreId).single();
+if(data){document.getElementById('welcome-msg-store').innerText="متجر: "+data.store_name;document.getElementById('store-title').innerText="تصنيفات: "+data.store_name;
+if(data.logo_url){const img=document.getElementById('store-logo-img');img.src=data.logo_url;img.style.display='block'}}}catch(err){console.error(err)}}
 
-    // تفعيل وضع التحرير في نفس السطر
-    function enableEdit(id, currentName) {
-        const nameSpan = document.getElementById(`name-${id}`);
-        const actionsDiv = document.getElementById(`actions-${id}`);
+async function loadCategories(){const listDiv=document.getElementById('categories-list'),loading=document.getElementById('loading-msg');
+try{const{data,error}=await _supabase.from('categories').select('*').eq('store_id',currentStoreId).order(currentSortColumn,{ascending:isAscending});
+loading.style.display='none';if(data&&data.length>0){listDiv.innerHTML=data.map(cat=>`
+<div class="category-item" id="item-${cat.id}">
+<div class="order-val" id="order-box-${cat.id}">${cat.display_order}</div>
+<div class="name-val" id="name-box-${cat.id}">${cat.category_name}</div>
+<div class="actions" id="actions-${cat.id}">
+<button class="btn-action btn-edit" onclick="enableEdit('${cat.id}','${cat.category_name}',${cat.display_order})">تعديل</button>
+<button class="btn-action btn-delete" onclick="deleteCategory('${cat.id}')">حذف</button>
+</div>
+</div>`).join('')}else{listDiv.innerHTML="<p style='text-align:center; color:#999;'>لا توجد تصنيفات مضافة.</p>"}}catch(err){console.error(err)}}
 
-        // تحويل النص إلى Input
-        nameSpan.innerHTML = `<input type="text" class="edit-input" id="input-${id}" value="${currentName}">`;
-        
-        // تغيير الأزرار إلى حفظ وإلغاء
-        actionsDiv.innerHTML = `
-            <button class="btn-action btn-save" onclick="saveEdit('${id}')">حفظ</button>
-            <button class="btn-action btn-cancel" onclick="loadCategories()">إلغاء</button>
-        `;
+function enableEdit(id,currentName,currentOrder){const orderBox=document.getElementById(`order-box-${id}`),nameBox=document.getElementById(`name-box-${id}`),actionsDiv=document.getElementById(`actions-${id}`);
+orderBox.innerHTML=`<input type="number" class="edit-order" id="edit-order-${id}" value="${currentOrder}">`;
+nameBox.innerHTML=`<input type="text" class="edit-input" id="edit-name-${id}" value="${currentName}">`;
+actionsDiv.innerHTML=`<button class="btn-action btn-save" onclick="saveEdit('${id}')">حفظ</button><button class="btn-action btn-cancel" onclick="loadCategories()">إلغاء</button>`}
 
-        document.getElementById(`input-${id}`).focus();
-    }
+async function saveEdit(id){const newName=document.getElementById(`edit-name-${id}`).value.trim(),newOrder=parseInt(document.getElementById(`edit-order-${id}`).value)||0;
+if(!newName)return;try{const{error}=await _supabase.from('categories').update({category_name:newName,display_order:newOrder}).eq('id',id);
+if(error)throw error;await loadCategories()}catch(err){alert("فشل التعديل: "+err.message)}}
 
-    // حفظ التعديل في قاعدة البيانات
-    async function saveEdit(id) {
-        const newName = document.getElementById(`input-${id}`).value.trim();
-        if (!newName) return;
+async function handleAddCategory(){const input=document.getElementById('cat-input'),orderInput=document.getElementById('order-input'),name=input.value.trim(),order=parseInt(orderInput.value)||0;
+if(!name)return;try{const{data:profile}=await _supabase.from('profiles').select('id').eq('phone_number',userPhone).single();
+const{error}=await _supabase.from('categories').insert([{category_name:name,store_id:currentStoreId,user_id:profile.id,display_order:order,is_visible:true}]);
+if(error)throw error;input.value="";orderInput.value="0";toggleAddBox();await loadCategories()}catch(err){alert("خطأ أثناء الحفظ: "+err.message)}}
 
-        try {
-            const { error } = await _supabase
-                .from('categories')
-                .update({ category_name: newName })
-                .eq('id', id);
-
-            if (error) throw error;
-            await loadCategories(); // تحديث القائمة بعد الحفظ
-        } catch (err) {
-            alert("فشل التعديل: " + err.message);
-        }
-    }
-
-    async function handleAddCategory() {
-        const input = document.getElementById('cat-input');
-        const name = input.value.trim();
-        if (!name) return;
-
-        try {
-            const { data: profile } = await _supabase.from('profiles').select('id').eq('phone_number', userPhone).single();
-            const { error } = await _supabase.from('categories').insert([{
-                category_name: name,
-                store_id: currentStoreId,
-                user_id: profile.id,
-                display_order: 0,
-                is_visible: true
-            }]);
-            if (error) throw error;
-            input.value = "";
-            await loadCategories();
-        } catch (err) {
-            alert("خطأ أثناء الحفظ: " + err.message);
-        }
-    }
-
-    async function deleteCategory(id) {
-        if (!confirm("هل أنت متأكد من حذف التصنيف؟")) return;
-        try {
-            await _supabase.from('categories').delete().eq('id', id);
-            await loadCategories();
-        } catch (err) { alert(err.message); }
-    }
-
-    initPage();
+async function deleteCategory(id){if(!confirm("هل أنت متأكد من حذف التصنيف؟"))return;try{await _supabase.from('categories').delete().eq('id',id);await loadCategories()}catch(err){alert(err.message)}}
+initPage();
 </script>
 </body>
-</html>
-</html>
 </html>
