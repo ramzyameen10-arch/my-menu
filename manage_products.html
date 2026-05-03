@@ -29,9 +29,12 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl
 #product-form-container{background:white;padding:25px;border-radius:15px;box-shadow:0 4px 20px rgba(0,0,0,0.1);margin-bottom:25px;display:none}
 .clickable-preview{width:100px;height:100px;border-radius:15px;border:2px dashed #ccc;margin:0 auto 20px;cursor:pointer;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#fafafa}
 .clickable-preview img{width:100%;height:100%;object-fit:cover}
+
+/* تحسين نظام الشبكة للفورم */
 .form-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:15px}
 .full{grid-column:span 3}
-input,select,textarea{width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box}
+
+input,select,textarea{width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box;font-size:14px}
 input:required,select:required{border-right:4px solid var(--danger)}
 input:valid,select:valid{border-right:4px solid var(--primary)}
 .table-card{background:white;border-radius:15px;overflow-x:auto;box-shadow:0 4px 12px rgba(0,0,0,0.05)}
@@ -50,7 +53,15 @@ td{padding:12px 15px;border-bottom:1px solid #eee;vertical-align:middle;font-siz
 .drag-handle{cursor:grab;color:#ccc;font-size:20px;padding:0 10px;user-select:none}
 .sortable-ghost{opacity:0.3;background:#e8f5e9!important;border:2px dashed var(--primary)}
 .no-cat-alert{background:#fff3f3;color:#d63031;padding:15px;border-radius:8px;margin-bottom:15px;border:1px solid #fab1a0;display:none;text-align:center;font-weight:bold}
-@media (max-width:850px){.filter-bar{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr}}
+
+/* تعديلات الهاتف لضمان عدم صغر المربعات */
+@media (max-width:850px){
+    .filter-bar{grid-template-columns:1fr 1fr}
+    .form-grid{grid-template-columns:1fr} /* جعل كل الحقول تحت بعضها بعرض كامل */
+    .full{grid-column:span 1}
+    .container{padding:10px}
+    #product-form-container{padding:15px}
+}
 </style>
 </head>
 <body>
@@ -83,7 +94,7 @@ td{padding:12px 15px;border-bottom:1px solid #eee;vertical-align:middle;font-siz
 <div><input type="number" id="p-sale" step="0.01" placeholder="السعر بعد الخصم"></div>
 <div><select id="p-cat" required></select></div>
 <div><input type="number" id="p-order" placeholder="الترتيب"></div>
-<div class="full" style="grid-column:span 2"><textarea id="p-desc" rows="2" placeholder="وصف المنتج"></textarea></div>
+<div class="full"><textarea id="p-desc" rows="3" placeholder="وصف المنتج"></textarea></div>
 </div>
 <div id="form-actions"><button class="btn-main" id="btn-save" style="width:100%;margin-top:15px" onclick="handleSave()">حفظ المنتج</button></div>
 <button class="btn-outline" style="width:100%;margin-top:8px;justify-content:center" onclick="toggleForm()">إلغاء</button>
@@ -104,7 +115,7 @@ td{padding:12px 15px;border-bottom:1px solid #eee;vertical-align:middle;font-siz
     <table>
         <thead>
             <tr>
-                <th width="40"></th>
+                <th width="40">سحب</th>
                 <th width="90">الحالة</th>
                 <th width="60">الصورة</th>
                 <th>المنتج</th>
@@ -148,27 +159,14 @@ function renderTable(data) {
             productImg = (p.image_url && p.image_url !== "") ? p.image_url : (storeLogoUrl || fallback);
 
         list.innerHTML += `<tr id="row-${p.id}">
-            <td style="text-align:center;">
-                ${canDrag ? '<div class="drag-handle">☰</div>' : ''}
-            </td>
-            <td>
-                <button id="btn-status-${p.id}" 
-                        class="btn-opt status-btn ${isAvail ? 'status-available' : 'status-unavailable'}" 
-                        onclick="toggleAvailability('${p.id}', ${isAvail})">
-                    ${isAvail ? 'متوفر' : 'معطل'}
-                </button>
-            </td>
+            <td style="text-align:center;">${canDrag ? '<div class="drag-handle">☰</div>' : ''}</td>
+            <td><button id="btn-status-${p.id}" class="btn-opt status-btn ${isAvail ? 'status-available' : 'status-unavailable'}" onclick="toggleAvailability('${p.id}', ${isAvail})">${isAvail ? 'متوفر' : 'معطل'}</button></td>
             <td style="text-align:center;"><img src="${productImg}" id="img-${p.id}" class="row-img" onclick="changeImageInTable('${p.id}')"></td>
             <td><strong>${p.product_name}</strong></td>
             <td><small>${p.categories ? p.categories.category_name : 'غير مصنف'}</small></td>
             <td>${hasSale ? `<span class="old-price">${Number(p.price).toFixed(2)}</span>` : ''} <span class="price-tag">${displayPrice}</span></td>
             <td style="text-align:center;"><span style="background:#eee;padding:2px 8px;border-radius:4px">${p.product_order || 0}</span></td>
-            <td>
-                <div class="actions">
-                    <button class="btn-opt edit" onclick='setupEdit(${JSON.stringify(p).replace(/'/g, "&apos;")})'>تعديل</button>
-                    <button class="btn-opt delete" onclick="deleteProd('${p.id}')">حذف</button>
-                </div>
-            </td>
+            <td><div class="actions"><button class="btn-opt edit" onclick='setupEdit(${JSON.stringify(p).replace(/'/g, "&apos;")})'>تعديل</button><button class="btn-opt delete" onclick="deleteProd('${p.id}')">حذف</button></div></td>
         </tr>`;
     });
 }
