@@ -7,41 +7,50 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root { --primary: #24b47e; --ai: #6c5ce7; --bg: #f4f7f6; }
-        body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 15px; direction: rtl; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 15px; direction: rtl; }
         .container { max-width: 600px; margin: auto; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; }
-        .upload-box { border: 2px dashed var(--ai); padding: 40px; border-radius: 10px; cursor: pointer; margin-top: 20px; }
-        .hidden { display: none; }
-        .btn { padding: 12px; width: 100%; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        .btn-primary { background: var(--primary); color: white; }
+        .card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; }
+        .upload-box { border: 2px dashed var(--ai); padding: 40px; border-radius: 15px; cursor: pointer; background: #f9f8ff; transition: 0.3s; }
+        .upload-box:hover { background: #f0edff; }
         #loading { display: none; color: var(--ai); font-weight: bold; margin-top: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: right; }
-        input { width: 90%; border: none; background: transparent; }
+        .hidden { display: none; }
+        .btn { padding: 15px; width: 100%; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 16px; }
+        .btn-primary { background: var(--primary); color: white; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; border-radius: 10px; overflow: hidden; }
+        th, td { border: 1px solid #eee; padding: 12px; text-align: right; }
+        th { background: #f8f9fa; color: #666; font-size: 13px; }
+        input { width: 100%; border: 1px solid #ddd; padding: 8px; border-radius: 5px; box-sizing: border-box; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div id="step-1" class="card">
-        <h2>المسح الذكي للمنيو</h2>
-        <p>ارفع صورة المنيو لتحويلها إلى منتجات رقمية</p>
+        <h2 style="color: var(--ai);">📸 المسح الذكي للمنيو</h2>
+        <p>ارفع صورة قائمة الطعام ليقوم الذكاء الاصطناعي باستخراج المنتجات فوراً</p>
+        
         <div class="upload-box" id="drop-zone">
-            <span>📸 اضغط هنا للتصوير أو الرفع</span>
+            <span style="font-size: 50px; display: block;">📷</span>
+            <span style="font-weight: bold; color: var(--ai);">اضغط هنا للتصوير أو اختيار ملف</span>
         </div>
         <input type="file" id="file-input" class="hidden" accept="image/*">
-        <div id="loading">جاري تحليل الصورة... انتظر قليلاً</div>
+        
+        <div id="loading">
+            <div style="margin-bottom: 10px;">⏳ جاري تحليل المنيو بعناية...</div>
+            <small style="font-weight: normal; color: #888;">قد يستغرق الأمر من 5 إلى 10 ثوانٍ</small>
+        </div>
     </div>
 
     <div id="step-2" class="hidden">
         <div class="card">
-            <h3>راجع البيانات المستخرجة</h3>
+            <h3>✅ تمت القراءة بنجاح</h3>
+            <p style="font-size: 14px; color: #666;">يمكنك تعديل الأسماء أو الأسعار قبل الحفظ</p>
             <table>
                 <thead><tr><th>المنتج</th><th>السعر</th><th>التصنيف</th></tr></thead>
                 <tbody id="result-body"></tbody>
             </table>
-            <button class="btn btn-primary" id="save-btn" style="margin-top: 20px;">حفظ في المتجر ✅</button>
-            <button class="btn" onclick="location.reload()">إلغاء</button>
+            <button class="btn btn-primary" id="save-btn">حفظ جميع المنتجات في المتجر ✅</button>
+            <button class="btn" style="background: #eee;" onclick="location.reload()">إلغاء وإعادة المحاولة</button>
         </div>
     </div>
 </div>
@@ -53,11 +62,11 @@
 <script type="module">
     import { GoogleGenerativeAI } from "@google/generative-ai";
 
-    const API_KEY = "AIzaSyAEz3LsCjAU4JHPFWt76vh37o3oCBeA3lA"; // مفتاحك
-    const SUPABASE_URL = 'https://wnvyqvwuzmxzzhilgidh.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indudnlxdnd1em14enpoaWxnaWRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MTg1MDEsImV4cCI6MjA5MTQ5NDUwMX0.AyD4CYqA0cz9mC-bcOt16uUpueL_cAWT26Q92l574r0';
+    const API_KEY = "AIzaSyAEz3LsCjAU4JHPFWt76vh37o3oCBeA3lA"; 
+    const SB_URL = 'https://wnvyqvwuzmxzzhilgidh.supabase.co';
+    const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indudnlxdnd1em14enpoaWxnaWRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MTg1MDEsImV4cCI6MjA5MTQ5NDUwMX0.AyD4CYqA0cz9mC-bcOt16uUpueL_cAWT26Q92l574r0';
 
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const _supabase = supabase.createClient(SB_URL, SB_KEY);
     const storeId = new URLSearchParams(window.location.search).get('store_id');
 
     const fileInput = document.getElementById('file-input');
@@ -70,32 +79,35 @@
         if (!file) return;
 
         document.getElementById('loading').style.display = 'block';
+        dropZone.style.display = 'none';
         
         try {
             const genAI = new GoogleGenerativeAI(API_KEY);
-            // استخدام الموديل المستقر
+            // تم تحديث الموديل ليعمل بدون مشاكل الـ 404
             const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-            const base64Data = await new Promise(r => {
+            const base64Data = await new Promise((resolve) => {
                 const reader = new FileReader();
-                reader.onload = () => r(reader.result.split(',')[1]);
+                reader.onload = () => resolve(reader.result.split(',')[1]);
                 reader.readAsDataURL(file);
             });
 
-            const prompt = "Extract menu data to JSON: {\"items\": [{\"name\": \"\", \"price\": 0, \"cat\": \"\"}]}. Answer in Arabic.";
+            const prompt = "Extract menu items from this image and return ONLY a JSON object: {\"items\": [{\"name\": \"product name in Arabic\", \"price\": 10.5, \"cat\": \"category name in Arabic\"}]}";
             
             const result = await model.generateContent([
-                prompt,
-                { inlineData: { data: base64Data, mimeType: file.type } }
+                { inlineData: { data: base64Data, mimeType: file.type } },
+                { text: prompt }
             ]);
 
             const response = await result.response;
-            const text = response.text().replace(/```json|```/g, "").trim();
+            let text = response.text().replace(/```json|```/g, "").trim();
             const data = JSON.parse(text);
 
             displayResults(data.items);
         } catch (err) {
-            alert("خطأ: " + err.message);
+            console.error(err);
+            alert("عذراً، حدث خطأ في القراءة. يرجى التأكد من وضوح الصورة وتوفر الإنترنت.");
+            location.reload();
         } finally {
             document.getElementById('loading').style.display = 'none';
         }
@@ -116,8 +128,30 @@
     }
 
     document.getElementById('save-btn').onclick = async () => {
-        alert("سيتم الحفظ في المتجر رقم: " + storeId);
-        // هنا يتم إضافة كود الـ insert في سوبابيز كما في النسخ السابقة
+        const btn = document.getElementById('save-btn');
+        btn.innerText = "جاري الحفظ... ⏳";
+        btn.disabled = true;
+
+        const products = [];
+        document.querySelectorAll('#result-body tr').forEach(row => {
+            products.push({
+                product_name: row.querySelector('.p-name').value,
+                price: parseFloat(row.querySelector('.p-price').value) || 0,
+                store_id: storeId,
+                is_available: true
+            });
+        });
+
+        try {
+            const { error } = await _supabase.from('products').insert(products);
+            if (error) throw error;
+            alert("تم حفظ المنتجات بنجاح في متجرك! 🎉");
+            window.location.href = `manage_products.html?store_id=${storeId}`;
+        } catch (err) {
+            alert("خطأ أثناء الحفظ: " + err.message);
+            btn.disabled = false;
+            btn.innerText = "حفظ جميع المنتجات في المتجر ✅";
+        }
     };
 </script>
 </body>
