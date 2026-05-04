@@ -1,150 +1,85 @@
-<!DOCTYPE html><html lang="ar" dir="rtl">
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>تحليل المنيو</title><style>
-body {
-    font-family: Arial;
-    text-align: center;
-    padding: 20px;
-    background: #f7f7f7;
-}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مستخرج المنيو الذكي 💡</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f8f9fa; margin: 0; padding: 20px; direction: rtl; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); text-align: center; }
+        .upload-btn { background: #6c5ce7; color: white; padding: 15px 30px; border: none; border-radius: 10px; cursor: pointer; font-size: 18px; transition: 0.3s; }
+        .upload-btn:hover { background: #5b4bc4; }
+        #loading { display: none; margin: 20px 0; color: #6c5ce7; font-weight: bold; }
+        #output { 
+            margin-top: 25px; 
+            padding: 20px; 
+            background: #2d3436; 
+            color: #fab1a0; 
+            border-radius: 10px; 
+            text-align: right; 
+            white-space: pre-wrap; 
+            display: none;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
 
-.box {
-    border: 2px dashed #6c5ce7;
-    padding: 30px;
-    margin: 20px auto;
-    width: 300px;
-    border-radius: 15px;
-    cursor: pointer;
-    background: white;
-}
+<div class="container">
+    <h2>📸 قارئ القوائم الذكي</h2>
+    <p>ارفع صورة المنيو وسنقوم بتحويلها لنص فوراً</p>
+    
+    <input type="file" id="imageInput" accept="image/*" style="display: none;">
+    <button class="upload-btn" onclick="document.getElementById('imageInput').click()">إضافة صورة المنيو 📂</button>
+    
+    <div id="loading">⏳ جاري معالجة الصورة... انتظر قليلاً</div>
+    
+    <div id="output"></div>
+</div>
 
-.box:hover {
-    background: #f0edff;
-}
+<script>
+    const API_URL = "https://wnvyqvwuzmxzzhilgidh.supabase.co/functions/v1/analyze-image";
+    const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indudnlxdnd1em14enpoaWxnaWRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MTg1MDEsImV4cCI6MjA5MTQ5NDUwMX0.AyD4CYqA0cz9mC-bcOt16uUpueL_cAWT26Q92l574r0";
 
-#loading {
-    display: none;
-    margin-top: 15px;
-    font-weight: bold;
-}
+    document.getElementById('imageInput').onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
 
-#result {
-    margin-top: 20px;
-    padding: 15px;
-    background: white;
-    border-radius: 10px;
-    text-align: right;
-    overflow-x: auto;
-}
+        const loading = document.getElementById('loading');
+        const output = document.getElementById('output');
+        
+        loading.style.display = 'block';
+        output.style.display = 'none';
 
-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-th {
-    background: #6c5ce7;
-    color: white;
-    padding: 10px;
-}
-
-td {
-    padding: 8px;
-    border-bottom: 1px solid #ddd;
-}
-
-.success { color: green; }
-.error { color: red; }
-</style></head><body><h2>📸 تحليل صورة المنيو</h2><div class="box" onclick="document.getElementById('file').click()">
-    اضغط لرفع صورة
-</div><input type="file" id="file" accept="image/*" style="display:none"><div id="loading">⏳ جاري التحليل...</div>
-<div id="result"></div><script>
-const FUNCTION_URL = "https://wnvyqvwuzmxzzhilgidh.supabase.co/functions/v1/analyze-image";
-
-document.getElementById("file").addEventListener("change", async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    document.getElementById("loading").style.display = "block";
-    document.getElementById("result").innerHTML = "";
-
-    try {
-        const base64 = await toBase64(file);
-        const base64Data = base64.split(",")[1];
-
-        const res = await fetch(FUNCTION_URL, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                imageBase64: base64Data,
-                mimeType: file.type
-            })
-        });
-
-        const data = await res.json();
-
-        const text = JSON.stringify(data);
-        const match = text.match(/\{[\s\S]*\}/);
-
-        if (!match) throw new Error("لم يتم العثور على JSON");
-
-        const parsed = JSON.parse(match[0]);
-
-        displayResults(parsed.items || []);
-
-    } catch (err) {
-        document.getElementById("result").innerHTML =
-            `<span class="error">❌ خطأ: ${err.message}</span>`;
-    }
-
-    document.getElementById("loading").style.display = "none";
-});
-
-function toBase64(file) {
-    return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-    });
-}
+        reader.onload = async () => {
+            const base64 = reader.result.split(',')[1];
 
-function displayResults(items) {
-    if (!items.length) {
-        document.getElementById("result").innerHTML =
-            `<span class="error">❌ لم يتم العثور على بيانات</span>`;
-        return;
-    }
+            try {
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${ANON_KEY}`
+                    },
+                    body: JSON.stringify({ image: base64 })
+                });
 
-    let html = `<div class="success">✅ تم التحليل بنجاح</div><br>`;
-    html += "<table>";
-    html += "<tr><th>المنتج</th><th>السعر</th><th>التصنيف</th></tr>";
+                const resultText = await res.text();
+                output.innerText = resultText;
+                output.style.display = 'block';
 
-    items.forEach(item => {
-        html += `
-        <tr>
-            <td>${escapeHtml(item.name)}</td>
-            <td>${item.price || 0}</td>
-            <td>${escapeHtml(item.category || "عام")}</td>
-        </tr>`;
-    });
+            } catch (err) {
+                output.innerText = "فشل الاتصال: " + err.message;
+                output.style.display = 'block';
+            } finally {
+                loading.style.display = 'none';
+            }
+        };
+    };
+</script>
 
-    html += "</table>";
-
-    document.getElementById("result").innerHTML = html;
-}
-
-function escapeHtml(text) {
-    if (!text) return "";
-    return text.replace(/[&<>]/g, (m) => {
-        if (m === "&") return "&amp;";
-        if (m === "<") return "&lt;";
-        if (m === ">") return "&gt;";
-    });
-}
-</script></body>
+</body>
 </html>
