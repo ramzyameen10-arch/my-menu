@@ -6,18 +6,23 @@
     <title>المسح الذكي للمنيو ✨</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --primary: #24b47e; --ai: #6c5ce7; --bg: #f4f7f6; }
+        :root { --primary: #24b47e; --ai: #6c5ce7; --bg: #f4f7f6; --error: #e74c3c; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; padding: 15px; direction: rtl; }
         .container { max-width: 600px; margin: auto; }
         .card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; }
-        .upload-box { border: 2px dashed var(--ai); padding: 40px; border-radius: 15px; cursor: pointer; background: #f9f8ff; margin: 20px 0; }
-        #loading { display: none; color: var(--ai); font-weight: bold; margin-top: 20px; }
+        .upload-box { border: 2px dashed var(--ai); padding: 40px; border-radius: 15px; cursor: pointer; background: #f9f8ff; margin: 20px 0; transition: 0.3s; }
+        .upload-box:hover { background: #f0efff; border-color: var(--primary); }
+        #loading, #error-div { display: none; margin-top: 20px; padding: 15px; border-radius: 10px; }
+        #loading { background: var(--ai); color: white; font-weight: bold; }
+        #error-div { background: #fee; color: var(--error); border: 1px solid var(--error); }
         .hidden { display: none; }
-        .btn { padding: 15px; width: 100%; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 16px; }
+        .btn { padding: 15px; width: 100%; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 16px; transition: 0.2s; }
         .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: #1a9e6b; }
+        .btn-secondary { background: #eee; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; border-radius: 10px; overflow: hidden; }
         th, td { border: 1px solid #eee; padding: 12px; text-align: right; }
-        input { width: 100%; border: 1px solid #ddd; padding: 8px; border-radius: 5px; }
+        input { width: 100%; border: 1px solid #ddd; padding: 8px; border-radius: 5px; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -31,18 +36,21 @@
             <span style="font-weight: bold; color: var(--ai);">اضغط للتصوير أو اختيار ملف</span>
         </div>
         <input type="file" id="file-input" class="hidden" accept="image/*">
-        <div id="loading">جاري تحليل المنيو... انتظر قليلاً ⏳</div>
+        <div id="loading">⏳ جاري تحليل المنيو باستخدام الذكاء الاصطناعي... انتظر قليلاً</div>
+        <div id="error-div">⚠️ <span id="error-msg"></span></div>
     </div>
 
     <div id="step-2" class="hidden">
         <div class="card">
-            <h3>✅ مراجعة البيانات</h3>
+            <h3>✅ مراجعة البيانات المستخرجة</h3>
             <table>
-                <thead><tr><th>المنتج</th><th>السعر</th><th>التصنيف</th></tr></thead>
+                <thead>
+                    <tr><th>المنتج</th><th>السعر</th><th>التصنيف</th></tr>
+                </thead>
                 <tbody id="result-body"></tbody>
             </table>
-            <button class="btn btn-primary" id="save-btn">حفظ في قاعدة البيانات ✅</button>
-            <button class="btn" style="background: #eee;" onclick="location.reload()">إلغاء</button>
+            <button class="btn btn-primary" id="save-btn">💾 حفظ في قاعدة البيانات</button>
+            <button class="btn btn-secondary" onclick="location.reload()">🔄 إلغاء ومسح جديد</button>
         </div>
     </div>
 </div>
@@ -54,45 +62,108 @@
 <script type="module">
     import { GoogleGenerativeAI } from "@google/generative-ai";
 
-    // المفتاح المأخوذ من صورتك الأخيرة
+    // 🔐 المفاتيح
     const API_KEY = "AIzaSyAEz3LsCjAU4JHPFWt76vh37o3oCBeA3lA"; 
     const SB_URL = 'https://wnvyqvwuzmxzzhilgidh.supabase.co';
     const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indudnlxdnd1em14enpoaWxnaWRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MTg1MDEsImV4cCI6MjA5MTQ5NDUwMX0.AyD4CYqA0cz9mC-bcOt16uUpueL_cAWT26Q92l574r0';
 
-    const _supabase = supabase.createClient(SB_URL, SB_KEY);
+    const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
     const storeId = new URLSearchParams(window.location.search).get('store_id');
+    
+    // تحقق من وجود store_id
+    if (!storeId) {
+        alert("⚠️ يرجى تمرير store_id في الرابط، مثل: ?store_id=123");
+    }
 
-    document.getElementById('file-input').onchange = async (e) => {
+    const fileInput = document.getElementById('file-input');
+    const loadingDiv = document.getElementById('loading');
+    const errorDiv = document.getElementById('error-div');
+    const errorMsgSpan = document.getElementById('error-msg');
+    
+    // عرض الخطأ للمستخدم
+    function showError(message) {
+        errorMsgSpan.innerText = message;
+        errorDiv.style.display = 'block';
+        loadingDiv.style.display = 'none';
+    }
+
+    fileInput.onchange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
-        document.getElementById('loading').style.display = 'block';
+        // إخفاء أي خطأ سابق
+        errorDiv.style.display = 'none';
+        loadingDiv.style.display = 'block';
         
         try {
-            const genAI = new GoogleGenerativeAI(API_KEY);
-            // استخدام اسم الموديل المستقر لتجنب خطأ الـ 404
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
+            // 1. تحويل الصورة إلى Base64
             const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = async () => {
-                const base64Data = reader.result.split(',')[1];
-                
-                const prompt = "Extract menu items as JSON: {\"items\": [{\"name\": \"\", \"price\": 0, \"cat\": \"\"}]}. Use Arabic.";
-                
-                const result = await model.generateContent([
-                    { inlineData: { data: base64Data, mimeType: file.type } },
-                    { text: prompt }
-                ]);
-
-                const text = result.response.text().replace(/```json|```/g, "").trim();
-                const data = JSON.parse(text);
-                displayResults(data.items);
+            const base64Promise = new Promise((resolve, reject) => {
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+            
+            const base64Data = await base64Promise;
+            
+            // 2. تهيئة Gemini بالنموذج الصحيح والمستقر (gemini-1.5-pro)
+            const genAI = new GoogleGenerativeAI(API_KEY);
+            // ✅ الحل: استخدام النموذج الأكثر استقراراً gemini-1.5-pro بدلاً من flash
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+            
+            // 3. تحضير الصيغة المطلوبة من Gemini
+            const imagePart = {
+                inlineData: {
+                    data: base64Data,
+                    mimeType: file.type
+                }
             };
+            
+            // برومبت دقيق للحصول على JSON
+            const prompt = `قم بتحليل صورة قائمة الطعام هذه واستخرج جميع الأطباق أو المنتجات.
+قم بإرجاع النتيجة فقط بصيغة JSON بهذا الشكل بالضبط:
+{"items": [{"name": "اسم الطبق", "price": 10.5, "cat": "تصنيف مثل مشروبات أو مقبلات"}]}
+تأكد من أن الأسماء باللغة العربية، والأسعار أرقام فقط. إذا لم تجد السعر ضع 0. لا تكتب أي نص آخر غير JSON.`;
+            
+            // 4. إرسال الطلب
+            const result = await model.generateContent([prompt, imagePart]);
+            const responseText = await result.response.text();
+            
+            // 5. تنظيف النص من أي علامات JSON غير صحيحة
+            let cleanJson = responseText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+            
+            // محاولة العثور على JSON الصحيح
+            const jsonMatch = cleanJson.match(/\{.*\}/s);
+            if (jsonMatch) {
+                cleanJson = jsonMatch[0];
+            }
+            
+            const data = JSON.parse(cleanJson);
+            
+            if (!data.items || !Array.isArray(data.items)) {
+                throw new Error("البيانات المستخرجة لا تحتوي على قائمة منتجات صالحة");
+            }
+            
+            // عرض النتائج في الجدول
+            displayResults(data.items);
+            
         } catch (err) {
-            alert("خطأ: " + err.message);
+            console.error("خطأ مفصل:", err);
+            let errorMessage = "فشل تحليل الصورة. ";
+            
+            if (err.message.includes("404")) {
+                errorMessage += "النموذج غير متوفر. تأكد من مفتاح API أو جرب نموذجاً آخر.";
+            } else if (err.message.includes("API key")) {
+                errorMessage += "مفتاح API غير صالح.";
+            } else if (err.message.includes("JSON")) {
+                errorMessage += "البيانات التي أرجعها الذكاء الاصطناعي غير صالحة: " + err.message;
+            } else {
+                errorMessage += err.message;
+            }
+            
+            showError(errorMessage);
         } finally {
-            document.getElementById('loading').style.display = 'none';
+            loadingDiv.style.display = 'none';
         }
     };
 
@@ -100,25 +171,69 @@
         document.getElementById('step-1').classList.add('hidden');
         document.getElementById('step-2').classList.remove('hidden');
         const body = document.getElementById('result-body');
+        
+        if (items.length === 0) {
+            body.innerHTML = '<tr><td colspan="3">لا توجد منتجات مستخرجة</td></tr>';
+            return;
+        }
+        
         body.innerHTML = items.map(item => `
             <tr>
-                <td><input type="text" class="p-name" value="${item.name}"></td>
-                <td><input type="number" class="p-price" value="${item.price}"></td>
-                <td><input type="text" class="p-cat" value="${item.cat}"></td>
-            </tr>`).join('');
+                <td><input type="text" class="p-name" value="${escapeHtml(item.name || '')}"></td>
+                <td><input type="number" step="0.01" class="p-price" value="${item.price || 0}"></td>
+                <td><input type="text" class="p-cat" value="${escapeHtml(item.cat || 'عام')}"></td>
+            </tr>
+        `).join('');
+    }
+    
+    // حماية ضد هجمات XSS
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
     }
 
     document.getElementById('save-btn').onclick = async () => {
-        const products = Array.from(document.querySelectorAll('#result-body tr')).map(row => ({
-            product_name: row.querySelector('.p-name').value,
-            price: parseFloat(row.querySelector('.p-price').value) || 0,
-            store_id: storeId,
-            is_available: true
-        }));
-
-        const { error } = await _supabase.from('products').insert(products);
-        if (error) alert("خطأ سوبابيز: " + error.message);
-        else alert("تم الحفظ بنجاح! 🎉");
+        const rows = document.querySelectorAll('#result-body tr');
+        if (rows.length === 0 || (rows.length === 1 && rows[0].innerText.includes('لا توجد منتجات'))) {
+            alert("لا توجد منتجات لحفظها");
+            return;
+        }
+        
+        const products = [];
+        for (let row of rows) {
+            const nameInput = row.querySelector('.p-name');
+            const priceInput = row.querySelector('.p-price');
+            
+            if (nameInput && nameInput.value.trim() !== '') {
+                products.push({
+                    product_name: nameInput.value.trim(),
+                    price: parseFloat(priceInput.value) || 0,
+                    store_id: storeId,
+                    is_available: true
+                });
+            }
+        }
+        
+        if (products.length === 0) {
+            alert("الرجاء إدخال منتج واحد على الأقل");
+            return;
+        }
+        
+        const { data, error } = await supabaseClient.from('products').insert(products);
+        
+        if (error) {
+            console.error(error);
+            alert("خطأ في الحفظ: " + error.message);
+        } else {
+            alert(`✅ تم حفظ ${products.length} منتج بنجاح! 🎉`);
+            // يمكن إعادة توجيه أو مسح
+            location.reload();
+        }
     };
 </script>
 </body>
