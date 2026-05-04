@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>المسح الذكي للمنيو ✨</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --primary: #24b47e; --ai: #6c5ce7; --bg: #f4f7f6; }
+        body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 15px; direction: rtl; }
+        .container { max-width: 600px; margin: auto; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; }
+        .upload-box { border: 2px dashed var(--ai); padding: 40px; border-radius: 10px; cursor: pointer; margin-top: 20px; }
+        .hidden { display: none; }
+        .btn { padding: 12px; width: 100%; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-primary { background: var(--primary); color: white; }
+        #loading { display: none; color: var(--ai); font-weight: bold; margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: right; }
+        input { width: 90%; border: none; background: transparent; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="step-1" class="card">
+        <h2>المسح الذكي للمنيو</h2>
+        <p>ارفع صورة المنيو لتحويلها إلى منتجات رقمية</p>
+        <div class="upload-box" id="drop-zone">
+            <span>📸 اضغط هنا للتصوير أو الرفع</span>
+        </div>
+        <input type="file" id="file-input" class="hidden" accept="image/*">
+        <div id="loading">جاري تحليل الصورة... انتظر قليلاً</div>
+    </div>
+
+    <div id="step-2" class="hidden">
+        <div class="card">
+            <h3>راجع البيانات المستخرجة</h3>
+            <table>
+                <thead><tr><th>المنتج</th><th>السعر</th><th>التصنيف</th></tr></thead>
+                <tbody id="result-body"></tbody>
+            </table>
+            <button class="btn btn-primary" id="save-btn" style="margin-top: 20px;">حفظ في المتجر ✅</button>
+            <button class="btn" onclick="location.reload()">إلغاء</button>
+        </div>
+    </div>
+</div>
+
+<script type="importmap">
+    { "imports": { "@google/generative-ai": "https://esm.run/@google/generative-ai" } }
+</script>
+
+<script type="module">
+    import { GoogleGenerativeAI } from "@google/generative-ai";
+
+    const API_KEY = "AIzaSyAEz3LsCjAU4JHPFWt76vh37o3oCBeA3lA"; // مفتاحك
+    const SUPABASE_URL = 'https://wnvyqvwuzmxzzhilgidh.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indudnlxdnd1em14enpoaWxnaWRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MTg1MDEsImV4cCI6MjA5MTQ5NDUwMX0.AyD4CYqA0cz9mC-bcOt16uUpueL_cAWT26Q92l574r0';
+
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const storeId = new URLSearchParams(window.location.search).get('store_id');
+
+    const fileInput = document.getElementById('file-input');
+    const dropZone = document.getElementById('drop-zone');
+
+    dropZone.onclick = () => fileInput.click();
+
+    fileInput.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        document.getElementById('loading').style.display = 'block';
+        
+        try {
+            const genAI = new GoogleGenerativeAI(API_KEY);
+            // استخدام الموديل المستقر
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+            const base64Data = await new Promise(r => {
+                const reader = new FileReader();
+                reader.onload = () => r(reader.result.split(',')[1]);
+                reader.readAsDataURL(file);
+            });
+
+            const prompt = "Extract menu data to JSON: {\"items\": [{\"name\": \"\", \"price\": 0, \"cat\": \"\"}]}. Answer in Arabic.";
+            
+            const result = await model.generateContent([
+                prompt,
+                { inlineData: { data: base64Data, mimeType: file.type } }
+            ]);
+
+            const response = await result.response;
+            const text = response.text().replace(/```json|```/g, "").trim();
+            const data = JSON.parse(text);
+
+            displayResults(data.items);
+        } catch (err) {
+            alert("خطأ: " + err.message);
+        } finally {
+            document.getElementById('loading').style.display = 'none';
+        }
+    };
+
+    function displayResults(items) {
+        document.getElementById('step-1').classList.add('hidden');
+        document.getElementById('step-2').classList.remove('hidden');
+        const body = document.getElementById('result-body');
+        body.innerHTML = "";
+        items.forEach(item => {
+            body.innerHTML += `<tr>
+                <td><input type="text" class="p-name" value="${item.name}"></td>
+                <td><input type="number" class="p-price" value="${item.price}"></td>
+                <td><input type="text" class="p-cat" value="${item.cat}"></td>
+            </tr>`;
+        });
+    }
+
+    document.getElementById('save-btn').onclick = async () => {
+        alert("سيتم الحفظ في المتجر رقم: " + storeId);
+        // هنا يتم إضافة كود الـ insert في سوبابيز كما في النسخ السابقة
+    };
+</script>
+</body>
+</html>
