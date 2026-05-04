@@ -10,8 +10,7 @@
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; padding: 15px; direction: rtl; }
         .container { max-width: 600px; margin: auto; }
         .card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; }
-        .upload-box { border: 2px dashed var(--ai); padding: 40px; border-radius: 15px; cursor: pointer; background: #f9f8ff; transition: 0.3s; margin: 20px 0; }
-        .upload-box:active { transform: scale(0.98); background: #f0edff; }
+        .upload-box { border: 2px dashed var(--ai); padding: 40px; border-radius: 15px; cursor: pointer; background: #f9f8ff; margin: 20px 0; }
         #loading { display: none; color: var(--ai); font-weight: bold; margin-top: 20px; }
         .hidden { display: none; }
         .btn { padding: 15px; width: 100%; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 16px; }
@@ -27,13 +26,11 @@
     <div id="step-1" class="card">
         <h2>📸 المسح الذكي للمنيو</h2>
         <p>ارفع صورة قائمة الطعام لاستخراج المنتجات تلقائياً</p>
-        
         <div class="upload-box" onclick="document.getElementById('file-input').click()">
             <span style="font-size: 50px; display: block;">📷</span>
             <span style="font-weight: bold; color: var(--ai);">اضغط للتصوير أو اختيار ملف</span>
         </div>
         <input type="file" id="file-input" class="hidden" accept="image/*">
-        
         <div id="loading">جاري تحليل المنيو... انتظر قليلاً ⏳</div>
     </div>
 
@@ -57,10 +54,8 @@
 <script type="module">
     import { GoogleGenerativeAI } from "@google/generative-ai";
 
-    // 1. إعدادات جوجل (تأكد من إنشاء مفتاح جديد ووضعه هنا)
+    // المفتاح المأخوذ من صورتك الأخيرة
     const API_KEY = "AIzaSyAEz3LsCjAU4JHPFWt76vh37o3oCBeA3lA"; 
-    
-    // 2. إعدادات قاعدة البيانات (سوبابيز)
     const SB_URL = 'https://wnvyqvwuzmxzzhilgidh.supabase.co';
     const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indudnlxdnd1em14enpoaWxnaWRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MTg1MDEsImV4cCI6MjA5MTQ5NDUwMX0.AyD4CYqA0cz9mC-bcOt16uUpueL_cAWT26Q92l574r0';
 
@@ -75,7 +70,7 @@
         
         try {
             const genAI = new GoogleGenerativeAI(API_KEY);
-            // استخدمنا الموديل المستقر gemini-1.5-flash
+            // استخدام اسم الموديل المستقر لتجنب خطأ الـ 404
             const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
             const reader = new FileReader();
@@ -83,7 +78,7 @@
             reader.onload = async () => {
                 const base64Data = reader.result.split(',')[1];
                 
-                const prompt = "Extract menu items as JSON: {\"items\": [{\"name\": \"\", \"price\": 0, \"cat\": \"\"}]}. Names in Arabic.";
+                const prompt = "Extract menu items as JSON: {\"items\": [{\"name\": \"\", \"price\": 0, \"cat\": \"\"}]}. Use Arabic.";
                 
                 const result = await model.generateContent([
                     { inlineData: { data: base64Data, mimeType: file.type } },
@@ -95,7 +90,7 @@
                 displayResults(data.items);
             };
         } catch (err) {
-            alert("خطأ في الاتصال بجوجل: " + err.message);
+            alert("خطأ: " + err.message);
         } finally {
             document.getElementById('loading').style.display = 'none';
         }
@@ -105,33 +100,25 @@
         document.getElementById('step-1').classList.add('hidden');
         document.getElementById('step-2').classList.remove('hidden');
         const body = document.getElementById('result-body');
-        body.innerHTML = "";
-        items.forEach(item => {
-            body.innerHTML += `<tr>
+        body.innerHTML = items.map(item => `
+            <tr>
                 <td><input type="text" class="p-name" value="${item.name}"></td>
                 <td><input type="number" class="p-price" value="${item.price}"></td>
                 <td><input type="text" class="p-cat" value="${item.cat}"></td>
-            </tr>`;
-        });
+            </tr>`).join('');
     }
 
     document.getElementById('save-btn').onclick = async () => {
-        const products = [];
-        document.querySelectorAll('#result-body tr').forEach(row => {
-            products.push({
-                product_name: row.querySelector('.p-name').value,
-                price: parseFloat(row.querySelector('.p-price').value) || 0,
-                store_id: storeId,
-                is_available: true
-            });
-        });
+        const products = Array.from(document.querySelectorAll('#result-body tr')).map(row => ({
+            product_name: row.querySelector('.p-name').value,
+            price: parseFloat(row.querySelector('.p-price').value) || 0,
+            store_id: storeId,
+            is_available: true
+        }));
 
         const { error } = await _supabase.from('products').insert(products);
-        if (error) alert("خطأ في الحفظ: " + error.message);
-        else {
-            alert("تم الحفظ بنجاح!");
-            window.location.href = `manage_products.html?store_id=${storeId}`;
-        }
+        if (error) alert("خطأ سوبابيز: " + error.message);
+        else alert("تم الحفظ بنجاح! 🎉");
     };
 </script>
 </body>
