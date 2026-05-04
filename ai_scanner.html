@@ -1,190 +1,150 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<!DOCTYPE html><html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>اختبار Gemini API - النسخة النهائية</title>
-    <style>
-        body { font-family: Arial; padding: 20px; text-align: center; direction: rtl; max-width: 800px; margin: auto; }
-        .box { border: 2px dashed #6c5ce7; padding: 30px; margin: 20px; cursor: pointer; border-radius: 15px; }
-        .box:hover { background: #f9f8ff; }
-        #result { margin-top: 20px; padding: 15px; background: #f0f0f0; border-radius: 10px; text-align: right; overflow-x: auto; }
-        .success { color: green; font-weight: bold; }
-        .error { color: red; font-weight: bold; }
-        .info { color: blue; }
-        button { margin: 5px; padding: 10px 15px; cursor: pointer; border-radius: 8px; border: none; }
-        .model-btn { background: #6c5ce7; color: white; }
-        .model-btn:hover { background: #5a4ac7; }
-        .active { background: #24b47e; }
-    </style>
-</head>
-<body>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تحليل المنيو</title><style>
+body {
+    font-family: Arial;
+    text-align: center;
+    padding: 20px;
+    background: #f7f7f7;
+}
 
-<h2>📸 اختبار Gemini API - تحليل المنيو</h2>
+.box {
+    border: 2px dashed #6c5ce7;
+    padding: 30px;
+    margin: 20px auto;
+    width: 300px;
+    border-radius: 15px;
+    cursor: pointer;
+    background: white;
+}
 
-<div>
-    <p>اختر النموذج (جرب كل واحد حتى يعمل):</p>
-    <button id="model-pro" class="model-btn">gemini-1.5-pro</button>
-    <button id="model-pro-vision" class="model-btn">gemini-pro-vision</button>
-    <button id="model-flash" class="model-btn">gemini-1.5-flash-latest</button>
-    <button id="model-10" class="model-btn">gemini-1.0-pro-vision</button>
-</div>
+.box:hover {
+    background: #f0edff;
+}
 
-<div class="box" onclick="document.getElementById('file-input').click()">
-    📷 اضغط لرفع صورة المنيو
-</div>
-<input type="file" id="file-input" accept="image/*" style="display:none">
+#loading {
+    display: none;
+    margin-top: 15px;
+    font-weight: bold;
+}
 
-<div id="loading" style="display:none;">⏳ جاري التحليل...</div>
-<div id="result"></div>
+#result {
+    margin-top: 20px;
+    padding: 15px;
+    background: white;
+    border-radius: 10px;
+    text-align: right;
+    overflow-x: auto;
+}
 
-<script type="importmap">
-    { "imports": { "@google/generative-ai": "https://esm.run/@google/generative-ai" } }
-</script>
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
 
-<script type="module">
-    import { GoogleGenerativeAI } from "@google/generative-ai";
+th {
+    background: #6c5ce7;
+    color: white;
+    padding: 10px;
+}
 
-    const API_KEY = "AIzaSyAEz3LsCjAU4JHPFWt76vh37o3oCBeA3lA";
-    let currentModel = "gemini-1.5-pro";
-    
-    const resultDiv = document.getElementById('result');
-    const loadingDiv = document.getElementById('loading');
-    
-    // أزرار اختيار النموذج
-    document.getElementById('model-pro').onclick = () => setModel('gemini-1.5-pro');
-    document.getElementById('model-pro-vision').onclick = () => setModel('gemini-pro-vision');
-    document.getElementById('model-flash').onclick = () => setModel('gemini-1.5-flash-latest');
-    document.getElementById('model-10').onclick = () => setModel('gemini-1.0-pro-vision');
-    
-    function setModel(modelName) {
-        currentModel = modelName;
-        // تحديث شكل الأزرار
-        document.querySelectorAll('.model-btn').forEach(btn => btn.classList.remove('active'));
-        if (modelName === 'gemini-1.5-pro') document.getElementById('model-pro').classList.add('active');
-        if (modelName === 'gemini-pro-vision') document.getElementById('model-pro-vision').classList.add('active');
-        if (modelName === 'gemini-1.5-flash-latest') document.getElementById('model-flash').classList.add('active');
-        if (modelName === 'gemini-1.0-pro-vision') document.getElementById('model-10').classList.add('active');
-        
-        resultDiv.innerHTML = `<span class="info">✅ تم تغيير النموذج إلى: ${modelName}</span>`;
-    }
-    
-    // اختبار المفتاح مع النموذج الحالي
-    async function testCurrentModel() {
-        resultDiv.innerHTML = `<span class="info">🔍 جاري اختبار النموذج ${currentModel}...</span>`;
-        try {
-            const genAI = new GoogleGenerativeAI(API_KEY);
-            const model = genAI.getGenerativeModel({ model: currentModel });
-            const testResult = await model.generateContent("قل فقط: يعمل");
-            const response = await testResult.response.text();
-            resultDiv.innerHTML = `<span class="success">✅ النموذج ${currentModel} يعمل! رد API: ${response}</span>`;
-            return true;
-        } catch (err) {
-            resultDiv.innerHTML = `<span class="error">❌ النموذج ${currentModel} لا يعمل: ${err.message}</span><br><br>
-            <span class="info">💡 جرب نموذجاً آخر من الأزرار أعلاه</span>`;
-            return false;
-        }
-    }
-    
-    // اختبار النموذج عند التحميل
-    testCurrentModel();
-    
-    document.getElementById('file-input').onchange = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        
-        loadingDiv.style.display = 'block';
-        resultDiv.innerHTML = '';
-        
-        try {
-            const genAI = new GoogleGenerativeAI(API_KEY);
-            const model = genAI.getGenerativeModel({ model: currentModel });
-            
-            // تحويل الصورة
-            const reader = new FileReader();
-            const base64Data = await new Promise((resolve, reject) => {
-                reader.onload = () => resolve(reader.result.split(',')[1]);
-                reader.onerror = reject;
-                reader.readAsDataURL(file);
-            });
-            
-            const prompt = `أنت خبير في تحليل صور قوائم الطعام. استخرج جميع المنتجات والأسعار من هذه الصورة.
-            
-أعد النتيجة فقط بصيغة JSON صالحة بهذا الشكل:
-{"items": [{"name": "اسم المنتج", "price": 0, "category": "تصنيف"}]}
+td {
+    padding: 8px;
+    border-bottom: 1px solid #ddd;
+}
 
-ملاحظات:
-- استخدم اللغة العربية للأسماء
-- إذا لم تجد السعر، ضع 0
-- إذا لم تجد التصنيف، ضع "عام"
-- لا تكتب أي شيء خارج JSON`;
-            
-            const result = await model.generateContent([
-                { inlineData: { data: base64Data, mimeType: file.type } },
-                { text: prompt }
-            ]);
-            
-            const text = result.response.text();
-            
-            // محاولة استخراج JSON من النص
-            let jsonMatch = text.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-                const data = JSON.parse(jsonMatch[0]);
-                displayResults(data.items || []);
-            } else {
-                throw new Error("لم يتم العثور على JSON صالح في الرد");
-            }
-            
-        } catch (err) {
-            console.error(err);
-            let errorMsg = err.message;
-            
-            if (err.message.includes("404")) {
-                errorMsg = `النموذج "${currentModel}" غير متوفر. جرب نموذجاً آخر من الأزرار أعلاه.`;
-            } else if (err.message.includes("403")) {
-                errorMsg = "المفتاح غير مفعل. اذهب إلى Google Cloud Console وفعّل Generative Language API";
-            } else if (err.message.includes("400") && err.message.includes("vision")) {
-                errorMsg = `النموذج "${currentModel}" لا يدعم تحليل الصور. جرب "gemini-1.5-pro" أو "gemini-pro-vision"`;
-            }
-            
-            resultDiv.innerHTML = `<span class="error">❌ خطأ: ${errorMsg}</span>`;
-        } finally {
-            loadingDiv.style.display = 'none';
-        }
-    };
-    
-    function displayResults(items) {
-        if (!items || items.length === 0) {
-            resultDiv.innerHTML = '<span class="error">❌ لم يتم العثور على منتجات في الصورة</span>';
-            return;
-        }
-        
-        let html = '<span class="success">✅ تم استخراج المنتجات بنجاح!</span><br><br>';
-        html += '<table border="1" style="width:100%; border-collapse: collapse;">';
-        html += '<tr style="background:#6c5ce7; color:white;"><th>المنتج</th><th>السعر</th><th>التصنيف</th></tr>';
-        
-        items.forEach(item => {
-            html += `<tr>
-                        <td>${escapeHtml(item.name || '')}</td>
-                        <td>${item.price || 0} ₪</td>
-                        <td>${escapeHtml(item.category || item.cat || 'عام')}</td>
-                     </tr>`;
+.success { color: green; }
+.error { color: red; }
+</style></head><body><h2>📸 تحليل صورة المنيو</h2><div class="box" onclick="document.getElementById('file').click()">
+    اضغط لرفع صورة
+</div><input type="file" id="file" accept="image/*" style="display:none"><div id="loading">⏳ جاري التحليل...</div>
+<div id="result"></div><script>
+const FUNCTION_URL = "https://wnvyqvwuzmxzzhilgidh.supabase.co/functions/v1/analyze-image";
+
+document.getElementById("file").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    document.getElementById("loading").style.display = "block";
+    document.getElementById("result").innerHTML = "";
+
+    try {
+        const base64 = await toBase64(file);
+        const base64Data = base64.split(",")[1];
+
+        const res = await fetch(FUNCTION_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                imageBase64: base64Data,
+                mimeType: file.type
+            })
         });
-        
-        html += '</table>';
-        resultDiv.innerHTML = html;
-    }
-    
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        });
-    }
-</script>
 
-</body>
+        const data = await res.json();
+
+        const text = JSON.stringify(data);
+        const match = text.match(/\{[\s\S]*\}/);
+
+        if (!match) throw new Error("لم يتم العثور على JSON");
+
+        const parsed = JSON.parse(match[0]);
+
+        displayResults(parsed.items || []);
+
+    } catch (err) {
+        document.getElementById("result").innerHTML =
+            `<span class="error">❌ خطأ: ${err.message}</span>`;
+    }
+
+    document.getElementById("loading").style.display = "none";
+});
+
+function toBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+    });
+}
+
+function displayResults(items) {
+    if (!items.length) {
+        document.getElementById("result").innerHTML =
+            `<span class="error">❌ لم يتم العثور على بيانات</span>`;
+        return;
+    }
+
+    let html = `<div class="success">✅ تم التحليل بنجاح</div><br>`;
+    html += "<table>";
+    html += "<tr><th>المنتج</th><th>السعر</th><th>التصنيف</th></tr>";
+
+    items.forEach(item => {
+        html += `
+        <tr>
+            <td>${escapeHtml(item.name)}</td>
+            <td>${item.price || 0}</td>
+            <td>${escapeHtml(item.category || "عام")}</td>
+        </tr>`;
+    });
+
+    html += "</table>";
+
+    document.getElementById("result").innerHTML = html;
+}
+
+function escapeHtml(text) {
+    if (!text) return "";
+    return text.replace(/[&<>]/g, (m) => {
+        if (m === "&") return "&amp;";
+        if (m === "<") return "&lt;";
+        if (m === ">") return "&gt;";
+    });
+}
+</script></body>
 </html>
