@@ -7,63 +7,60 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root { --primary: #24b47e; --ai: #6c5ce7; --bg: #f4f7f6; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 15px; direction: rtl; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; padding: 15px; direction: rtl; }
         .container { max-width: 600px; margin: auto; }
         .card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; }
-        .upload-box { border: 2px dashed var(--ai); padding: 40px; border-radius: 15px; cursor: pointer; background: #f9f8ff; transition: 0.3s; }
-        .upload-box:hover { background: #f0edff; }
+        .upload-box { border: 2px dashed var(--ai); padding: 40px; border-radius: 15px; cursor: pointer; background: #f9f8ff; transition: 0.3s; margin: 20px 0; }
+        .upload-box:active { transform: scale(0.98); background: #f0edff; }
         #loading { display: none; color: var(--ai); font-weight: bold; margin-top: 20px; }
         .hidden { display: none; }
         .btn { padding: 15px; width: 100%; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 16px; }
         .btn-primary { background: var(--primary); color: white; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; border-radius: 10px; overflow: hidden; }
         th, td { border: 1px solid #eee; padding: 12px; text-align: right; }
-        th { background: #f8f9fa; color: #666; font-size: 13px; }
-        input { width: 100%; border: 1px solid #ddd; padding: 8px; border-radius: 5px; box-sizing: border-box; }
+        input { width: 100%; border: 1px solid #ddd; padding: 8px; border-radius: 5px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div id="step-1" class="card">
-        <h2 style="color: var(--ai);">📸 المسح الذكي للمنيو</h2>
-        <p>ارفع صورة قائمة الطعام ليقوم الذكاء الاصطناعي باستخراج المنتجات فوراً</p>
+        <h2>📸 المسح الذكي للمنيو</h2>
+        <p>ارفع صورة قائمة الطعام لاستخراج المنتجات تلقائياً</p>
         
-        <div class="upload-box" id="drop-zone">
+        <div class="upload-box" onclick="document.getElementById('file-input').click()">
             <span style="font-size: 50px; display: block;">📷</span>
-            <span style="font-weight: bold; color: var(--ai);">اضغط هنا للتصوير أو اختيار ملف</span>
+            <span style="font-weight: bold; color: var(--ai);">اضغط للتصوير أو اختيار ملف</span>
         </div>
         <input type="file" id="file-input" class="hidden" accept="image/*">
         
-        <div id="loading">
-            <div style="margin-bottom: 10px;">⏳ جاري تحليل المنيو بعناية...</div>
-            <small style="font-weight: normal; color: #888;">قد يستغرق الأمر من 5 إلى 10 ثوانٍ</small>
-        </div>
+        <div id="loading">جاري تحليل المنيو... انتظر قليلاً ⏳</div>
     </div>
 
     <div id="step-2" class="hidden">
         <div class="card">
-            <h3>✅ تمت القراءة بنجاح</h3>
-            <p style="font-size: 14px; color: #666;">يمكنك تعديل الأسماء أو الأسعار قبل الحفظ</p>
+            <h3>✅ مراجعة البيانات</h3>
             <table>
                 <thead><tr><th>المنتج</th><th>السعر</th><th>التصنيف</th></tr></thead>
                 <tbody id="result-body"></tbody>
             </table>
-            <button class="btn btn-primary" id="save-btn">حفظ جميع المنتجات في المتجر ✅</button>
-            <button class="btn" style="background: #eee;" onclick="location.reload()">إلغاء وإعادة المحاولة</button>
+            <button class="btn btn-primary" id="save-btn">حفظ في قاعدة البيانات ✅</button>
+            <button class="btn" style="background: #eee;" onclick="location.reload()">إلغاء</button>
         </div>
     </div>
 </div>
 
 <script type="importmap">
     { "imports": { "@google/generative-ai": "https://esm.run/@google/generative-ai" } }
-
+</script>
 
 <script type="module">
     import { GoogleGenerativeAI } from "@google/generative-ai";
 
-    // تأكد من نسخ المفتاح الجديد بعد إنشائه من صفحة Google AI Studio
-    const API_KEY = "ضغ_مفتاحك_الجديد_هنا"; 
+    // 1. إعدادات جوجل (تأكد من إنشاء مفتاح جديد ووضعه هنا)
+    const API_KEY = "AIzaSyAEz3LsCjAU4JHPFWt76vh37o3oCBeA3lA"; 
+    
+    // 2. إعدادات قاعدة البيانات (سوبابيز)
     const SB_URL = 'https://wnvyqvwuzmxzzhilgidh.supabase.co';
     const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indudnlxdnd1em14enpoaWxnaWRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MTg1MDEsImV4cCI6MjA5MTQ5NDUwMX0.AyD4CYqA0cz9mC-bcOt16uUpueL_cAWT26Q92l574r0';
 
@@ -78,32 +75,27 @@
         
         try {
             const genAI = new GoogleGenerativeAI(API_KEY);
-            // استخدام نسخة الموديل المستقرة تماماً
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+            // استخدمنا الموديل المستقر gemini-1.5-flash
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
             const reader = new FileReader();
             reader.readAsDataURL(file);
             reader.onload = async () => {
                 const base64Data = reader.result.split(',')[1];
                 
-                // صياغة الطلب بشكل أوضح للذكاء الاصطناعي
+                const prompt = "Extract menu items as JSON: {\"items\": [{\"name\": \"\", \"price\": 0, \"cat\": \"\"}]}. Names in Arabic.";
+                
                 const result = await model.generateContent([
-                    {
-                        inlineData: {
-                            data: base64Data,
-                            mimeType: file.type
-                        }
-                    },
-                    { text: "Extract menu items as JSON: {\"items\": [{\"name\": \"\", \"price\": 0, \"cat\": \"\"}]}. Write names in Arabic." },
+                    { inlineData: { data: base64Data, mimeType: file.type } },
+                    { text: prompt }
                 ]);
 
-                const response = await result.response;
-                const text = response.text().replace(/```json|```/g, "").trim();
-                displayResults(JSON.parse(text).items);
+                const text = result.response.text().replace(/```json|```/g, "").trim();
+                const data = JSON.parse(text);
+                displayResults(data.items);
             };
         } catch (err) {
-            console.error("Detail Error:", err);
-            alert("فشل التحليل. تأكد من صلاحية الـ API Key ومن فتح الموقع عبر GitHub (HTTPS)");
+            alert("خطأ في الاتصال بجوجل: " + err.message);
         } finally {
             document.getElementById('loading').style.display = 'none';
         }
@@ -122,7 +114,25 @@
             </tr>`;
         });
     }
-</script>
 
+    document.getElementById('save-btn').onclick = async () => {
+        const products = [];
+        document.querySelectorAll('#result-body tr').forEach(row => {
+            products.push({
+                product_name: row.querySelector('.p-name').value,
+                price: parseFloat(row.querySelector('.p-price').value) || 0,
+                store_id: storeId,
+                is_available: true
+            });
+        });
+
+        const { error } = await _supabase.from('products').insert(products);
+        if (error) alert("خطأ في الحفظ: " + error.message);
+        else {
+            alert("تم الحفظ بنجاح!");
+            window.location.href = `manage_products.html?store_id=${storeId}`;
+        }
+    };
+</script>
 </body>
 </html>
