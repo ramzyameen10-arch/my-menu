@@ -57,57 +57,53 @@
 
 <script type="importmap">
     { "imports": { "@google/generative-ai": "https://esm.run/@google/generative-ai" } }
-</script>
+
 
 <script type="module">
     import { GoogleGenerativeAI } from "@google/generative-ai";
 
-    const API_KEY = "AIzaSyAEz3LsCjAU4JHPFWt76vh37o3oCBeA3lA"; 
+    // تأكد من نسخ المفتاح الجديد بعد إنشائه من صفحة Google AI Studio
+    const API_KEY = "ضغ_مفتاحك_الجديد_هنا"; 
     const SB_URL = 'https://wnvyqvwuzmxzzhilgidh.supabase.co';
     const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indudnlxdnd1em14enpoaWxnaWRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MTg1MDEsImV4cCI6MjA5MTQ5NDUwMX0.AyD4CYqA0cz9mC-bcOt16uUpueL_cAWT26Q92l574r0';
 
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
     const storeId = new URLSearchParams(window.location.search).get('store_id');
 
-    const fileInput = document.getElementById('file-input');
-    const dropZone = document.getElementById('drop-zone');
-
-    dropZone.onclick = () => fileInput.click();
-
-    fileInput.onchange = async (e) => {
+    document.getElementById('file-input').onchange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
         document.getElementById('loading').style.display = 'block';
-        dropZone.style.display = 'none';
         
         try {
             const genAI = new GoogleGenerativeAI(API_KEY);
-            // تم تحديث الموديل ليعمل بدون مشاكل الـ 404
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            // استخدام نسخة الموديل المستقرة تماماً
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 
-            const base64Data = await new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result.split(',')[1]);
-                reader.readAsDataURL(file);
-            });
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = async () => {
+                const base64Data = reader.result.split(',')[1];
+                
+                // صياغة الطلب بشكل أوضح للذكاء الاصطناعي
+                const result = await model.generateContent([
+                    {
+                        inlineData: {
+                            data: base64Data,
+                            mimeType: file.type
+                        }
+                    },
+                    { text: "Extract menu items as JSON: {\"items\": [{\"name\": \"\", \"price\": 0, \"cat\": \"\"}]}. Write names in Arabic." },
+                ]);
 
-            const prompt = "Extract menu items from this image and return ONLY a JSON object: {\"items\": [{\"name\": \"product name in Arabic\", \"price\": 10.5, \"cat\": \"category name in Arabic\"}]}";
-            
-            const result = await model.generateContent([
-                { inlineData: { data: base64Data, mimeType: file.type } },
-                { text: prompt }
-            ]);
-
-            const response = await result.response;
-            let text = response.text().replace(/```json|```/g, "").trim();
-            const data = JSON.parse(text);
-
-            displayResults(data.items);
+                const response = await result.response;
+                const text = response.text().replace(/```json|```/g, "").trim();
+                displayResults(JSON.parse(text).items);
+            };
         } catch (err) {
-            console.error(err);
-            alert("عذراً، حدث خطأ في القراءة. يرجى التأكد من وضوح الصورة وتوفر الإنترنت.");
-            location.reload();
+            console.error("Detail Error:", err);
+            alert("فشل التحليل. تأكد من صلاحية الـ API Key ومن فتح الموقع عبر GitHub (HTTPS)");
         } finally {
             document.getElementById('loading').style.display = 'none';
         }
@@ -126,33 +122,7 @@
             </tr>`;
         });
     }
-
-    document.getElementById('save-btn').onclick = async () => {
-        const btn = document.getElementById('save-btn');
-        btn.innerText = "جاري الحفظ... ⏳";
-        btn.disabled = true;
-
-        const products = [];
-        document.querySelectorAll('#result-body tr').forEach(row => {
-            products.push({
-                product_name: row.querySelector('.p-name').value,
-                price: parseFloat(row.querySelector('.p-price').value) || 0,
-                store_id: storeId,
-                is_available: true
-            });
-        });
-
-        try {
-            const { error } = await _supabase.from('products').insert(products);
-            if (error) throw error;
-            alert("تم حفظ المنتجات بنجاح في متجرك! 🎉");
-            window.location.href = `manage_products.html?store_id=${storeId}`;
-        } catch (err) {
-            alert("خطأ أثناء الحفظ: " + err.message);
-            btn.disabled = false;
-            btn.innerText = "حفظ جميع المنتجات في المتجر ✅";
-        }
-    };
 </script>
+
 </body>
 </html>
