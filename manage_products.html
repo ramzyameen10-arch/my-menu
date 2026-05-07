@@ -79,7 +79,13 @@ td{padding:12px 15px;border-bottom:1px solid #eee;vertical-align:middle;font-siz
 <button onclick="logout()" class="btn-outline btn-logout">تسجيل خروج</button>
 </div>
 </div>
+
 <button class="btn-main" onclick="toggleForm()">+ إضافة منتج جديد</button>
+<style="display: flex; gap: 10px;">
+<button class="btn-main" style="background-color: #6c5ce7;" onclick="openMenuScanner()">+ إضافة منتجات من المنيو (AI)</button>
+
+
+</div>
 </div>
 
 <div id="product-form-container">
@@ -194,6 +200,142 @@ function resetFilters(){document.getElementById('search-name').value="";document
 function logout(){localStorage.clear();window.location.href='index.html'}
 
 init();
+
+
+
+
+
+
+
+
+
+
+// 1. دالة فتح النافذة والتحقق من هوية المستخدم
+
+
+async function openMenuScanner() {
+    const modal = document.getElementById('scanner-modal');
+    modal.style.display = 'flex';
+    
+    // إخفاء أي رسالة حالة سابقة وتأطير الزر كغير نشط في البداية
+    const btn = document.getElementById('modal-upload-btn');
+    btn.disabled = true;
+    btn.style.opacity = "0.5";
+    btn.innerText = "جاري التحقق...";
+
+    try {
+        const { data: profile } = await _supabase.from('profiles').select('id').eq('phone_number', userPhone).single();
+        window.realUserId = profile.id;
+        
+        // تفعيل الزر فوراً عند الجاهزية وتغيير نصه
+        btn.disabled = false;
+        btn.style.opacity = "1";
+        btn.innerText = "📸 اختر صورة المنيو للرفع";
+    } catch (e) {
+        btn.innerText = "❌ خطأ في التحقق";
+        btn.style.background = "#e74c3c";
+    }
+}
+
+
+
+// 2. دالة إغلاق النافذة
+function closeScannerModal() {
+    document.getElementById('scanner-modal').style.display = 'none';
+    document.getElementById('modal-file-in').value = '';
+    document.getElementById('modal-output').innerText = '';
+    document.getElementById('modal-loading-section').style.display = 'none';
+    document.getElementById('modal-upload-btn').style.display = 'flex';
+}
+
+// 3. دالة معالجة الرفع والتحويل لـ Base64 والإرسال للـ Edge Function
+async function startDirectUpload(input) {
+    const file = input.files[0];
+    if (!file || !window.realUserId) return;
+
+    const loading = document.getElementById('modal-loading-section');
+    const btn = document.getElementById('modal-upload-btn');
+    const output = document.getElementById('modal-output');
+
+    btn.style.display = 'none';
+    loading.style.display = 'block';
+    output.innerText = "";
+
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = async () => {
+        const base64Data = reader.result.split(',')[1];
+        
+        try {
+            const response = await fetch(`${SB_URL}/functions/v1/analyze-image`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json', 
+                    'Authorization': `Bearer ${SB_KEY}` 
+                },
+                body: JSON.stringify({ 
+                    image: base64Data,
+                    store_id: parseInt(storeId),
+                    user_id: window.realUserId
+                })
+            });
+
+            if (response.ok) {
+                output.style.color = "#24b47e";
+                output.innerText = "✅ تمت العملية بنجاح! جاري التحديث...";
+                if (typeof loadProducts === "function") await loadProducts();
+                setTimeout(closeScannerModal, 2000);
+            } else {
+                throw new Error(await response.text());
+            }
+        } catch (err) {
+            output.style.color = "#e74c3c";
+            output.innerText = "❌ فشل الرفع: " + err.message;
+            btn.style.display = 'flex';
+            loading.style.display = 'none';
+        }
+    };
+}
+
+
 </script>
+
+
+
+
+
+
+
+
+
+<div id="scanner-modal" class="scanner-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:10000; justify-content:center; align-items:center; padding:20px;">
+    <div class="scanner-content" style="background:white; width:100%; max-width:500px; padding:30px; border-radius:20px; position:relative; text-align:center;">
+        <button onclick="closeScannerModal()" style="position:absolute; top:15px; left:15px; border:none; background:none; font-size:24px; cursor:pointer; color:#95a5a6;">✕</button>
+        
+        <div style="font-size:50px; margin-bottom:15px;">📊</div>
+        <h3>الماسح الذكي AI</h3>
+        <p style="color:#7f8c8d; font-size:14px; line-height:1.6;">ارفع صورة المنيو وسيقوم النظام باستخراج الأصناف، الأسعار، والأقسام وإضافتها تلقائياً.</p>
+        
+        
+
+        <button id="modal-upload-btn" class="btn-main" style="width:100%; background:#6c5ce7; padding:15px; border-radius:10px; color:white; border:none; cursor:pointer; font-weight:bold; display:flex; justify-content:center; align-items:center; gap:10px;" disabled onclick="document.getElementById('modal-file-in').click()">
+            📸 اختر صورة المنيو
+        </button>
+        
+        <input type="file" id="modal-file-in" style="display:none" accept="image/*" onchange="startDirectUpload(this)">
+
+        <div id="modal-loading-section" style="display:none; margin-top:20px;">
+            <div class="spinner" style="margin:auto; width:40px; height:40px; border:4px solid #f3f3f3; border-top:4px solid #6c5ce7; border-radius:50%; animation:spin 1s linear infinite;"></div>
+            <p style="color:#6c5ce7; font-weight:bold; margin-top:10px;">جاري تحليل المنيو وإضافة البيانات...</p>
+        </div>
+
+        <div id="modal-output" style="margin-top:15px; font-size:13px; font-weight:bold;"></div>
+    </div>
+</div>
+
+
+
+
+
 </body>
 </html>
