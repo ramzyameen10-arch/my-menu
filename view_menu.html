@@ -3,34 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="page-title">منيو المتجر - الإصدار المتكامل</title>
+    <title id="page-title">منيو المتجر - الترتيب المخصص</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root { --main-color: #24b47e; } 
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f9f9f9; margin: 0; direction: rtl; text-align: right; overflow-x: hidden; }
         
-        /* شريط الترحيب */
         .announcement-bar { background-color: var(--main-color); color: white; width: 95%; max-width: 570px; height: 35px; display: none; overflow: hidden; position: fixed; top: 0; left: 50%; transform: translateX(-50%); z-index: 1100; white-space: nowrap; align-items: center; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; }
         .announcement-text { display: inline-block; padding-right: 100%; animation: marquee 15s linear infinite; font-size: 0.9em; font-weight: bold; line-height: 35px; }
         @keyframes marquee { 0% { transform: translate(0, 0); } 100% { transform: translate(100%, 0); } }
 
-        /* الهيدر الثابت */
         .sticky-top-container { position: fixed; top: 0; width: 100%; z-index: 1000; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: flex; flex-direction: column; align-items: center; }
         .store-header-compact { display: flex; align-items: center; justify-content: flex-start; padding: 15px; gap: 15px; width: 95%; max-width: 570px; border-bottom: 1px solid #f0f0f0; }
         .store-logo-square { width: 60px; height: 60px; border-radius: 12px; object-fit: cover; display: none; border: 1px solid #eee; }
         .store-name-large { font-size: 1.3em; font-weight: 800; color: #222; }
 
-        /* التبويبات */
         .categories-nav { display: flex; overflow-x: auto; white-space: nowrap; padding: 10px; scrollbar-width: none; background: white; gap: 8px; width: 100%; justify-content: center; }
         .categories-nav::-webkit-scrollbar { display: none; }
         .cat-item { padding: 7px 18px; border-radius: 20px; background: #f1f2f6; color: #555; cursor: pointer; font-size: 0.85em; font-weight: bold; transition: 0.25s; border: 2px solid transparent; }
         .cat-item.active { background: var(--main-color); color: white; border-color: var(--main-color); }
 
-        /* الحاوية والعناوين */
         .container { max-width: 600px; margin: auto; padding: 150px 15px 120px; box-sizing: border-box; }
         .category-title { font-size: 1.1em; font-weight: bold; margin: 20px 0 10px; color: #333; padding-right: 10px; border-right: 4px solid var(--main-color); scroll-margin-top: 160px; }
         
-        /* كروت المنتجات */
         .product-card { background: white; border-radius: 15px; padding: 12px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; flex-direction: column; cursor: pointer; }
         .product-top-row { display: flex; align-items: center; width: 100%; pointer-events: none; } 
         .product-img { width: 80px; height: 80px; border-radius: 12px; object-fit: cover; margin-left: 12px; }
@@ -45,10 +40,8 @@
         .qty-box { display: flex; align-items: center; background: #f1f2f6; border-radius: 25px; padding: 5px 12px; gap: 12px; pointer-events: auto; } 
         .btn-qty { width: 30px; height: 30px; border-radius: 50%; border: none; background: white; color: var(--main-color); font-weight: bold; cursor: pointer; font-size: 1.2em; }
 
-        /* شريط السلة السفلي */
         .cart-bar { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 92%; max-width: 550px; background: var(--main-color); color: white; padding: 12px 20px; border-radius: 20px; display: none; justify-content: space-between; align-items: center; z-index: 1001; box-shadow: 0 8px 25px rgba(0,0,0,0.2); cursor: pointer; }
         
-        /* مودال السلة */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; display: none; justify-content: center; align-items: flex-end; }
         .cart-modal { background: white; width: 100%; max-width: 600px; border-top-left-radius: 25px; border-top-right-radius: 25px; padding: 20px; box-sizing: border-box; animation: slideUp 0.3s ease-out; max-height: 85vh; overflow-y: auto; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
@@ -94,7 +87,7 @@
             <button onclick="document.getElementById('modal-overlay').style.display='none'" style="border:none; background:none; font-size:1.8em; cursor:pointer; color:#999;">&times;</button>
         </div>
         <div id="cart-items-list"></div>
-        <textarea id="order-notes" class="notes-area" rows="3" placeholder="أضف ملاحظاتك هنا (مثلاً: بمرك آخذهم)"></textarea>
+        <textarea id="order-notes" class="notes-area" rows="3" placeholder="أضف ملاحظاتك هنا"></textarea>
         <div style="background: #f1f2f6; padding: 15px; border-radius: 12px; margin-bottom: 15px;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9em; color: #555;">
                 <span>عدد الأصناف :</span>
@@ -114,13 +107,16 @@
     const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indudnlxdnd1em14enpoaWxnaWRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MTg1MDEsImV4cCI6MjA5MTQ5NDUwMX0.AyD4CYqA0cz9mC-bcOt16uUpueL_cAWT26Q92l574r0';
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
     const slug = new URLSearchParams(window.location.search).get('s'); 
-    let cart = {}; let productsList = []; let merchantPhone = "";
+    let cart = {}; let productsList = []; let merchantPhone = ""; 
+    let storeLogoUrl = "";
 
     async function init() {
         if (!slug) return;
         const { data: store } = await _supabase.from('store_settings').select('*').eq('store_slug', slug).single();
         if (!store) return;
         document.getElementById('display-store-name').innerText = store.store_name;
+        storeLogoUrl = store.logo_url || "";
+
         if(store.logo_url) { const img = document.getElementById('display-logo'); img.src = store.logo_url; img.style.display = 'block'; }
         if(store.welcome_msg) { 
             document.getElementById('announcement-bar').style.display = 'flex';
@@ -130,7 +126,16 @@
         document.documentElement.style.setProperty('--main-color', store.primary_color || '#24b47e');
         const { data: profile } = await _supabase.from('profiles').select('phone_number').eq('id', store.user_id).single();
         merchantPhone = profile?.phone_number || "";
-        const { data: prods } = await _supabase.from('products').select('*, categories(category_name)').eq('store_id', store.id).eq('is_available', true).order('category_id');
+
+        // التعديل هنا: جلب display_order من جدول التصنيفات
+        const { data: prods } = await _supabase.from('products').select(`
+            *,
+            categories(category_name, display_order)
+        `)
+        .eq('store_id', store.id)
+        .eq('is_available', true)
+        .order('product_order', { ascending: true }); // ترتيب المنتجات داخل التصنيف
+
         productsList = prods || [];
         renderMenu(productsList);
         
@@ -144,28 +149,43 @@
     }
 
     function renderMenu(products) {
+        // 1. تجميع المنتجات حسب التصنيف مع حفظ بيانات الترتيب
         const groups = products.reduce((acc, p) => {
-            const cName = p.categories ? p.categories.category_name : "عام";
-            if (!acc[cName]) acc[cName] = [];
-            acc[cName].push(p);
+            const catInfo = p.categories || { category_name: "عام", display_order: 999 };
+            const catName = catInfo.category_name;
+            
+            if (!acc[catName]) {
+                acc[catName] = {
+                    name: catName,
+                    order: catInfo.display_order,
+                    items: []
+                };
+            }
+            acc[catName].items.push(p);
             return acc;
         }, {});
 
+        // 2. تحويل الكائن إلى مصفوفة وفرزها بناءً على display_order
+        const sortedCategories = Object.values(groups).sort((a, b) => a.order - b.order);
+
         let menuHtml = ''; let navHtml = '';
-        Object.keys(groups).forEach((cat, i) => {
+        sortedCategories.forEach((catObj, i) => {
             const id = "sec-" + i;
-            navHtml += `<div class="cat-item ${i===0?'active':''}" id="tab-${id}" onclick="scrollToSection('${id}')">${cat}</div>`;
-            menuHtml += `<div id="${id}" class="menu-section"><div class="category-title">${cat}</div>`;
-            groups[cat].forEach(p => {
+            navHtml += `<div class="cat-item ${i===0?'active':''}" id="tab-${id}" onclick="scrollToSection('${id}')">${catObj.name}</div>`;
+            menuHtml += `<div id="${id}" class="menu-section"><div class="category-title">${catObj.name}</div>`;
+            
+            catObj.items.forEach(p => {
                 let currentPrice = (p.sale_price || p.price).toFixed(2);
                 let priceDisplay = (p.sale_price && p.sale_price < p.price) 
                     ? `<span class="sale-price">${currentPrice} ريال</span> <span class="original-price">${p.price.toFixed(2)} ريال</span>`
                     : `<span class="sale-price">${currentPrice} ريال</span>`;
 
+                const finalImg = (p.image_url && p.image_url !== "") ? p.image_url : (storeLogoUrl || "https://via.placeholder.com/150?text=No+Image");
+
                 menuHtml += `
                     <div class="product-card" onclick="this.classList.toggle('open')">
                         <div class="product-top-row">
-                            <img class="product-img" src="${p.image_url || ''}">
+                            <img class="product-img" src="${finalImg}">
                             <div class="product-info-content">
                                 <div class="product-name">${p.product_name}</div>
                                 <div>${priceDisplay}</div>
