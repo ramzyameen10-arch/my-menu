@@ -3,9 +3,18 @@
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>إدارة المنتجات | لوحة التاجر</title>
+
+
+<div style="display:flex;align-items:center;gap:15px">
+    
+    
+</div>
+
 <script>if(!localStorage.getItem('user_phone'))window.location.href='index.html';</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
+
 <style>
 :root{--primary:#24b47e;--danger:#e74c3c;--edit:#3498db;--bg:#f4f7f6;--dark:#2f3542;--gray:#95a5a6}
 body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl;padding:20px;margin:0}
@@ -29,11 +38,8 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl
 #product-form-container{background:white;padding:25px;border-radius:15px;box-shadow:0 4px 20px rgba(0,0,0,0.1);margin-bottom:25px;display:none}
 .clickable-preview{width:100px;height:100px;border-radius:15px;border:2px dashed #ccc;margin:0 auto 20px;cursor:pointer;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#fafafa}
 .clickable-preview img{width:100%;height:100%;object-fit:cover}
-
-/* تحسين نظام الشبكة للفورم */
 .form-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:15px}
 .full{grid-column:span 3}
-
 input,select,textarea{width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box;font-size:14px}
 input:required,select:required{border-right:4px solid var(--danger)}
 input:valid,select:valid{border-right:4px solid var(--primary)}
@@ -47,24 +53,92 @@ td{padding:12px 15px;border-bottom:1px solid #eee;vertical-align:middle;font-siz
 .actions{display:flex;gap:6px}
 .btn-opt{padding:7px 10px;border:none;border-radius:6px;cursor:pointer;color:white;font-weight:bold;font-size:11px}
 .edit{background:var(--edit)}.delete{background:var(--danger)}
-.status-btn{min-width:65px}
-.status-available{background:var(--primary)}
-.status-unavailable{background:var(--gray)}
+.status-btn{min-width:65px}.status-available{background:var(--primary)}.status-unavailable{background:var(--gray)}
 .drag-handle{cursor:grab;color:#ccc;font-size:20px;padding:0 10px;user-select:none}
 .sortable-ghost{opacity:0.3;background:#e8f5e9!important;border:2px dashed var(--primary)}
 .no-cat-alert{background:#fff3f3;color:#d63031;padding:15px;border-radius:8px;margin-bottom:15px;border:1px solid #fab1a0;display:none;text-align:center;font-weight:bold}
+@media (max-width:850px){.filter-bar{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr}.full{grid-column:span 1}.container{padding:10px}#product-form-container{padding:15px}}
 
-/* تعديلات الهاتف لضمان عدم صغر المربعات */
-@media (max-width:850px){
-    .filter-bar{grid-template-columns:1fr 1fr}
-    .form-grid{grid-template-columns:1fr} /* جعل كل الحقول تحت بعضها بعرض كامل */
-    .full{grid-column:span 1}
-    .container{padding:10px}
-    #product-form-container{padding:15px}
+/* تنسيق القائمة الجانبية - تم التعديل لتفتح من اليسار */
+.sidebar {
+    width: 260px;
+    background: white;
+    height: 100vh;
+    position: fixed;
+    left: -260px; /* مخفية خارج الشاشة جهة اليسار */
+    top: 0;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    transition: 0.3s;
+    z-index: 10001;
+    padding: 20px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
 }
+.sidebar.active {
+    left: 0; /* تظهر عند إضافة كلاس active */
+    right: auto;
+}
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 10000;
+}
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+.btn-side {
+    background: transparent;
+    border: 1px solid #eee;
+    color: var(--dark);
+    padding: 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: right;
+    font-weight: 600;
+    width: 100%;
+    transition: 0.2s;
+}
+.btn-side:hover {
+    background: var(--bg);
+}
+.btn-logout-side {
+    margin-top: auto; /* يدفع زر الخروج للأسفل */
+    color: var(--danger);
+    border-color: rgba(231,76,60,0.2);
+}
+
+
 </style>
 </head>
 <body>
+
+<div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+<div id="sidebar" class="sidebar">
+    <div class="sidebar-header">
+    
+    
+        <h4 style="margin:0">القائمة الرئيسية</h4>
+        <button onclick="toggleSidebar()" style="border:none;background:none;font-size:20px;cursor:pointer">✕</button>
+    </div>
+
+    <button onclick="window.location.href='manage_categories.html?store_id='+storeId" class="btn-side">📁 إدارة التصنيفات</button>
+    <button onclick="history.back()" class="btn-side">⬅ رجوع للخلف</button>
+    <button onclick="logout()" class="btn-side btn-logout-side">🔒 تسجيل الخروج</button>
+</div>
+
+
 <div id="loading-overlay"><div class="spinner"></div><p style="color:var(--primary);font-weight:bold;margin-top:10px">جاري المعالجة...</p></div>
 <div class="container">
 <div class="header-box">
@@ -73,21 +147,14 @@ td{padding:12px 15px;border-bottom:1px solid #eee;vertical-align:middle;font-siz
 <img id="main-store-logo" class="store-logo-header">
 <h3 id="store-display-title" style="margin:0;color:var(--dark)">إدارة المنتجات</h3>
 </div>
-<div class="nav-links">
-<button onclick="window.location.href='manage_categories.html?store_id='+storeId" class="btn-outline">📁 إدارة التصنيفات</button>
-<button onclick="history.back()" class="btn-outline">⬅ رجوع</button>
-<button onclick="logout()" class="btn-outline btn-logout">تسجيل خروج</button>
-</div>
-</div>
+<button onclick="toggleSidebar()" style="background:none;border:none;font-size:24px;cursor:pointer">☰</button>
 
+</div>
+<div style="display:flex;gap:10px;flex-wrap:wrap">
 <button class="btn-main" onclick="toggleForm()">+ إضافة منتج جديد</button>
-<style="display: flex; gap: 10px;">
-<button class="btn-main" style="background-color: #6c5ce7;" onclick="openMenuScanner()">+ إضافة منتجات من المنيو (AI)</button>
-
-
+<button class="btn-main" style="background-color:#6c5ce7;" onclick="openMenuScanner()">+ إضافة منتجات من المنيو (AI)</button>
 </div>
 </div>
-
 <div id="product-form-container">
 <div id="no-cat-warning" class="no-cat-alert">عذراً! يجب عليك إنشاء تصنيف واحد على الأقل قبل إضافة منتجات.</div>
 <h4 id="form-title" style="margin:0 0 20px 0">تفاصيل المنتج</h4>
@@ -105,7 +172,6 @@ td{padding:12px 15px;border-bottom:1px solid #eee;vertical-align:middle;font-siz
 <div id="form-actions"><button class="btn-main" id="btn-save" style="width:100%;margin-top:15px" onclick="handleSave()">حفظ المنتج</button></div>
 <button class="btn-outline" style="width:100%;margin-top:8px;justify-content:center" onclick="toggleForm()">إلغاء</button>
 </div>
-
 <div class="filter-bar">
 <input type="text" id="search-name" placeholder="بحث بالاسم..." oninput="filterData()">
 <select id="filter-cat" onchange="filterData()"><option value="">كل التصنيفات</option></select>
@@ -116,226 +182,68 @@ td{padding:12px 15px;border-bottom:1px solid #eee;vertical-align:middle;font-siz
 <button class="btn-reset" title="فرز" style="display:flex;align-items:center;justify-content:center;width:40px;height:40px;padding:0" onclick="filterData()"><span style="font-size:18px">🔃</span></button>
 <button class="btn-reset" title="مسح الفلاتر" style="display:flex;align-items:center;justify-content:center;width:40px;height:40px;padding:0;margin-right:5px" onclick="resetFilters()"><span style="font-size:18px">✖</span></button>
 </div>
-
 <div class="table-card">
-    <table>
-        <thead>
-            <tr>
-                <th width="40">سحب</th>
-                <th width="90">الحالة</th>
-                <th width="60">الصورة</th>
-                <th>المنتج</th>
-                <th>التصنيف</th>
-                <th>السعر</th>
-                <th width="50">الترتيب</th>
-                <th width="150">الإجراءات</th>
-            </tr>
-        </thead>
-        <tbody id="prod-list"></tbody>
-    </table>
+<table>
+<thead>
+<tr><th width="40">سحب</th><th width="90">الحالة</th><th width="60">الصورة</th><th>المنتج</th><th>التصنيف</th><th>السعر</th><th width="50">الترتيب</th><th width="150">الإجراءات</th></tr>
+</thead>
+<tbody id="prod-list"></tbody>
+</table>
 </div>
-
+</div>
+<div id="scanner-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:10000;justify-content:center;align-items:center;padding:20px;">
+<div style="background:white;width:100%;max-width:500px;padding:30px;border-radius:20px;position:relative;text-align:center;">
+<button onclick="closeScannerModal()" style="position:absolute;top:15px;left:15px;border:none;background:none;font-size:24px;cursor:pointer;color:#95a5a6;">✕</button>
+<div style="font-size:50px;margin-bottom:15px;">📊</div>
+<h3>الماسح الذكي AI</h3>
+<p style="color:#7f8c8d;font-size:14px;line-height:1.6;">ارفع صورة المنيو وسيقوم النظام باستخراج الأصناف وإضافتها تلقائياً.</p>
+<button id="modal-upload-btn" class="btn-main" style="width:100%;background:#6c5ce7;padding:15px;border-radius:10px;color:white;border:none;cursor:pointer;font-weight:bold;display:flex;justify-content:center;align-items:center;gap:10px;" disabled onclick="document.getElementById('modal-file-in').click()">📸 اختر صورة المنيو</button>
+<input type="file" id="modal-file-in" style="display:none" accept="image/*" onchange="startDirectUpload(this)">
+<div id="modal-loading-section" style="display:none;margin-top:20px;">
+<div class="spinner" style="margin:auto;width:40px;height:40px;border:4px solid #f3f3f3;border-top:4px solid #6c5ce7;border-radius:50%;animation:spin 1s linear infinite;"></div>
+<p style="color:#6c5ce7;font-weight:bold;margin-top:10px;">جاري تحليل المنيو وإضافة البيانات...</p>
+</div>
+<div id="modal-output" style="margin-top:15px;font-size:13px;font-weight:bold;"></div>
+</div>
 </div>
 <input type="file" id="table-file-input" style="display:none" accept="image/*">
 <script>
 const SB_URL='https://wnvyqvwuzmxzzhilgidh.supabase.co',SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indudnlxdnd1em14enpoaWxnaWRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MTg1MDEsImV4cCI6MjA5MTQ5NDUwMX0.AyD4CYqA0cz9mC-bcOt16uUpueL_cAWT26Q92l574r0',_supabase=supabase.createClient(SB_URL,SB_KEY);
 const storeId=new URLSearchParams(window.location.search).get('store_id'),userPhone=localStorage.getItem('user_phone');
 let allProducts=[],currentImgUrl="",activeTableId=null,storeLogoUrl="",sortableInstance;
-
 async function init(){if(!storeId)return;const{data:store}=await _supabase.from('store_settings').select('store_name,logo_url').eq('id',storeId).single();if(store){document.getElementById('store-display-title').innerText="متجر: "+store.store_name;if(store.logo_url){const mLogo=document.getElementById('main-store-logo');mLogo.src=store.logo_url;mLogo.style.display='block';storeLogoUrl=store.logo_url}}const el=document.getElementById('prod-list');sortableInstance=new Sortable(el,{handle:'.drag-handle',animation:150,ghostClass:'sortable-ghost',onEnd:async function(){showLoader(true);const rows=document.querySelectorAll('#prod-list tr');const updates=Array.from(rows).map((row,index)=>{const id=row.id.replace('row-','');const pIdx=allProducts.findIndex(p=>p.id==id);if(pIdx!==-1)allProducts[pIdx].product_order=index+1;return _supabase.from('products').update({product_order:index+1}).eq('id',id)});await Promise.all(updates);filterData();showLoader(false)}});await loadCategories();loadProducts()}
-
 async function loadCategories(){const{data}=await _supabase.from('categories').select('id,category_name').eq('store_id',storeId).order('display_order',{ascending:true});const pCat=document.getElementById('p-cat'),fCat=document.getElementById('filter-cat'),warning=document.getElementById('no-cat-warning');fCat.innerHTML='<option value="">كل التصنيفات</option>';pCat.innerHTML='';if(data&&data.length>0){data.forEach(c=>{const opt=`<option value="${c.id}">${c.category_name}</option>`;pCat.innerHTML+=opt;fCat.innerHTML+=opt});warning.style.display='none'}else{pCat.innerHTML='<option value="">لا توجد تصنيفات!</option>';warning.style.display='block'}}
-
 async function loadProducts(){showLoader(true);const{data}=await _supabase.from('products').select('*,categories(category_name)').eq('store_id',storeId).order('product_order',{ascending:true});if(data){allProducts=data;filterData()}showLoader(false)}
-
-function renderTable(data) {
-    const list = document.getElementById('prod-list');
-    list.innerHTML = '';
-    const fallback = "https://via.placeholder.com/150?text=No+Image",
-        catValue = document.getElementById('filter-cat').value,
-        searchValue = document.getElementById('search-name').value,
-        canDrag = (catValue !== "" && searchValue === "");
-
-    if (sortableInstance) sortableInstance.option("disabled", !canDrag);
-
-    data.forEach(p => {
-        const hasSale = p.sale_price > 0 && p.sale_price !== null,
-            displayPrice = (hasSale ? p.sale_price : p.price).toFixed(2),
-            isAvail = p.is_available !== false,
-            productImg = (p.image_url && p.image_url !== "") ? p.image_url : (storeLogoUrl || fallback);
-
-        list.innerHTML += `<tr id="row-${p.id}">
-            <td style="text-align:center;">${canDrag ? '<div class="drag-handle">☰</div>' : ''}</td>
-            <td><button id="btn-status-${p.id}" class="btn-opt status-btn ${isAvail ? 'status-available' : 'status-unavailable'}" onclick="toggleAvailability('${p.id}', ${isAvail})">${isAvail ? 'متوفر' : 'معطل'}</button></td>
-            <td style="text-align:center;"><img src="${productImg}" id="img-${p.id}" class="row-img" onclick="changeImageInTable('${p.id}')"></td>
-            <td><strong>${p.product_name}</strong></td>
-            <td><small>${p.categories ? p.categories.category_name : 'غير مصنف'}</small></td>
-            <td>${hasSale ? `<span class="old-price">${Number(p.price).toFixed(2)}</span>` : ''} <span class="price-tag">${displayPrice}</span></td>
-            <td style="text-align:center;"><span style="background:#eee;padding:2px 8px;border-radius:4px">${p.product_order || 0}</span></td>
-            <td><div class="actions"><button class="btn-opt edit" onclick='setupEdit(${JSON.stringify(p).replace(/'/g, "&apos;")})'>تعديل</button><button class="btn-opt delete" onclick="deleteProd('${p.id}')">حذف</button></div></td>
-        </tr>`;
-    });
-}
-
+function renderTable(data){const list=document.getElementById('prod-list');list.innerHTML='';const fallback="https://via.placeholder.com/150?text=No+Image",catValue=document.getElementById('filter-cat').value,searchValue=document.getElementById('search-name').value,canDrag=(catValue!==""&&searchValue==="");if(sortableInstance)sortableInstance.option("disabled",!canDrag);data.forEach(p=>{const hasSale=p.sale_price>0&&p.sale_price!==null,displayPrice=(hasSale?p.sale_price:p.price).toFixed(2),isAvail=p.is_available!==false,productImg=(p.image_url&&p.image_url!=="")?p.image_url:(storeLogoUrl||fallback);list.innerHTML+=`<tr id="row-${p.id}"><td style="text-align:center;">${canDrag?'<div class="drag-handle">☰</div>':''}</td><td><button id="btn-status-${p.id}" class="btn-opt status-btn ${isAvail?'status-available':'status-unavailable'}" onclick="toggleAvailability('${p.id}',${isAvail})">${isAvail?'متوفر':'معطل'}</button></td><td style="text-align:center;"><img src="${productImg}" class="row-img" onclick="changeImageInTable('${p.id}')"></td><td><strong>${p.product_name}</strong></td><td><small>${p.categories?p.categories.category_name:'غير مصنف'}</small></td><td>${hasSale?`<span class="old-price">${Number(p.price).toFixed(2)}</span>`:''} <span class="price-tag">${displayPrice}</span></td><td style="text-align:center;"><span style="background:#eee;padding:2px 8px;border-radius:4px">${p.product_order||0}</span></td><td><div class="actions"><button class="btn-opt edit" onclick='setupEdit(${JSON.stringify(p).replace(/'/g,"&apos;")})'>تعديل</button><button class="btn-opt delete" onclick="deleteProd('${p.id}')">حذف</button></div></td></tr>`})}
 function filterData(){const n=document.getElementById('search-name').value.toLowerCase(),c=document.getElementById('filter-cat').value,s=document.getElementById('filter-status').value,sort=document.getElementById('sort-main').value;let filtered=allProducts.filter(p=>p.product_name.toLowerCase().includes(n)&&(c===""||p.category_id==c)&&(s===""||String(p.is_available!==false)===s));if(sort==="alpha")filtered.sort((a,b)=>a.product_name.localeCompare(b.product_name,'ar'));else if(sort==="price-low")filtered.sort((a,b)=>(a.sale_price||a.price)-(b.sale_price||b.price));else if(sort==="price-high")filtered.sort((a,b)=>(b.sale_price||b.price)-(a.sale_price||a.price));else if(sort==="avail-first")filtered.sort((a,b)=>(b.is_available!==false?1:0)-(a.is_available!==false?1:0));else if(sort==="unavail-first")filtered.sort((a,b)=>(a.is_available==false?0:1)-(b.is_available==false?0:1));else if(sort==="category")filtered.sort((a,b)=>(a.categories?.category_name||'').localeCompare(b.categories?.category_name||'','ar'));else filtered.sort((a,b)=>(parseInt(a.product_order)||0)-(parseInt(b.product_order)||0));renderTable(filtered)}
-
 async function toggleAvailability(id,current){const nextStatus=!current;const pIdx=allProducts.findIndex(p=>p.id==id);if(pIdx!==-1)allProducts[pIdx].is_available=nextStatus;filterData();await _supabase.from('products').update({is_available:nextStatus}).eq('id',id)}
-
 function showLoader(s){document.getElementById('loading-overlay').style.display=s?'flex':'none'}
 function changeImageInTable(id){activeTableId=id;document.getElementById('table-file-input').click()}
 document.getElementById('table-file-input').onchange=async function(e){const file=e.target.files[0];if(!file||!activeTableId)return;showLoader(true);const fName=`${Date.now()}.${file.name.split('.').pop()}`;await _supabase.storage.from('product-images').upload(fName,file);const url=_supabase.storage.from('product-images').getPublicUrl(fName).data.publicUrl;await _supabase.from('products').update({image_url:url}).eq('id',activeTableId);const idx=allProducts.findIndex(p=>p.id==activeTableId);if(idx!==-1)allProducts[idx].image_url=url;filterData();showLoader(false)};
-
 function toggleForm(){const f=document.getElementById('product-form-container');f.style.display=(f.style.display==='block')?'none':'block';if(f.style.display==='none'){document.getElementById('edit-id').value="";document.getElementById('p-name').value="";document.getElementById('p-price').value="";document.getElementById('p-sale').value="";document.getElementById('p-order').value="";document.getElementById('p-desc').value="";document.getElementById('preview-img').style.display='none';document.getElementById('placeholder-text').style.display='block'}}
-
 function previewImage(i){if(i.files&&i.files[0]){const r=new FileReader();r.onload=(e)=>{const img=document.getElementById('preview-img');img.src=e.target.result;img.style.display='block';document.getElementById('placeholder-text').style.display='none'};r.readAsDataURL(i.files[0])}}
-
 function setupEdit(p){window.scrollTo({top:0,behavior:'smooth'});if(document.getElementById('product-form-container').style.display!=='block')toggleForm();document.getElementById('edit-id').value=p.id;document.getElementById('p-name').value=p.product_name;document.getElementById('p-price').value=p.price;document.getElementById('p-sale').value=p.sale_price||"";document.getElementById('p-order').value=p.product_order||"";document.getElementById('p-desc').value=p.description||"";document.getElementById('p-cat').value=p.category_id||"";if(p.image_url){document.getElementById('preview-img').src=p.image_url;document.getElementById('preview-img').style.display='block';document.getElementById('placeholder-text').style.display='none';currentImgUrl=p.image_url}else{document.getElementById('preview-img').style.display='none';document.getElementById('placeholder-text').style.display='block';currentImgUrl=""}}
-
 async function handleSave(){const name=document.getElementById('p-name').value,price=document.getElementById('p-price').value,catId=document.getElementById('p-cat').value;if(!name||!price||!catId){alert("يرجى إكمال الحقول المطلوبة.");return}showLoader(true);const id=document.getElementById('edit-id').value,file=document.getElementById('p-file').files[0];let url=currentImgUrl;if(file){const fN=`${Date.now()}.${file.name.split('.').pop()}`;await _supabase.storage.from('product-images').upload(fN,file);url=_supabase.storage.from('product-images').getPublicUrl(fN).data.publicUrl}const{data:prof}=await _supabase.from('profiles').select('id').eq('phone_number',userPhone).single();const payload={product_name:name,price:parseFloat(price),sale_price:document.getElementById('p-sale').value?parseFloat(document.getElementById('p-sale').value):null,product_order:parseInt(document.getElementById('p-order').value)||0,description:document.getElementById('p-desc').value,category_id:catId,image_url:url,store_id:storeId,user_id:prof.id};if(id)await _supabase.from('products').update(payload).eq('id',id);else await _supabase.from('products').insert([payload]);toggleForm();await loadProducts()}
-
 async function deleteProd(id){if(confirm("هل أنت متأكد؟")){showLoader(true);await _supabase.from('products').delete().eq('id',id);await loadProducts()}}
-
 function resetFilters(){document.getElementById('search-name').value="";document.getElementById('filter-cat').value="";document.getElementById('filter-status').value="";document.getElementById('sort-main').value="";filterData()}
-
 function logout(){localStorage.clear();window.location.href='index.html'}
-
+async function openMenuScanner(){const modal=document.getElementById('scanner-modal');modal.style.display='flex';const btn=document.getElementById('modal-upload-btn');btn.disabled=true;btn.style.opacity="0.5";btn.innerText="جاري التحقق...";try{const{data:profile}=await _supabase.from('profiles').select('id').eq('phone_number',userPhone).single();window.realUserId=profile.id;btn.disabled=false;btn.style.opacity="1";btn.innerText="📸 اختر صورة المنيو للرفع"}catch(e){btn.innerText="❌ خطأ في التحقق";btn.style.background="#e74c3c"}}
+function closeScannerModal(){document.getElementById('scanner-modal').style.display='none';document.getElementById('modal-file-in').value='';document.getElementById('modal-output').innerText='';document.getElementById('modal-loading-section').style.display='none';document.getElementById('modal-upload-btn').style.display='flex'}
+async function startDirectUpload(input){const file=input.files[0];if(!file||!window.realUserId)return;const loading=document.getElementById('modal-loading-section'),btn=document.getElementById('modal-upload-btn'),output=document.getElementById('modal-output');btn.style.display='none';loading.style.display='block';output.innerText="";const reader=new FileReader();reader.readAsDataURL(file);reader.onload=async()=>{const base64Data=reader.result.split(',')[1];try{const response=await fetch(`${SB_URL}/functions/v1/analyze-image`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${SB_KEY}`},body:JSON.stringify({image:base64Data,store_id:parseInt(storeId),user_id:window.realUserId})});if(response.ok){output.style.color="#24b47e";output.innerText="✅ تمت العملية بنجاح! جاري التحديث...";if(typeof loadProducts==="function")await loadProducts();setTimeout(closeScannerModal,2000)}else{throw new Error(await response.text())}}catch(err){output.style.color="#e74c3c";output.innerText="❌ فشل الرفع: "+err.message;btn.style.display='flex';loading.style.display='none'}}}
 init();
 
-
-
-
-
-
-
-
-
-
-// 1. دالة فتح النافذة والتحقق من هوية المستخدم
-
-
-async function openMenuScanner() {
-    const modal = document.getElementById('scanner-modal');
-    modal.style.display = 'flex';
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
     
-    // إخفاء أي رسالة حالة سابقة وتأطير الزر كغير نشط في البداية
-    const btn = document.getElementById('modal-upload-btn');
-    btn.disabled = true;
-    btn.style.opacity = "0.5";
-    btn.innerText = "جاري التحقق...";
-
-    try {
-        const { data: profile } = await _supabase.from('profiles').select('id').eq('phone_number', userPhone).single();
-        window.realUserId = profile.id;
-        
-        // تفعيل الزر فوراً عند الجاهزية وتغيير نصه
-        btn.disabled = false;
-        btn.style.opacity = "1";
-        btn.innerText = "📸 اختر صورة المنيو للرفع";
-    } catch (e) {
-        btn.innerText = "❌ خطأ في التحقق";
-        btn.style.background = "#e74c3c";
+    sidebar.classList.toggle('active');
+    
+    if (sidebar.classList.contains('active')) {
+        overlay.style.display = 'block';
+    } else {
+        overlay.style.display = 'none';
     }
 }
-
-
-
-// 2. دالة إغلاق النافذة
-function closeScannerModal() {
-    document.getElementById('scanner-modal').style.display = 'none';
-    document.getElementById('modal-file-in').value = '';
-    document.getElementById('modal-output').innerText = '';
-    document.getElementById('modal-loading-section').style.display = 'none';
-    document.getElementById('modal-upload-btn').style.display = 'flex';
-}
-
-// 3. دالة معالجة الرفع والتحويل لـ Base64 والإرسال للـ Edge Function
-async function startDirectUpload(input) {
-    const file = input.files[0];
-    if (!file || !window.realUserId) return;
-
-    const loading = document.getElementById('modal-loading-section');
-    const btn = document.getElementById('modal-upload-btn');
-    const output = document.getElementById('modal-output');
-
-    btn.style.display = 'none';
-    loading.style.display = 'block';
-    output.innerText = "";
-
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = async () => {
-        const base64Data = reader.result.split(',')[1];
-        
-        try {
-            const response = await fetch(`${SB_URL}/functions/v1/analyze-image`, {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json', 
-                    'Authorization': `Bearer ${SB_KEY}` 
-                },
-                body: JSON.stringify({ 
-                    image: base64Data,
-                    store_id: parseInt(storeId),
-                    user_id: window.realUserId
-                })
-            });
-
-            if (response.ok) {
-                output.style.color = "#24b47e";
-                output.innerText = "✅ تمت العملية بنجاح! جاري التحديث...";
-                if (typeof loadProducts === "function") await loadProducts();
-                setTimeout(closeScannerModal, 2000);
-            } else {
-                throw new Error(await response.text());
-            }
-        } catch (err) {
-            output.style.color = "#e74c3c";
-            output.innerText = "❌ فشل الرفع: " + err.message;
-            btn.style.display = 'flex';
-            loading.style.display = 'none';
-        }
-    };
-}
-
-
 </script>
-
-
-
-
-
-
-
-
-
-<div id="scanner-modal" class="scanner-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:10000; justify-content:center; align-items:center; padding:20px;">
-    <div class="scanner-content" style="background:white; width:100%; max-width:500px; padding:30px; border-radius:20px; position:relative; text-align:center;">
-        <button onclick="closeScannerModal()" style="position:absolute; top:15px; left:15px; border:none; background:none; font-size:24px; cursor:pointer; color:#95a5a6;">✕</button>
-        
-        <div style="font-size:50px; margin-bottom:15px;">📊</div>
-        <h3>الماسح الذكي AI</h3>
-        <p style="color:#7f8c8d; font-size:14px; line-height:1.6;">ارفع صورة المنيو وسيقوم النظام باستخراج الأصناف، الأسعار، والأقسام وإضافتها تلقائياً.</p>
-        
-        
-
-        <button id="modal-upload-btn" class="btn-main" style="width:100%; background:#6c5ce7; padding:15px; border-radius:10px; color:white; border:none; cursor:pointer; font-weight:bold; display:flex; justify-content:center; align-items:center; gap:10px;" disabled onclick="document.getElementById('modal-file-in').click()">
-            📸 اختر صورة المنيو
-        </button>
-        
-        <input type="file" id="modal-file-in" style="display:none" accept="image/*" onchange="startDirectUpload(this)">
-
-        <div id="modal-loading-section" style="display:none; margin-top:20px;">
-            <div class="spinner" style="margin:auto; width:40px; height:40px; border:4px solid #f3f3f3; border-top:4px solid #6c5ce7; border-radius:50%; animation:spin 1s linear infinite;"></div>
-            <p style="color:#6c5ce7; font-weight:bold; margin-top:10px;">جاري تحليل المنيو وإضافة البيانات...</p>
-        </div>
-
-        <div id="modal-output" style="margin-top:15px; font-size:13px; font-weight:bold;"></div>
-    </div>
-</div>
-
-
-
-
-
 </body>
 </html>
