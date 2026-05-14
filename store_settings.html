@@ -88,6 +88,66 @@
         #form-container { display: none; }
         input, textarea { width: 100%; padding: 10px; margin: 6px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
         .btn-save { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+
+        /* ===== حقول مطلوبة - تمييز بالأحمر ===== */
+        .field-required-wrapper {
+            position: relative;
+            margin: 6px 0;
+        }
+        .field-required-wrapper input {
+            margin: 0;
+            border-color: #e74c3c;
+            border-width: 1.5px;
+            padding-left: 10px;
+        }
+        .field-required-wrapper input:focus {
+            outline: none;
+            border-color: #c0392b;
+            box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.12);
+        }
+        .field-required-wrapper input.valid {
+            border-color: var(--primary);
+        }
+        .field-required-wrapper input.valid:focus {
+            box-shadow: 0 0 0 3px rgba(36, 180, 126, 0.12);
+        }
+        .required-label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            color: #e74c3c;
+            font-weight: 600;
+            margin-bottom: 3px;
+        }
+        .required-label span.dot {
+            width: 6px; height: 6px;
+            background: #e74c3c;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        /* حقل الرابط - تلميح */
+        #slug-hint {
+            font-size: 11px;
+            color: #888;
+            margin-top: 3px;
+            display: block;
+            padding-right: 2px;
+        }
+        #slug-error {
+            font-size: 11px;
+            color: #e74c3c;
+            margin-top: 3px;
+            display: none;
+            padding-right: 2px;
+        }
+
+        /* حقل الرابط - اتجاه LTR لأنه إنجليزي */
+        #store_slug {
+            direction: ltr;
+            text-align: left;
+        }
         
         @media (max-width: 400px) {
             .welcome-section { font-size: 0.85em; }
@@ -123,9 +183,22 @@
             <input type="file" id="logo-file" accept="image/*" style="display:none" onchange="uploadStoreLogo(this)">
         </div>
         <input type="hidden" id="edit_store_id"> 
-        <input type="hidden" id="logo_url"> 
-        <input type="text" id="store_name" placeholder="اسم المتجر (إجباري)" oninput="autoGenerateSlug(this)">
-        <input type="text" id="store_slug" placeholder="رابط المتجر (إجباري)">
+        <input type="hidden" id="logo_url">
+
+        <!-- حقل اسم المتجر - مطلوب -->
+        <div class="field-required-wrapper">
+            <div class="required-label"><span class="dot"></span> اسم المتجر (مطلوب)</div>
+            <input type="text" id="store_name" placeholder="اسم المتجر" oninput="autoGenerateSlug(this); validateRequired(this)">
+        </div>
+
+        <!-- حقل رابط المتجر - مطلوب -->
+        <div class="field-required-wrapper">
+            <div class="required-label"><span class="dot"></span> رابط المتجر (مطلوب)</div>
+            <input type="text" id="store_slug" placeholder="store-link" oninput="validateSlug(this)" onkeydown="blockInvalidSlugKeys(event)">
+            <span id="slug-hint">يُسمح فقط بالحروف الإنجليزية، الأرقام (0-9)، الشرطة (-) والشرطة السفلية (_)</span>
+            <span id="slug-error">⚠️ يحتوي الرابط على أحرف غير مسموح بها</span>
+        </div>
+
         <input type="text" id="welcome_msg" placeholder="رسالة الترحيب">
         <textarea id="store_description" rows="2" placeholder="وصف المتجر"></textarea>
         <button class="btn-save" onclick="handleSaveStore()">حفظ البيانات</button>
@@ -155,6 +228,76 @@
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
     const userPhone = (localStorage.getItem('user_phone') || "").trim();
 
+    // ===== التحقق من الحقول المطلوبة =====
+    function validateRequired(input) {
+        if (input.value.trim()) {
+            input.classList.add('valid');
+        } else {
+            input.classList.remove('valid');
+        }
+    }
+
+    // ===== التحقق من حقل الرابط =====
+    const slugPattern = /^[a-zA-Z0-9_-]*$/;
+
+    function validateSlug(input) {
+        const val = input.value;
+        const errorEl = document.getElementById('slug-error');
+        const hintEl = document.getElementById('slug-hint');
+
+        // إزالة أي حرف غير مسموح به تلقائياً
+        const cleaned = val.replace(/[^a-zA-Z0-9_-]/g, '');
+        if (cleaned !== val) {
+            input.value = cleaned;
+            errorEl.style.display = 'block';
+            hintEl.style.display = 'none';
+            setTimeout(() => {
+                errorEl.style.display = 'none';
+                hintEl.style.display = 'block';
+            }, 2000);
+        }
+
+        if (cleaned) {
+            input.classList.add('valid');
+        } else {
+            input.classList.remove('valid');
+        }
+    }
+
+    // منع لصق نصوص غير صالحة
+    document.addEventListener('DOMContentLoaded', () => {
+        const slugInput = document.getElementById('store_slug');
+        if (slugInput) {
+            slugInput.addEventListener('paste', function(e) {
+                e.preventDefault();
+                const pasted = (e.clipboardData || window.clipboardData).getData('text');
+                const cleaned = pasted.replace(/[^a-zA-Z0-9_-]/g, '').toLowerCase();
+                this.value = this.value + cleaned;
+                validateSlug(this);
+            });
+        }
+    });
+
+    function blockInvalidSlugKeys(e) {
+        // السماح بمفاتيح التحكم
+        const allowedKeys = ['Backspace','Delete','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Tab','Home','End','Enter'];
+        if (allowedKeys.includes(e.key)) return;
+        // السماح بـ Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+        if (e.ctrlKey || e.metaKey) return;
+        // التحقق من الحرف المدخل
+        if (!/^[a-zA-Z0-9_-]$/.test(e.key)) {
+            e.preventDefault();
+            const errorEl = document.getElementById('slug-error');
+            const hintEl = document.getElementById('slug-hint');
+            errorEl.style.display = 'block';
+            hintEl.style.display = 'none';
+            setTimeout(() => {
+                errorEl.style.display = 'none';
+                hintEl.style.display = 'block';
+            }, 2000);
+        }
+    }
+
     async function init() {
         if (!userPhone) { window.location.href = 'index.html'; return; }
         await fetchUserInfo();
@@ -172,18 +315,16 @@
     async function loadStores() {
         try {
             const { data: profile } = await _supabase.from('profiles').select('id').eq('phone_number', userPhone).single();
-            const { data: stores } = await _supabase.from('store_settings').select('*').eq('user_id', profile.id);
             
-            // --- تعديل التحويل التلقائي ---
+			
+			const { data: stores } = await _supabase.from('store_settings').select('*').eq('user_id', profile.id).order('id', { ascending: true });
+            
             const isBackFromManage = sessionStorage.getItem('back_from_manage');
             if (stores && stores.length === 1 && isBackFromManage !== 'true') {
-                // التحويل التلقائي لصفحة المنتجات
                 window.location.href = `manage_products.html?store_id=${stores[0].id}`;
                 return;
             }
-            // نمسح العلامة لضمان عودة التحويل التلقائي للعمل إذا دخل المستخدم من مكان آخر لاحقاً
             sessionStorage.removeItem('back_from_manage');
-            // ------------------------------
 
             document.getElementById('status-msg').style.display = 'none';
             const listDiv = document.getElementById('stores-list');
@@ -209,7 +350,6 @@
         <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
     </svg>
 </button>
-                            
                         </div>
                         <div class="card-actions-left">
                             <span class="icon-btn edit-icon" onclick='editExistingStore(${JSON.stringify(s)})' title="تعديل">✎</span>
@@ -227,15 +367,12 @@
         <line x1="10" y1="14" x2="21" y2="3"></line>
     </svg>
 </div>
-                                    
-                                    
                                     <div class="circle-tool" onclick="copyToClipboard('${fullUrl}')" title="نسخ الرابط">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
         <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
     </svg>
 </div>
-                                    
                                     <div class="circle-tool" onclick="generateQR('${fullUrl}')" title="رمز QR">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <rect x="3" y="3" width="7" height="7" rx="1"></rect>
@@ -244,7 +381,6 @@
         <path d="M7 14h.01M10 18h.01M7 18h.01M3 14h.01M3 18h.01"></path>
     </svg>
 </div>
-
                                 </div>
                             </div>
                         </div>
@@ -263,8 +399,16 @@
 
     function autoGenerateSlug(input) {
         if (!document.getElementById('edit_store_id').value) {
-            document.getElementById('store_slug').value = input.value.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+            // تحويل اسم المتجر إلى رابط صالح (إنجليزي فقط)
+            const slug = input.value
+                .toLowerCase()
+                .trim()
+                .replace(/\s+/g, '-')
+                .replace(/[^a-z0-9_-]/g, '');
+            document.getElementById('store_slug').value = slug;
+            validateSlug(document.getElementById('store_slug'));
         }
+        validateRequired(input);
     }
 
     function toggleForm() {
@@ -283,6 +427,9 @@
         document.getElementById('edit_store_id').value = '';
         document.querySelectorAll('#form-container input, #form-container textarea').forEach(i => i.value = '');
         document.getElementById('logo-preview').style.display = "none";
+        document.querySelectorAll('.field-required-wrapper input').forEach(i => i.classList.remove('valid'));
+        document.getElementById('slug-error').style.display = 'none';
+        document.getElementById('slug-hint').style.display = 'block';
     }
 
     function editExistingStore(store) {
@@ -291,14 +438,27 @@
         document.getElementById('store_name').value = store.store_name;
         document.getElementById('store_slug').value = store.store_slug;
         document.getElementById('logo_url').value = store.logo_url;
+        // تحديث حالة الحقول عند التعديل
+        if (store.store_name) document.getElementById('store_name').classList.add('valid');
+        if (store.store_slug) document.getElementById('store_slug').classList.add('valid');
         if(store.logo_url) { document.getElementById('logo-preview').src = store.logo_url; document.getElementById('logo-preview').style.display = "block"; }
     }
 
     async function handleSaveStore() {
-        const name = document.getElementById('store_name').value;
-        const slug = document.getElementById('store_slug').value;
+        const name = document.getElementById('store_name').value.trim();
+        const slug = document.getElementById('store_slug').value.trim();
         const storeId = document.getElementById('edit_store_id').value;
-        if(!name || !slug) { alert("أكمل البيانات المطلوبة"); return; }
+
+        if(!name || !slug) { 
+            alert("يرجى تعبئة الحقول المطلوبة: اسم المتجر ورابط المتجر");
+            return; 
+        }
+
+        // التحقق النهائي من صحة الرابط
+        if (!slugPattern.test(slug)) {
+            alert("رابط المتجر يحتوي على أحرف غير مسموح بها. يُسمح فقط بالحروف الإنجليزية والأرقام والشرطة (-) والشرطة السفلية (_)");
+            return;
+        }
         
         const storeData = { store_name: name, store_slug: slug, logo_url: document.getElementById('logo_url').value };
         if(storeId) await _supabase.from('store_settings').update(storeData).eq('id', storeId);
@@ -329,6 +489,33 @@
     async function deleteStore(id) { if (confirm("حذف المتجر؟")) { await _supabase.from('store_settings').delete().eq('id', id); location.reload(); } }
 
     init();
+	
+    async function uploadStoreLogo(input) {
+        const file = input.files[0];
+        if (!file) return;
+        
+        const preview = document.getElementById('logo-preview');
+        const logoUrlInput = document.getElementById('logo_url');
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+        
+        const fName = `logos/${Date.now()}.${file.name.split('.').pop()}`;
+        const { error } = await _supabase.storage.from('product-images').upload(fName, file);
+        
+        if (error) {
+            alert("فشل رفع الشعار: " + error.message);
+            return;
+        }
+        
+        const url = _supabase.storage.from('product-images').getPublicUrl(fName).data.publicUrl;
+        logoUrlInput.value = url;
+        preview.src = url;
+    }
 </script>
 </body>
 </html>
