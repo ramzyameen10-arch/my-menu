@@ -148,12 +148,52 @@
             direction: ltr;
             text-align: left;
         }
+
+        /* ===== اختيار اللون الأساسي ===== */
+        .color-picker-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 10px 0;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+        .color-picker-wrapper label {
+            font-size: 13px;
+            color: #555;
+            font-weight: 600;
+        }
+        #store_primary_color {
+            width: 50px;
+            height: 40px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            padding: 2px;
+            background: none;
+        }
+        #color-preview-box {
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            border: 2px solid #ddd;
+            display: inline-block;
+        }
+        .color-value-text {
+            font-size: 12px;
+            color: #888;
+            font-family: monospace;
+            direction: ltr;
+        }
         
         @media (max-width: 400px) {
             .welcome-section { font-size: 0.85em; }
             .circle-tool { width: 36px; height: 36px; font-size: 16px; }
         }
     </style>
+<base target="_blank">
 </head>
 <body>
 
@@ -199,8 +239,16 @@
             <span id="slug-error">⚠️ يحتوي الرابط على أحرف غير مسموح بها</span>
         </div>
 
-        <input type="text" id="welcome_msg" placeholder="رسالة الترحيب">
-        <textarea id="store_description" rows="2" placeholder="وصف المتجر"></textarea>
+        <!-- اختيار اللون الأساسي للمتجر -->
+        <div class="color-picker-wrapper">
+            <label for="store_primary_color">🎨 اللون الأساسي للمتجر:</label>
+            <input type="color" id="store_primary_color" value="#24b47e" onchange="updateColorPreview(this)">
+            <span id="color-preview-box" style="background:#24b47e;"></span>
+            <span class="color-value-text" id="color-value">#24b47e</span>
+        </div>
+
+        <input type="text" id="welcome_msg" placeholder="رسالة الترحيب (مثال: أهلاً وسهلاً بكم)">
+        <textarea id="store_description" rows="2" placeholder="وصف المتجر (يظهر في صفحة المتجر)"></textarea>
         <button class="btn-save" onclick="handleSaveStore()">حفظ البيانات</button>
         <button style="margin-top:10px; background:#95a5a6;" class="btn-save" onclick="toggleForm()">إلغاء</button>
     </div>
@@ -411,6 +459,13 @@
         validateRequired(input);
     }
 
+    // ===== تحديث معاينة اللون =====
+    function updateColorPreview(input) {
+        const color = input.value;
+        document.getElementById('color-preview-box').style.background = color;
+        document.getElementById('color-value').innerText = color;
+    }
+
     function toggleForm() {
         const f = document.getElementById('form-container');
         const t = document.getElementById('toggle-btn');
@@ -425,11 +480,14 @@
 
     function resetForm() {
         document.getElementById('edit_store_id').value = '';
-        document.querySelectorAll('#form-container input, #form-container textarea').forEach(i => i.value = '');
+        document.querySelectorAll('#form-container input[type="text"], #form-container textarea').forEach(i => i.value = '');
         document.getElementById('logo-preview').style.display = "none";
         document.querySelectorAll('.field-required-wrapper input').forEach(i => i.classList.remove('valid'));
         document.getElementById('slug-error').style.display = 'none';
         document.getElementById('slug-hint').style.display = 'block';
+        // Reset color to default
+        document.getElementById('store_primary_color').value = '#24b47e';
+        updateColorPreview(document.getElementById('store_primary_color'));
     }
 
     function editExistingStore(store) {
@@ -437,7 +495,14 @@
         document.getElementById('edit_store_id').value = store.id;
         document.getElementById('store_name').value = store.store_name;
         document.getElementById('store_slug').value = store.store_slug;
-        document.getElementById('logo_url').value = store.logo_url;
+        document.getElementById('logo_url').value = store.logo_url || '';
+        document.getElementById('welcome_msg').value = store.welcome_msg || '';
+        document.getElementById('store_description').value = store.store_description || '';
+        // تحديث اللون إذا موجود
+        if (store.primary_color) {
+            document.getElementById('store_primary_color').value = store.primary_color;
+            updateColorPreview(document.getElementById('store_primary_color'));
+        }
         // تحديث حالة الحقول عند التعديل
         if (store.store_name) document.getElementById('store_name').classList.add('valid');
         if (store.store_slug) document.getElementById('store_slug').classList.add('valid');
@@ -460,7 +525,16 @@
             return;
         }
         
-        const storeData = { store_name: name, store_slug: slug, logo_url: document.getElementById('logo_url').value };
+        const storeData = {
+    store_name: name,
+    store_slug: slug,
+    logo_url: document.getElementById('logo_url').value,
+    welcome_msg: document.getElementById('welcome_msg').value.trim(),
+    store_description: document.getElementById('store_description').value.trim(),
+    primary_color: document.getElementById('store_primary_color').value
+};
+
+
         if(storeId) await _supabase.from('store_settings').update(storeData).eq('id', storeId);
         else {
             const { data: profile } = await _supabase.from('profiles').select('id').eq('phone_number', userPhone).single();
