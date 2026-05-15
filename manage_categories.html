@@ -111,8 +111,10 @@ input[type="text"],input[type="number"]{padding:12px;border:1px solid #ddd;borde
 .edit-mode .cat-name{display:none}
 .edit-inputs{display:flex;gap:10px;flex:1;align-items:center}
 .edit-inputs input{padding:8px 12px;border:2px solid var(--edit);border-radius:6px;font-size:14px;outline:none;box-sizing:border-box}
-.edit-name{flex:1;min-width:100px}
-.edit-order{width:70px;text-align:center}
+
+
+.edit-name{width:70px;text-align:center}
+.edit-order{flex:1;min-width:100px}
 
 .sortable-ghost{opacity:0.4;background:#e8f5e9!important;border:2px dashed var(--primary)}
 #loading-msg{text-align:center;color:#999;padding:40px;font-size:16px}
@@ -124,7 +126,7 @@ input[type="text"],input[type="number"]{padding:12px;border:1px solid #ddd;borde
 
 /* ===== نافذة حذف التصنيف مع المنتجات ===== */
 .delete-modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:10002;justify-content:center;align-items:center;padding:20px;box-sizing:border-box}
-.delete-modal{background:white;padding:25px;border-radius:15px;max-width:400px;width:100%;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.2)}
+.delete-modal{background:white;padding:25px;border-radius:15px;max-width	:400px;width:100%;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.2)}
 .delete-modal h3{margin:0 0 15px 0;color:var(--dark);font-size:1.2em}
 .delete-modal p{color:#666;margin-bottom:20px;font-size:14px;line-height:1.6}
 .delete-modal .warning-box{background:#fff3f3;border:1px solid #fab1a0;border-radius:8px;padding:12px;margin-bottom:20px;color:#d63031;font-weight:bold;font-size:13px}
@@ -232,6 +234,8 @@ input[type="text"],input[type="number"]{padding:12px;border:1px solid #ddd;borde
             <div class="input-group" style="flex:1;"><label>اسم التصنيف</label><input type="text" id="cat-input" class="cat-input-add" placeholder="مثال: ركن القهوة"></div>
             <div class="input-group" style="width:80px;flex-shrink:0;"><label>الترتيب</label><input type="number" id="order-input" class="order-input-add" value="0" style="width:100%;"></div>
             <button class="btn-save-new" onclick="handleAddCategory()">حفظ</button>
+<button class="btn-save-new" onclick="toggleAddBox()" style="background:#95a5a6;">إلغاء</button>
+
         </div>
         
         <div id="loading-msg">جاري تحميل التصنيفات...</div>
@@ -363,10 +367,12 @@ async function loadCategories(){
                     <div class="order-badge">${cat.display_order}</div>
                     <div class="cat-info">
                         <div class="cat-name" id="name-box-${cat.id}">${cat.category_name}</div>
-                        <div class="edit-inputs" id="edit-inputs-${cat.id}" style="display:none;">
-                            <input type="text" class="edit-name" id="edit-name-${cat.id}" value="${cat.category_name}" placeholder="اسم التصنيف">
-                            <input type="number" class="edit-order" id="edit-order-${cat.id}" value="${cat.display_order}" placeholder="الترتيب">
-                        </div>
+						
+						<div class="edit-inputs" id="edit-inputs-${cat.id}" style="display:none;">
+    <input type="number" class="edit-order" id="edit-order-${cat.id}" value="${cat.display_order}" placeholder="الترتيب">
+    <input type="text" class="edit-name" id="edit-name-${cat.id}" value="${cat.category_name}" placeholder="اسم التصنيف">
+</div>
+
                     </div>
                    
 				                       <div class="card-actions" id="actions-${cat.id}">
@@ -424,7 +430,20 @@ async function saveEdit(id){
 async function handleAddCategory(){
     const input=document.getElementById('cat-input'),orderInput=document.getElementById('order-input');
     const name=input.value.trim(),order=parseInt(orderInput.value)||0;
-    if(!name)return;
+    
+    // التحقق من وجود الاسم
+    if(!name){
+        input.style.border='2px solid var(--danger)';
+        input.placeholder='⚠️ هذا الحقل مطلوب';
+        input.focus();
+        setTimeout(()=>{
+            input.style.border='1px solid #ddd';
+            input.placeholder='مثال: ركن القهوة';
+        },3000);
+        return;
+    }
+    
+    input.style.border='1px solid #ddd';
     try{
         const{data:profile}=await _supabase.from('profiles').select('id').eq('phone_number',userPhone).single();
         const{error}=await _supabase.from('categories').insert([{category_name:name,store_id:currentStoreId,user_id:profile.id,display_order:order,is_visible:true}]);

@@ -194,6 +194,7 @@
         }
     </style>
 <base target="_blank">
+<base target="_blank">
 </head>
 <body>
 
@@ -560,7 +561,38 @@
     }
 
     function closeQR() { document.getElementById('qr-modal').style.display = "none"; }
-    async function deleteStore(id) { if (confirm("حذف المتجر؟")) { await _supabase.from('store_settings').delete().eq('id', id); location.reload(); } }
+    // ===== حذف المتجر مع تنبيه فوري =====
+    async function deleteStore(id) {
+        // ✅ التنبيه الفوري — بدون انتظار Supabase
+        const firstConfirm = confirm(
+            '⚠️ تحذير نهائي!\n\n' +
+            'حذف هذا المتجر سيحذف جميع البيانات المرتبطة به بشكل نهائي:\n' +
+            '• جميع التصنيفات\n' +
+            '• جميع المنتجات\n' +
+            '• جميع الإعدادات\n\n' +
+            '⚡ هذا الإجراء لا يمكن التراجع عنه!\n\n' +
+            'هل تريد المتابعة؟'
+        );
+
+        if (!firstConfirm) return;
+
+        // ✅ التأكيد الثاني — فوري أيضاً
+        const secondConfirm = confirm(
+            '🔴 تأكيد نهائي\n\n' +
+            'اضغط "موافق" لحذف المتجر وكل محتوياته نهائياً.\n' +
+            'اضغط "إلغاء" للتراجع.'
+        );
+
+        if (!secondConfirm) return;
+
+        // ⏳ الآن نحذف في الخلفية (بعد التأكيد)
+        try {
+            await _supabase.from('store_settings').delete().eq('id', id);
+            location.reload();
+        } catch (err) {
+            alert('فشل الحذف: ' + err.message);
+        }
+    }
 
     init();
 	
