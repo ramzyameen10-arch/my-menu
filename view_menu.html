@@ -18,8 +18,7 @@
         .store-logo-square { width: 60px; height: 60px; border-radius: 12px; object-fit: cover; display: none; border: 1px solid #eee; }
         .store-name-large { font-size: 1.3em; font-weight: 800; color: #222; }
 
-        .categories-nav { display: flex;overflow-x: auto;white-space: nowrap; padding: 10px 0; scrollbar-width: none; background: white; gap: 8px; width: 95%;max-width: 570px;margin: 0 auto;justify-content: flex-start; flex-direction: row; direction: rtl; }
-		
+        .categories-nav { display: flex; overflow-x: auto; white-space: nowrap; padding: 10px 0; scrollbar-width: none; background: white; gap: 8px; width: 95%; max-width: 570px; margin: 0 auto; justify-content: flex-start; flex-direction: row; direction: rtl; }
         .categories-nav::-webkit-scrollbar { display: none; }
         .cat-item { padding: 7px 18px; border-radius: 20px; background: #f1f2f6; color: #555; cursor: pointer; font-size: 0.85em; font-weight: bold; transition: 0.25s; border: 2px solid transparent; }
         .cat-item.active { background: var(--main-color); color: white; border-color: var(--main-color); }
@@ -43,15 +42,36 @@
 
         .cart-bar { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 92%; max-width: 550px; background: var(--main-color); color: white; padding: 12px 20px; border-radius: 20px; display: none; justify-content: space-between; align-items: center; z-index: 1001; box-shadow: 0 8px 25px rgba(0,0,0,0.2); cursor: pointer; }
         
+        /* ===== ADDONS MODAL ===== */
+        .addons-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; display: none; justify-content: center; align-items: flex-end; }
+        .addons-modal { background: white; width: 100%; max-width: 600px; border-top-left-radius: 25px; border-top-right-radius: 25px; padding: 20px; box-sizing: border-box; animation: slideUp 0.3s ease-out; max-height: 80vh; overflow-y: auto; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .addons-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 15px; }
+        .addons-title { font-size: 1.1em; font-weight: bold; color: #222; }
+        .addons-subtitle { font-size: 0.85em; color: #888; margin-top: 3px; }
+        .addon-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f5f5f5; cursor: pointer; }
+        .addon-name { font-weight: bold; font-size: 0.95em; color: #222; }
+        .addon-price { font-size: 0.9em; color: var(--main-color); font-weight: bold; margin-top: 3px; }
+        .addon-check { width: 24px; height: 24px; border-radius: 8px; border: 2px solid #ddd; display: flex; align-items: center; justify-content: center; transition: 0.2s; flex-shrink: 0; }
+        .addon-check.selected { background: var(--main-color); border-color: var(--main-color); }
+        .addon-check svg { display: none; }
+        .addon-check.selected svg { display: block; }
+        .selected-product-preview { background: #f9f9f9; border-radius: 12px; padding: 12px; margin-bottom: 15px; display: flex; align-items: center; gap: 12px; }
+        .selected-product-preview img { width: 55px; height: 55px; border-radius: 10px; object-fit: cover; }
+        .section-label { font-size: 0.8em; font-weight: bold; color: #888; margin: 10px 0 5px; }
+        .addons-confirm-btn { background: var(--main-color); color: white; border: none; padding: 15px; border-radius: 15px; font-weight: bold; cursor: pointer; width: 100%; font-size: 1em; margin-top: 15px; }
+
+        /* ===== CART MODAL ===== */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; display: none; justify-content: center; align-items: flex-end; }
         .cart-modal { background: white; width: 100%; max-width: 600px; border-top-left-radius: 25px; border-top-right-radius: 25px; padding: 20px; box-sizing: border-box; animation: slideUp 0.3s ease-out; max-height: 85vh; overflow-y: auto; }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        
         .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 15px; }
         .cart-item-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f9f9f9; }
+        .cart-item-addons-list { font-size: 0.8em; color: #888; margin-top: 3px; }
         .clear-cart-btn { background: #fee2e2; color: #dc2626; border: none; padding: 6px 12px; border-radius: 10px; font-size: 0.85em; font-weight: bold; cursor: pointer; }
         .notes-area { width: 100%; border: 1px solid #eee; border-radius: 12px; padding: 12px; font-family: inherit; margin: 15px 0; resize: none; background: #f9f9f9; box-sizing: border-box; }
         .whatsapp-btn { background: #25D366; color: white; border: none; padding: 15px; border-radius: 15px; font-weight: bold; cursor: pointer; width: 100%; font-size: 1.1em; }
+        .product-card.hidden-by-search { display: none; }
+        .category-section-hidden { display: none; }
     </style>
 </head>
 <body>
@@ -66,7 +86,14 @@
     <div class="sticky-top-container" id="top-header">
         <div class="store-header-compact">
             <img id="display-logo" class="store-logo-square">
-            <div id="display-store-name" class="store-name-large"></div>
+            <div id="display-store-name" class="store-name-large" style="flex:1;"></div>
+            <button id="search-toggle-btn" onclick="toggleSearch()" style="background:none;border:none;cursor:pointer;padding:6px;color:#555;flex-shrink:0;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </button>
+        </div>
+        <div id="search-bar" style="display:none;width:95%;max-width:570px;padding:0 0 10px;">
+            <input id="search-input" type="text" placeholder="ابحث عن منتج..." oninput="filterMenuBySearch(this.value)"
+                style="width:100%;padding:10px 15px;border:2px solid var(--main-color);border-radius:25px;font-size:14px;box-sizing:border-box;outline:none;font-family:inherit;direction:rtl;">
         </div>
         <nav class="categories-nav" id="cat-nav"></nav>
     </div>
@@ -78,6 +105,21 @@
     <div style="font-weight: bold;"><span id="total-price-bar">0</span> ريال</div>
 </div>
 
+<!-- ADDONS MODAL -->
+<div id="addons-overlay" class="addons-overlay" onclick="if(event.target===this)this.style.display='none'">
+    <div class="addons-modal">
+        <div class="addons-header">
+            <div>
+                <div class="addons-title" id="addons-modal-title"></div>
+                <div class="addons-subtitle">الإضافات اختيارية</div>
+            </div>
+            <button onclick="document.getElementById('addons-overlay').style.display='none'" style="border:none;background:none;font-size:1.8em;cursor:pointer;color:#999;">&times;</button>
+        </div>
+        <div id="addons-modal-body"></div>
+    </div>
+</div>
+
+<!-- CART MODAL -->
 <div id="modal-overlay" class="modal-overlay" onclick="closeCartModal(event)">
     <div class="cart-modal" onclick="event.stopPropagation()">
         <div class="modal-header">
@@ -107,39 +149,72 @@
     const SB_URL = 'https://wnvyqvwuzmxzzhilgidh.supabase.co'; 
     const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indudnlxdnd1em14enpoaWxnaWRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MTg1MDEsImV4cCI6MjA5MTQ5NDUwMX0.AyD4CYqA0cz9mC-bcOt16uUpueL_cAWT26Q92l574r0';
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
-    const slug = new URLSearchParams(window.location.search).get('s'); 
-    let cart = {}; let productsList = []; let merchantPhone = ""; 
+    const slug = new URLSearchParams(window.location.search).get('s');
+
+    // cart: { pid => count } للمنتجات بدون إضافات
+    // cartItems: [ { uid, product, addons:[], qty } ] للمنتجات مع إضافات
+    let cart = {};
+    let cartItems = [];
+    let productsList = [];
+    let allAddonProducts = {};  // id => product
+    let addonLinks = {};        // main_product_id => [addon_product_id]
+    let merchantPhone = "";
     let storeLogoUrl = "";
+
+    // حالة موديول الإضافات
+    let currentProduct = null;
+    let currentSelectedAddons = new Set();
 
     async function init() {
         if (!slug) return;
         const { data: store } = await _supabase.from('store_settings').select('*').eq('store_slug', slug).single();
         if (!store) return;
+
         document.getElementById('display-store-name').innerText = store.store_name;
         storeLogoUrl = store.logo_url || "";
-
-        if(store.logo_url) { const img = document.getElementById('display-logo'); img.src = store.logo_url; img.style.display = 'block'; }
-        if(store.welcome_msg) { 
+        if (store.logo_url) { const img = document.getElementById('display-logo'); img.src = store.logo_url; img.style.display = 'block'; }
+        if (store.welcome_msg) {
             document.getElementById('announcement-bar').style.display = 'flex';
             document.getElementById('display-welcome').innerText = store.welcome_msg;
             document.getElementById('top-header').style.top = "35px";
         }
         document.documentElement.style.setProperty('--main-color', store.primary_color || '#24b47e');
+
         const { data: profile } = await _supabase.from('profiles').select('phone_number').eq('id', store.user_id).single();
         merchantPhone = profile?.phone_number || "";
 
-        // التعديل هنا: جلب display_order من جدول التصنيفات
-        const { data: prods } = await _supabase.from('products').select(`
-            *,
-            categories(category_name, display_order)
+        // جلب كل المنتجات
+        const { data: allProducts } = await _supabase.from('products').select(`
+            *, categories(category_name, display_order)
         `)
         .eq('store_id', store.id)
         .eq('is_available', true)
-        .order('product_order', { ascending: true }); // ترتيب المنتجات داخل التصنيف
+        .order('product_order', { ascending: true });
 
-        productsList = prods || [];
+        // تصنيف المنتجات إلى main وaddon
+        const mainProducts = [];
+        (allProducts || []).forEach(p => {
+            p.id = String(p.id);
+            if (p.product_type === 'addon') {
+                allAddonProducts[p.id] = p;
+            } else {
+                mainProducts.push(p);
+            }
+        });
+        productsList = mainProducts;
+
+        // جلب روابط الإضافات
+        const allProductIds = (allProducts || []).map(p => p.id);
+        const { data: links } = await _supabase.from('product_addons').select('*').in('main_product_id', allProductIds);
+        (links || []).forEach(link => {
+            const mainId = String(link.main_product_id);
+            const addonId = String(link.addon_product_id);
+            if (!addonLinks[mainId]) addonLinks[mainId] = [];
+            addonLinks[mainId].push(addonId);
+        });
+
         renderMenu(productsList);
-        
+
         setTimeout(() => {
             updateHeaderMetrics();
             setupScrollObserver();
@@ -150,23 +225,14 @@
     }
 
     function renderMenu(products) {
-        // 1. تجميع المنتجات حسب التصنيف مع حفظ بيانات الترتيب
         const groups = products.reduce((acc, p) => {
             const catInfo = p.categories || { category_name: "عام", display_order: 999 };
             const catName = catInfo.category_name;
-            
-            if (!acc[catName]) {
-                acc[catName] = {
-                    name: catName,
-                    order: catInfo.display_order,
-                    items: []
-                };
-            }
+            if (!acc[catName]) acc[catName] = { name: catName, order: catInfo.display_order, items: [] };
             acc[catName].items.push(p);
             return acc;
         }, {});
 
-        // 2. تحويل الكائن إلى مصفوفة وفرزها بناءً على display_order
         const sortedCategories = Object.values(groups).sort((a, b) => a.order - b.order);
 
         let menuHtml = ''; let navHtml = '';
@@ -174,13 +240,12 @@
             const id = "sec-" + i;
             navHtml += `<div class="cat-item ${i===0?'active':''}" id="tab-${id}" onclick="scrollToSection('${id}')">${catObj.name}</div>`;
             menuHtml += `<div id="${id}" class="menu-section"><div class="category-title">${catObj.name}</div>`;
-            
+
             catObj.items.forEach(p => {
-                let currentPrice = (p.sale_price || p.price).toFixed(2);
-                let priceDisplay = (p.sale_price && p.sale_price < p.price) 
+                const currentPrice = (p.sale_price || p.price).toFixed(2);
+                const priceDisplay = (p.sale_price && p.sale_price < p.price)
                     ? `<span class="sale-price">${currentPrice} ريال</span> <span class="original-price">${p.price.toFixed(2)} ريال</span>`
                     : `<span class="sale-price">${currentPrice} ريال</span>`;
-
                 const finalImg = (p.image_url && p.image_url !== "") ? p.image_url : (storeLogoUrl || "https://via.placeholder.com/150?text=No+Image");
 
                 menuHtml += `
@@ -192,9 +257,9 @@
                                 <div>${priceDisplay}</div>
                             </div>
                             <div class="qty-box" onclick="event.stopPropagation()">
-                                <button class="btn-qty" onclick="updateQty('${p.id}', 1)">+</button>
+                                <button class="btn-qty" onclick="handleAdd('${p.id}')">+</button>
                                 <span id="qty-${p.id}">0</span>
-                                <button class="btn-qty" onclick="updateQty('${p.id}', -1)">-</button>
+                                <button class="btn-qty" onclick="handleRemove('${p.id}')">-</button>
                             </div>
                         </div>
                         ${p.description ? `<div class="product-desc-row">${p.description}</div>` : ''}
@@ -202,25 +267,179 @@
             });
             menuHtml += `</div>`;
         });
+
         document.getElementById('menu-data').innerHTML = menuHtml;
         document.getElementById('cat-nav').innerHTML = navHtml;
     }
 
-    function updateQty(id, change) {
-        cart[id] = (cart[id] || 0) + change;
-        if (cart[id] < 0) cart[id] = 0;
-        if(document.getElementById(`qty-${id}`)) document.getElementById(`qty-${id}`).innerText = cart[id];
-        if(document.getElementById(`modal-qty-${id}`)) document.getElementById(`modal-qty-${id}`).innerText = cart[id];
+    // ===== منطق زر + =====
+    function handleAdd(productId) {
+        productId = String(productId);
+        const hasAddons = addonLinks[productId] && addonLinks[productId].length > 0;
+        if (hasAddons) {
+            openAddonsModal(productId);
+        } else {
+            // بدون إضافات: أضف مباشرة كالكود الأصلي
+            cart[productId] = (cart[productId] || 0) + 1;
+            updateQtyDisplay(productId);
+            updateTotals();
+        }
+    }
+
+    // ===== منطق زر - =====
+    function handleRemove(productId) {
+        productId = String(productId);
+        // إذا كان في cartItems (أي طُلب مع إضافات) احذف آخر عنصر منه
+        const lastIdx = [...cartItems].map((it,i)=>({it,i})).reverse().find(({it}) => it.product.id === productId)?.i;
+        if (lastIdx !== undefined) {
+            cartItems[lastIdx].qty -= 1;
+            if (cartItems[lastIdx].qty <= 0) cartItems.splice(lastIdx, 1);
+        } else {
+            // منتج بدون إضافات
+            cart[productId] = (cart[productId] || 0) - 1;
+            if (cart[productId] < 0) cart[productId] = 0;
+        }
+        updateQtyDisplay(productId);
         updateTotals();
     }
 
+    function updateQtyDisplay(productId) {
+        const el = document.getElementById('qty-' + productId);
+        if (!el) return;
+        const fromCart = cart[productId] || 0;
+        const fromItems = cartItems.filter(it => it.product.id === productId).reduce((s,it) => s + it.qty, 0);
+        el.innerText = fromCart + fromItems;
+    }
+
+    // ===== ADDONS MODAL =====
+    let editingItemUid = null; // uid العنصر قيد التعديل (null = إضافة جديدة)
+
+    function openAddonsModal(productId, editUid = null) {
+        const product = productsList.find(p => p.id === productId);
+        if (!product) return;
+        currentProduct = product;
+        editingItemUid = editUid;
+        // إذا تعديل: نملأ الاختيارات المسبقة
+        if (editUid !== null) {
+            const item = cartItems.find(i => i.uid === editUid);
+            currentSelectedAddons = new Set(item ? item.addons.map(a => a.id) : []);
+        } else {
+            currentSelectedAddons = new Set();
+        }
+
+        const addonIds = addonLinks[productId] || [];
+        const finalImg = (product.image_url && product.image_url !== "") ? product.image_url : (storeLogoUrl || "https://via.placeholder.com/150?text=No+Image");
+
+        document.getElementById('addons-modal-title').innerText = product.product_name;
+
+        let body = `
+            <div class="selected-product-preview">
+                <img src="${finalImg}">
+                <div>
+                    <div style="font-weight:bold;font-size:0.95em;color:#222;">${product.product_name}</div>
+                    <div style="font-size:0.85em;color:var(--main-color);font-weight:bold;margin-top:3px;">${(product.sale_price || product.price).toFixed(2)} ريال</div>
+                </div>
+            </div>
+            <div class="section-label">الإضافات المتاحة</div>`;
+
+        // ترتيب الإضافات حسب product_order
+        const sortedAddonIds = [...addonIds].sort((a, b) => {
+            const orderA = allAddonProducts[a]?.product_order ?? 9999;
+            const orderB = allAddonProducts[b]?.product_order ?? 9999;
+            return orderA - orderB;
+        });
+
+        sortedAddonIds.forEach(addonId => {
+            const addon = allAddonProducts[addonId];
+            if (!addon) return;
+            const isSelected = currentSelectedAddons.has(addon.id);
+            body += `
+                <div class="addon-item" onclick="toggleAddon('${addon.id}')">
+                    <div>
+                        <div class="addon-name">${addon.product_name}</div>
+                        <div class="addon-price">+ ${(addon.sale_price || addon.price).toFixed(2)} ريال</div>
+                    </div>
+                    <div class="addon-check ${isSelected ? 'selected' : ''}" id="check-${addon.id}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </div>
+                </div>`;
+        });
+
+        const btnLabel = editingItemUid !== null ? 'حفظ التعديل' : 'إضافة إلى السلة';
+        body += `<button class="addons-confirm-btn" onclick="confirmAddToCart()">${btnLabel}</button>`;
+        document.getElementById('addons-modal-body').innerHTML = body;
+        document.getElementById('addons-overlay').style.display = 'flex';
+    }
+
+    function toggleAddon(addonId) {
+        const el = document.getElementById('check-' + addonId);
+        if (currentSelectedAddons.has(addonId)) {
+            currentSelectedAddons.delete(addonId);
+            el.classList.remove('selected');
+        } else {
+            currentSelectedAddons.add(addonId);
+            el.classList.add('selected');
+        }
+    }
+
+    function confirmAddToCart() {
+        if (!currentProduct) return;
+        const selectedAddons = Array.from(currentSelectedAddons).sort().map(id => allAddonProducts[id]).filter(Boolean);
+        const key = currentProduct.id + '|' + selectedAddons.map(a => a.id).join(',');
+
+        if (editingItemUid !== null) {
+            // وضع التعديل: نحذف العنصر القديم ونضيف بـ key جديد
+            const oldIdx = cartItems.findIndex(i => i.uid === editingItemUid);
+            const oldQty = oldIdx !== -1 ? cartItems[oldIdx].qty : 1;
+            if (oldIdx !== -1) cartItems.splice(oldIdx, 1);
+            const existing = cartItems.find(i => i.key === key);
+            if (existing) {
+                existing.qty += oldQty;
+            } else {
+                cartItems.push({ uid: Date.now(), key, product: currentProduct, addons: selectedAddons, qty: oldQty });
+            }
+            editingItemUid = null;
+        } else {
+            // وضع الإضافة: تجميع المتشابهين
+            const existing = cartItems.find(i => i.key === key);
+            if (existing) {
+                existing.qty += 1;
+            } else {
+                cartItems.push({ uid: Date.now(), key, product: currentProduct, addons: selectedAddons, qty: 1 });
+            }
+        }
+
+        document.getElementById('addons-overlay').style.display = 'none';
+        updateQtyDisplay(currentProduct.id);
+        updateTotals();
+        // العودة للسلة إذا كان التعديل من داخلها
+        if (window._returnToCart) {
+            window._returnToCart = false;
+            openCartModal();
+        }
+    }
+
+    // ===== TOTALS =====
     function updateTotals() {
         let total = 0, count = 0;
+
+        // من cart العادي
         Object.keys(cart).forEach(pid => {
-            const p = productsList.find(x => x.id == pid);
+            if (cart[pid] <= 0) return;
+            const p = productsList.find(x => x.id === pid);
+            if (!p) return;
             total += (p.sale_price || p.price) * cart[pid];
             count += cart[pid];
         });
+
+        // من cartItems (مع إضافات)
+        cartItems.forEach(item => {
+            const base = item.product.sale_price || item.product.price;
+            const addonsSum = item.addons.reduce((s, a) => s + (a.sale_price || a.price), 0);
+            total += (base + addonsSum) * item.qty;
+            count += item.qty;
+        });
+
         const finalPrice = total.toFixed(2);
         document.getElementById('total-price-bar').innerText = finalPrice;
         document.getElementById('items-count-bar').innerText = count;
@@ -228,6 +447,131 @@
         document.getElementById('modal-total-qty').innerText = count;
         document.getElementById('cart-bar').style.display = count > 0 ? 'flex' : 'none';
         if (count === 0) document.getElementById('modal-overlay').style.display = 'none';
+    }
+
+    // ===== CART MODAL =====
+    function openCartModal() {
+        const list = document.getElementById('cart-items-list');
+        list.innerHTML = '';
+
+        // منتجات بدون إضافات
+        Object.keys(cart).forEach(pid => {
+            if (cart[pid] <= 0) return;
+            const p = productsList.find(x => x.id === pid);
+            if (!p) return;
+            list.innerHTML += `
+                <div class="cart-item-row">
+                    <div>
+                        <div style="font-weight:bold;font-size:0.95em;">${p.product_name}</div>
+                        <div style="font-size:0.85em;color:var(--main-color);">${(p.sale_price || p.price).toFixed(2)} ريال</div>
+                    </div>
+                    <div class="qty-box">
+                        <button class="btn-qty" onclick="handleAdd('${p.id}'); openCartModal()">+</button>
+                        <span id="modal-qty-${p.id}">${cart[pid]}</span>
+                        <button class="btn-qty" onclick="handleRemove('${p.id}'); openCartModal()">-</button>
+                    </div>
+                </div>`;
+        });
+
+        // منتجات مع إضافات
+        cartItems.forEach(item => {
+            const base = item.product.sale_price || item.product.price;
+            const addonsSum = item.addons.reduce((s, a) => s + (a.sale_price || a.price), 0);
+            const lineTotal = ((base + addonsSum) * item.qty).toFixed(2);
+            const addonsText = item.addons.map(a => a.product_name).join('، ');
+            list.innerHTML += `
+                <div class="cart-item-row" style="align-items:flex-start;">
+                    <div style="flex:1;">
+                        <div style="font-weight:bold;font-size:0.95em;">${item.product.product_name}</div>
+                        ${addonsText ? `<div class="cart-item-addons-list">+ ${addonsText}</div>` : '<div class="cart-item-addons-list" style="color:#bbb;">بدون إضافات</div>'}
+                        <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+                            <div style="font-size:0.85em;color:var(--main-color);">${lineTotal} ريال</div>
+                            <button onclick="editCartItem(${item.uid})" style="background:#f0fdf4;color:var(--main-color);border:1px solid var(--main-color);border-radius:8px;padding:2px 8px;font-size:0.75em;cursor:pointer;font-weight:bold;">تعديل الإضافات</button>
+                        </div>
+                    </div>
+                    <div class="qty-box" style="flex-shrink:0;margin-right:10px;">
+                        <button class="btn-qty" onclick="changeItemQty(${item.uid},1)">+</button>
+                        <span>${item.qty}</span>
+                        <button class="btn-qty" onclick="changeItemQty(${item.uid},-1)">-</button>
+                    </div>
+                </div>`;
+        });
+
+        document.getElementById('modal-overlay').style.display = 'flex';
+    }
+
+    function editCartItem(uid) {
+        const item = cartItems.find(i => i.uid === uid);
+        if (!item) return;
+        window._returnToCart = true; // علامة للعودة للسلة بعد التعديل
+        document.getElementById('modal-overlay').style.display = 'none';
+        openAddonsModal(item.product.id, uid);
+    }
+
+    function changeItemQty(uid, delta) {
+        const idx = cartItems.findIndex(i => i.uid === uid);
+        if (idx === -1) return;
+        cartItems[idx].qty += delta;
+        if (cartItems[idx].qty <= 0) {
+            updateQtyDisplay(cartItems[idx].product.id);
+            cartItems.splice(idx, 1);
+        } else {
+            updateQtyDisplay(cartItems[idx].product.id);
+        }
+        updateTotals();
+        openCartModal();
+    }
+
+    function clearCart() {
+        if (confirm("هل تريد تفريغ السلة؟")) {
+            Object.keys(cart).forEach(id => {
+                cart[id] = 0;
+                const el = document.getElementById('qty-' + id);
+                if (el) el.innerText = 0;
+            });
+            cartItems.forEach(item => {
+                const el = document.getElementById('qty-' + item.product.id);
+                if (el) el.innerText = 0;
+            });
+            cart = {};
+            cartItems = [];
+            updateTotals();
+            document.getElementById('modal-overlay').style.display = 'none';
+        }
+    }
+
+    function closeCartModal(e) { if (e.target.id === 'modal-overlay') e.target.style.display = 'none'; }
+
+    function sendToWhatsApp() {
+        const notes = document.getElementById('order-notes').value.trim();
+        const storeName = document.getElementById('display-store-name').innerText;
+        let msg = `*طلب جديد من متجرك: ${storeName}*\n\n`;
+        let grandTotal = 0;
+
+        Object.keys(cart).forEach(pid => {
+            if (cart[pid] <= 0) return;
+            const p = productsList.find(x => x.id === pid);
+            if (!p) return;
+            const lineTotal = (p.sale_price || p.price) * cart[pid];
+            grandTotal += lineTotal;
+            msg += `🔹 ${cart[pid]}× ${p.product_name} ==>  ${lineTotal.toFixed(2)} ريال\n`;
+        });
+
+        cartItems.forEach(item => {
+            const base = item.product.sale_price || item.product.price;
+            const addonsSum = item.addons.reduce((s, a) => s + (a.sale_price || a.price), 0);
+            const lineTotal = (base + addonsSum) * item.qty;
+            grandTotal += lineTotal;
+            msg += `🔹 ${item.qty}× ${item.product.product_name} ==>  ${lineTotal.toFixed(2)} ريال\n`;
+            item.addons.forEach(a => {
+                msg += `      ↳ إضافة: ${a.product_name} (+${(a.sale_price || a.price).toFixed(2)} ريال)\n`;
+            });
+        });
+
+        msg += `\n📝 *ملاحظات :*\n${notes ? notes : "لا يوجد"}\n`;
+        msg += `\n📊 *عدد الأصناف: ${document.getElementById('modal-total-qty').innerText}*`;
+        msg += `\n💰 *إجمالي السعر : ${grandTotal.toFixed(2)} ريال*`;
+        window.open(`https://wa.me/${merchantPhone.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`);
     }
 
     function scrollToSection(id) {
@@ -241,19 +585,15 @@
 
     function setupScrollObserver() {
         const sections = document.querySelectorAll('.menu-section');
-        const observerOptions = { root: null, rootMargin: '-180px 0px -60% 0px', threshold: 0 };
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
                     document.querySelectorAll('.cat-item').forEach(item => item.classList.remove('active'));
                     const activeTab = document.getElementById('tab-' + entry.target.id);
-                    if (activeTab) {
-                        activeTab.classList.add('active');
-                        activeTab.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-                    }
+                    if (activeTab) { activeTab.classList.add('active'); activeTab.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); }
                 }
             });
-        }, observerOptions);
+        }, { root: null, rootMargin: '-180px 0px -60% 0px', threshold: 0 });
         sections.forEach(s => observer.observe(s));
     }
 
@@ -264,56 +604,35 @@
         document.querySelectorAll('.category-title').forEach(title => { title.style.scrollMarginTop = (totalHeight + 10) + "px"; });
     }
 
-    function clearCart() {
-        if(confirm("هل تريد تفريغ السلة؟")) {
-            Object.keys(cart).forEach(id => {
-                cart[id] = 0;
-                if(document.getElementById(`qty-${id}`)) document.getElementById(`qty-${id}`).innerText = 0;
-            });
-            updateTotals();
-            document.getElementById('modal-overlay').style.display = 'none';
+    // ===== دوال البحث =====
+    function toggleSearch() {
+        const bar = document.getElementById('search-bar');
+        const isVisible = bar.style.display !== 'none';
+        bar.style.display = isVisible ? 'none' : 'block';
+        if (!isVisible) {
+            document.getElementById('search-input').focus();
+            updateHeaderMetrics();
+        } else {
+            document.getElementById('search-input').value = '';
+            filterMenuBySearch('');
+            updateHeaderMetrics();
         }
     }
 
-    function openCartModal() {
-        const list = document.getElementById('cart-items-list');
-        list.innerHTML = '';
-        Object.keys(cart).forEach(id => {
-            if(cart[id] > 0) {
-                const p = productsList.find(x => x.id == id);
-                list.innerHTML += `
-                    <div class="cart-item-row">
-                        <div>
-                            <div style="font-weight:bold; font-size: 0.95em;">${p.product_name}</div>
-                            <div style="font-size:0.85em; color:var(--main-color);">${(p.sale_price || p.price).toFixed(2)} ريال</div>
-                        </div>
-                        <div class="qty-box">
-                            <button class="btn-qty" onclick="updateQty('${p.id}', 1)">+</button>
-                            <span id="modal-qty-${p.id}">${cart[id]}</span>
-                            <button class="btn-qty" onclick="updateQty('${p.id}', -1)">-</button>
-                        </div>
-                    </div>`;
-            }
+    function filterMenuBySearch(query) {
+        const q = query.trim().toLowerCase();
+        const sections = document.querySelectorAll('.menu-section');
+        sections.forEach(section => {
+            let hasVisible = false;
+            section.querySelectorAll('.product-card').forEach(card => {
+                const name = card.querySelector('.product-name')?.innerText.toLowerCase() || '';
+                const match = !q || name.includes(q);
+                card.classList.toggle('hidden-by-search', !match);
+                if (match) hasVisible = true;
+            });
+            // إخفاء القسم كاملاً إذا لا يوجد منتجات مطابقة
+            section.style.display = hasVisible ? '' : 'none';
         });
-        document.getElementById('modal-overlay').style.display = 'flex';
-    }
-
-    function closeCartModal(e) { if(e.target.id === 'modal-overlay') e.target.style.display = 'none'; }
-
-    function sendToWhatsApp() {
-        const notes = document.getElementById('order-notes').value.trim();
-        const storeName = document.getElementById('display-store-name').innerText;
-        let msg = `*طلب جديد من متجرك: ${storeName}*\n\n`;
-        Object.keys(cart).forEach(id => {
-            if(cart[id] > 0) {
-                const p = productsList.find(x => x.id == id);
-                msg += `🔹 ${cart[id]} ${p.product_name} ==>  ${((p.sale_price || p.price) * cart[id]).toFixed(2)} ريال\n`;
-            }
-        });
-        msg += `\n📝 *ملاحظات :*\n${notes ? notes : "لا يوجد"}\n`;
-        msg += `\n📊 *عدد الأصناف: ${document.getElementById('modal-total-qty').innerText}*`;
-        msg += `\n💰 *إجمالي السعر : ${document.getElementById('modal-total-price').innerText} ريال*`;
-        window.open(`https://wa.me/${merchantPhone.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`);
     }
 
     window.addEventListener('resize', updateHeaderMetrics);
