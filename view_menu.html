@@ -9,56 +9,41 @@
         :root { --main-color: #24b47e; } 
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f9f9f9; margin: 0; direction: rtl; text-align: right; overflow-x: hidden; }
         
-        .announcement-bar { background-color: var(--main-color); color: white; width: 95%; max-width: 570px; height: 32px; display: none; overflow: hidden; position: fixed; top: 0; left: 50%; transform: translateX(-50%); z-index: 1100; white-space: nowrap; align-items: center; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; }
-        .announcement-text { display: inline-block; padding-right: 100%; animation: marquee 15s linear infinite; font-size: 0.85em; font-weight: bold; line-height: 32px; }
+        .announcement-bar { background-color: var(--main-color); color: white; width: 95%; max-width: 570px; height: 35px; display: none; overflow: hidden; position: fixed; top: 0; left: 50%; transform: translateX(-50%); z-index: 1100; white-space: nowrap; align-items: center; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; }
+        .announcement-text { display: inline-block; padding-right: 100%; animation: marquee 15s linear infinite; font-size: 0.9em; font-weight: bold; line-height: 35px; }
         @keyframes marquee { 0% { transform: translate(0, 0); } 100% { transform: translate(100%, 0); } }
 
         .sticky-top-container { position: fixed; top: 0; width: 100%; z-index: 1000; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: flex; flex-direction: column; align-items: center; }
+        .store-header-compact { display: flex; align-items: center; justify-content: flex-start; padding: 15px; gap: 15px; width: 95%; max-width: 570px; border-bottom: 1px solid #f0f0f0; }
+        .store-logo-square { width: 60px; height: 60px; border-radius: 12px; object-fit: cover; display: none; border: 1px solid #eee; }
+        .store-name-large { font-size: 1.3em; font-weight: 800; color: #222; }
 
-        /* ===== تصغير الهيدر ===== */
-        .store-header-compact { display: flex; align-items: center; justify-content: flex-start; padding: 8px 15px; gap: 10px; width: 95%; max-width: 570px; border-bottom: 1px solid #f0f0f0; }
-        .store-logo-square { width: 44px; height: 44px; border-radius: 10px; object-fit: cover; display: none; border: 1px solid #eee; }
-        .store-name-large { font-size: 1.1em; font-weight: 800; color: #222; }
-
-        /* ===== تصغير شريط التصنيفات ===== */
-        .categories-nav { display: flex; overflow-x: auto; white-space: nowrap; padding: 6px 0; scrollbar-width: none; background: white; gap: 6px; width: 95%; max-width: 570px; margin: 0 auto; justify-content: flex-start; flex-direction: row; direction: rtl; }
+        .categories-nav { display: flex; overflow-x: auto; white-space: nowrap; padding: 10px 0; scrollbar-width: none; background: white; gap: 8px; width: 95%; max-width: 570px; margin: 0 auto; justify-content: flex-start; flex-direction: row; direction: rtl; }
         .categories-nav::-webkit-scrollbar { display: none; }
-        .cat-item { padding: 5px 14px; border-radius: 20px; background: #f1f2f6; color: #555; cursor: pointer; font-size: 0.78em; font-weight: bold; transition: 0.25s; border: 2px solid transparent; }
+        .cat-item { padding: 7px 18px; border-radius: 20px; background: #f1f2f6; color: #555; cursor: pointer; font-size: 0.85em; font-weight: bold; transition: 0.25s; border: 2px solid transparent; }
         .cat-item.active { background: var(--main-color); color: white; border-color: var(--main-color); }
 
         .container { max-width: 600px; margin: auto; padding: 150px 15px 120px; box-sizing: border-box; }
-        .category-title { font-size: 1em; font-weight: bold; margin: 14px 0 8px; color: #333; padding-right: 10px; border-right: 4px solid var(--main-color); scroll-margin-top: 160px; }
+        .category-title { font-size: 1.1em; font-weight: bold; margin: 20px 0 10px; color: #333; padding-right: 10px; border-right: 4px solid var(--main-color); scroll-margin-top: 160px; }
         
-        /* ===== بطاقة المنتج - مصغّرة وكاملها قابلة للنقر ===== */
-        .product-card {
-            background: white;
-            border-radius: 13px;
-            padding: 9px 10px;
-            margin-bottom: 9px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            display: flex;
-            flex-direction: column;
-            cursor: pointer; /* ===== الكرت كله قابل للنقر ===== */
-            -webkit-tap-highlight-color: rgba(0,0,0,0.04);
-        }
-        .product-card:active { opacity: 0.92; }
-
-        .product-top-row { display: flex; align-items: center; width: 100%; flex-direction: row-reverse; }
+        /* ===== بطاقة المنتج ===== */
+        .product-card { background: white; border-radius: 15px; padding: 12px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
+        .product-top-row { display: flex; align-items: center; width: 100%; flex-direction: row-reverse; } /* صورة يسار، نص يمين */
 
         /* الصورة مع زر + والعداد */
-        .product-img-wrap { position: relative; width: 70px; flex-shrink: 0; margin-right: 10px; margin-left: 11px; display: flex; flex-direction: column; align-items: center; overflow: visible; }
-        .product-img-inner { position: relative; width: 70px; height: 70px; flex-shrink: 0; }
-        .product-img { width: 70px; height: 70px; border-radius: 10px; object-fit: cover; display: block; flex-shrink: 0; }
+        .product-img-wrap { position: relative; width: 80px; flex-shrink: 0; margin-right: 12px; margin-left: 13px; cursor: pointer; display: flex; flex-direction: column; align-items: center; overflow: visible; }
+        .product-img-inner { position: relative; width: 80px; height: 80px; flex-shrink: 0; }
+        .product-img { width: 80px; height: 80px; border-radius: 12px; object-fit: cover; display: block; flex-shrink: 0; }
 
-        /* زر + */
+        /* زر + نصفه داخل الصورة ونصفه خارجها - زاوية يسار سفلى */
         .img-add-btn {
             position: absolute;
-            bottom: -12px; left: -12px;
-            width: 24px; height: 24px;
+            bottom: -13px; left: -13px;
+            width: 26px; height: 26px;
             border-radius: 50%;
             background: #f1f2f6;
             color: var(--main-color);
-            font-size: 1.1em;
+            font-size: 1.15em;
             font-weight: bold;
             border: none;
             cursor: pointer;
@@ -68,42 +53,42 @@
             z-index: 2;
         }
 
-        /* عداد الكمية */
+        /* عداد الكمية نصفه داخل الصورة ونصفه خارجها - زاوية يسار سفلى */
         .img-qty-box {
             position: absolute;
-            bottom: -12px; left: -12px;
+            bottom: -13px; left: -13px;
             background: #f1f2f6;
             border-radius: 20px;
             display: none;
             align-items: center;
-            gap: 2px;
-            padding: 2px 5px;
+            gap: 3px;
+            padding: 2px 6px;
             box-shadow: 0 1px 4px rgba(0,0,0,0.15);
             z-index: 2;
             white-space: nowrap;
         }
         .img-qty-box.visible { display: flex; }
         .img-qty-box .btn-q {
-            width: 18px; height: 18px;
+            width: 20px; height: 20px;
             border-radius: 50%; border: none;
             background: transparent;
-            color: var(--main-color); font-size: 0.9em; font-weight: bold;
+            color: var(--main-color); font-size: 0.95em; font-weight: bold;
             cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1;
         }
-        .img-qty-box .qty-num { color: #333; font-weight: 900; font-size: 0.75em; min-width: 12px; text-align: center; }
+        .img-qty-box .qty-num { color: #333; font-weight: 900; font-size: 0.8em; min-width: 14px; text-align: center; }
 
-        /* نص "قابل للتخصيص" */
-        .customizable-label { font-size: 0.6em; color: #aaa; font-weight: 400; margin-top: 14px; text-align: center; width: 70px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-height: 1em; }
-        .customizable-label-empty { margin-top: 14px; min-height: 1em; width: 70px; }
+        /* نص "قابل للتخصيص" أسفل الصورة ضمن حدودها */
+        .customizable-label { font-size: 0.65em; color: #aaa; font-weight: 400; margin-top: 16px; text-align: center; width: 80px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-height: 1em; }
+        .customizable-label-empty { margin-top: 16px; min-height: 1em; width: 80px; }
 
-        /* معلومات المنتج */
-        .product-info-content { flex: 1; }
-        .product-name { font-weight: bold; font-size: 0.95em; color: #222; margin-bottom: 2px; }
-        .sale-price { color: var(--main-color); font-weight: bold; font-size: 1em; }
-        .original-price { color: #999; text-decoration: line-through; font-size: 0.8em; margin-right: 6px; }
+        /* معلومات المنتج - جهة اليمين */
+        .product-info-content { flex: 1; cursor: pointer; }
+        .product-name { font-weight: bold; font-size: 1.05em; color: #222; margin-bottom: 2px; }
+        .sale-price { color: var(--main-color); font-weight: bold; font-size: 1.1em; }
+        .original-price { color: #999; text-decoration: line-through; font-size: 0.85em; margin-right: 8px; }
         
-        .product-desc-row { max-height: 0; overflow: hidden; transition: 0.3s ease-out; font-size: 0.82em; color: #666; width: 100%; }
-        .product-card.open .product-desc-row { max-height: 200px; padding-top: 8px; margin-top: 8px; border-top: 1px dashed #eee; }
+        .product-desc-row { max-height: 0; overflow: hidden; transition: 0.3s ease-out; font-size: 0.85em; color: #666; width: 100%; }
+        .product-card.open .product-desc-row { max-height: 200px; padding-top: 10px; margin-top: 10px; border-top: 1px dashed #eee; }
 
         .qty-box { display: flex; align-items: center; background: #f1f2f6; border-radius: 25px; padding: 5px 12px; gap: 12px; } 
         .btn-qty { width: 30px; height: 30px; border-radius: 50%; border: none; background: white; color: var(--main-color); font-weight: bold; cursor: pointer; font-size: 1.2em; }
@@ -115,6 +100,7 @@
         .addons-modal { background: white; width: 100%; max-width: 600px; border-top-left-radius: 25px; border-top-right-radius: 25px; padding: 0; box-sizing: border-box; animation: slideUp 0.3s ease-out; max-height: 90vh; overflow-y: auto; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
+        /* صورة المنتج كبيرة في أعلى المودال - contain للحفاظ على التفاصيل */
         .addons-hero-img { width: 100%; height: 220px; object-fit: contain; background: #f1f2f6; border-top-left-radius: 25px; border-top-right-radius: 25px; display: block; }
         .addons-modal-body-inner { padding: 16px 20px 20px; }
 
@@ -133,6 +119,7 @@
         .addon-check.selected svg { display: block; }
         .section-label { font-size: 0.8em; font-weight: bold; color: #888; margin: 10px 0 5px; }
 
+        /* زر الإضافة مع عداد الكمية */
         .addons-footer { display: flex; align-items: center; gap: 10px; margin-top: 15px; }
         .addons-qty-box { display: flex; align-items: center; background: #f1f2f6; border-radius: 25px; padding: 6px 12px; gap: 12px; flex-shrink: 0; }
         .addons-btn-qty { width: 30px; height: 30px; border-radius: 50%; border: none; background: white; color: var(--main-color); font-weight: bold; cursor: pointer; font-size: 1.2em; }
@@ -165,12 +152,12 @@
             <img id="display-logo" class="store-logo-square">
             <div id="display-store-name" class="store-name-large" style="flex:1;"></div>
             <button id="search-toggle-btn" onclick="toggleSearch()" style="background:none;border:none;cursor:pointer;padding:6px;color:#555;flex-shrink:0;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
             </button>
         </div>
-        <div id="search-bar" style="display:none;width:95%;max-width:570px;padding:0 0 8px;">
+        <div id="search-bar" style="display:none;width:95%;max-width:570px;padding:0 0 10px;">
             <input id="search-input" type="text" placeholder="ابحث عن منتج..." oninput="filterMenuBySearch(this.value)"
-                style="width:100%;padding:9px 15px;border:2px solid var(--main-color);border-radius:25px;font-size:13px;box-sizing:border-box;outline:none;font-family:inherit;direction:rtl;">
+                style="width:100%;padding:10px 15px;border:2px solid var(--main-color);border-radius:25px;font-size:14px;box-sizing:border-box;outline:none;font-family:inherit;direction:rtl;">
         </div>
         <nav class="categories-nav" id="cat-nav"></nav>
     </div>
@@ -196,6 +183,7 @@
                 <button onclick="document.getElementById('addons-overlay').style.display='none'" style="border:none;background:none;font-size:1.8em;cursor:pointer;color:#999;margin-top:-4px;">&times;</button>
             </div>
             <div id="addons-modal-body"></div>
+            <!-- Footer: عداد + زر الإضافة -->
             <div class="addons-footer">
                 <div class="addons-qty-box">
                     <button class="addons-btn-qty" onclick="addonQtyChange(-1)">−</button>
@@ -250,7 +238,7 @@
     let currentProduct = null;
     let currentSelectedAddons = new Set();
     let editingItemUid = null;
-    let addonQty = 1;
+    let addonQty = 1; // كمية الطلب من مودال الإضافات
 
     async function init() {
         if (!slug) return;
@@ -263,7 +251,7 @@
         if (store.welcome_msg) {
             document.getElementById('announcement-bar').style.display = 'flex';
             document.getElementById('display-welcome').innerText = store.welcome_msg;
-            document.getElementById('top-header').style.top = "32px";
+            document.getElementById('top-header').style.top = "35px";
         }
         document.documentElement.style.setProperty('--main-color', store.primary_color || '#24b47e');
 
@@ -321,12 +309,11 @@
                 const finalImg = (p.image_url && p.image_url !== "") ? p.image_url : (storeLogoUrl || "https://via.placeholder.com/150?text=No+Image");
                 const hasAddons = addonLinks[p.id] && addonLinks[p.id].length > 0;
 
-                /* ===== الكرت كله onclick - بدون onclick على العناصر الداخلية ===== */
                 menuHtml += `
-                    <div class="product-card" onclick="handleCardClick(event, '${p.id}')">
+                    <div class="product-card">
                         <div class="product-top-row">
                             <!-- الصورة جهة اليسار -->
-                            <div class="product-img-wrap">
+                            <div class="product-img-wrap" onclick="openAddonsModal('${p.id}')">
                                 <div class="product-img-inner">
                                     <img class="product-img" src="${finalImg}" alt="${p.product_name}">
                                     <button class="img-add-btn" id="addbtn-${p.id}" onclick="event.stopPropagation(); handleAdd('${p.id}')">+</button>
@@ -339,7 +326,7 @@
                                 ${hasAddons ? `<div class="customizable-label">قابل للتخصيص</div>` : `<div class="customizable-label-empty"></div>`}
                             </div>
                             <!-- النص جهة اليمين -->
-                            <div class="product-info-content">
+                            <div class="product-info-content" onclick="openAddonsModal('${p.id}')">
                                 <div class="product-name">${p.product_name}</div>
                                 <div>${priceDisplay}</div>
                             </div>
@@ -354,14 +341,7 @@
         document.getElementById('cat-nav').innerHTML = navHtml;
     }
 
-    /* ===== نقرة الكرت الكامل - تفتح المودال ===== */
-    function handleCardClick(event, productId) {
-        // تجاهل النقر على الأزرار الداخلية (img-add-btn, btn-q)
-        if (event.target.closest('.img-add-btn') || event.target.closest('.img-qty-box')) return;
-        openAddonsModal(productId);
-    }
-
-    /* ===== زر + الصغير على الصورة ===== */
+    // ===== زر + الصغير على الصورة - يضيف مباشرة أو يفتح الإضافات =====
     function handleAdd(productId) {
         productId = String(productId);
         const hasAddons = addonLinks[productId] && addonLinks[productId].length > 0;
@@ -405,11 +385,13 @@
         }
     }
 
+    // ===== عداد الكمية في مودال الإضافات =====
     function addonQtyChange(delta) {
         addonQty = Math.max(1, addonQty + delta);
         document.getElementById('addon-qty-display').innerText = addonQty;
     }
 
+    // ===== ADDONS MODAL =====
     function openAddonsModal(productId, editUid = null) {
         const product = productsList.find(p => p.id === productId);
         if (!product) return;
@@ -430,18 +412,24 @@
         const addonIds = addonLinks[productId] || [];
         const finalImg = (product.image_url && product.image_url !== "") ? product.image_url : (storeLogoUrl || "https://via.placeholder.com/150?text=No+Image");
 
+        // صورة كبيرة في الأعلى
         document.getElementById('addons-hero-img').src = finalImg;
+
+        // معلومات المنتج
         document.getElementById('addons-modal-title').innerText = product.product_name;
         document.getElementById('addons-modal-price').innerText = (product.sale_price || product.price).toFixed(2) + ' ريال';
 
+        // السعرات الحرارية أو الوصف كـ meta
         const metaParts = [];
         if (product.calories) metaParts.push(product.calories + ' سعرة حرارية');
         if (product.description) metaParts.push(product.description);
         document.getElementById('addons-modal-meta').innerText = metaParts.join(' • ');
 
+        // زر التأكيد
         const btnLabel = editingItemUid !== null ? 'حفظ التعديل' : 'إضافة إلى السلة';
         document.getElementById('addons-confirm-btn').innerText = btnLabel;
 
+        // قائمة الإضافات
         let body = '';
         if (addonIds.length > 0) {
             body += `<div class="section-label">الإضافات المتاحة</div>`;
@@ -492,10 +480,12 @@
             else cartItems.push({ uid: Date.now(), key, product: currentProduct, addons: selectedAddons, qty: addonQty });
             editingItemUid = null;
         } else if (hasAddons) {
+            // منتج له إضافات: يُضاف عبر cartItems
             const existing = cartItems.find(i => i.key === key);
             if (existing) existing.qty += addonQty;
             else cartItems.push({ uid: Date.now(), key, product: currentProduct, addons: selectedAddons, qty: addonQty });
         } else {
+            // منتج بدون إضافات: يُضاف عبر cart العادي
             cart[currentProduct.id] = (cart[currentProduct.id] || 0) + addonQty;
         }
 
@@ -505,6 +495,7 @@
         if (window._returnToCart) { window._returnToCart = false; openCartModal(); }
     }
 
+    // ===== TOTALS =====
     function updateTotals() {
         let total = 0, count = 0;
         Object.keys(cart).forEach(pid => {
@@ -529,6 +520,7 @@
         if (count === 0) document.getElementById('modal-overlay').style.display = 'none';
     }
 
+    // ===== CART MODAL =====
     function openCartModal() {
         const list = document.getElementById('cart-items-list');
         list.innerHTML = '';
@@ -640,7 +632,7 @@
         document.getElementById('tab-' + id).classList.add('active');
         const el = document.getElementById(id);
         const headerHeight = document.getElementById('top-header').offsetHeight;
-        const announceHeight = (document.getElementById('announcement-bar').style.display !== 'none') ? 32 : 0;
+        const announceHeight = (document.getElementById('announcement-bar').style.display !== 'none') ? 35 : 0;
         window.scrollTo({ top: el.offsetTop - headerHeight - announceHeight - 10, behavior: 'smooth' });
     }
 
@@ -660,7 +652,7 @@
 
     function updateHeaderMetrics() {
         const header = document.getElementById('top-header');
-        const totalHeight = header.offsetHeight + (document.getElementById('announcement-bar').style.display !== 'none' ? 32 : 0);
+        const totalHeight = header.offsetHeight + (document.getElementById('announcement-bar').style.display !== 'none' ? 35 : 0);
         document.querySelector('.container').style.paddingTop = (totalHeight + 10) + "px";
         document.querySelectorAll('.category-title').forEach(title => { title.style.scrollMarginTop = (totalHeight + 10) + "px"; });
     }
