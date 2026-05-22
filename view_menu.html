@@ -9,29 +9,29 @@
         :root { --main-color: #24b47e; } 
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f9f9f9; margin: 0; direction: rtl; text-align: right; overflow-x: hidden; }
         
-        .announcement-bar { background-color: var(--main-color); color: white; width: 95%; max-width: 570px; height: 35px; display: none; overflow: hidden; position: fixed; top: 0; left: 50%; transform: translateX(-50%); z-index: 1100; white-space: nowrap; align-items: center; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; }
-        .announcement-text { display: inline-block; padding-right: 100%; animation: marquee 15s linear infinite; font-size: 0.9em; font-weight: bold; line-height: 35px; }
+        .announcement-bar { background-color: var(--main-color); color: white; width: 95%; max-width: 570px; height: 30px; display: none; overflow: hidden; position: fixed; top: 0; left: 50%; transform: translateX(-50%); z-index: 1100; white-space: nowrap; align-items: center; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; }
+        .announcement-text { display: inline-block; padding-right: 100%; animation: marquee 15s linear infinite; font-size: 0.85em; font-weight: bold; line-height: 30px; }
         @keyframes marquee { 0% { transform: translate(0, 0); } 100% { transform: translate(100%, 0); } }
 
         .sticky-top-container { position: fixed; top: 0; width: 100%; z-index: 1000; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: flex; flex-direction: column; align-items: center; }
-        .store-header-compact { display: flex; align-items: center; justify-content: flex-start; padding: 15px; gap: 15px; width: 95%; max-width: 570px; border-bottom: 1px solid #f0f0f0; }
-        .store-logo-square { width: 60px; height: 60px; border-radius: 12px; object-fit: cover; display: none; border: 1px solid #eee; }
-        .store-name-large { font-size: 1.3em; font-weight: 800; color: #222; }
+        .store-header-compact { display: flex; align-items: center; justify-content: flex-start; padding: 8px 12px; gap: 10px; width: 95%; max-width: 570px; border-bottom: 1px solid #f0f0f0; }
+        .store-logo-square { width: 45px; height: 45px; border-radius: 10px; object-fit: cover; display: none; border: 1px solid #eee; }
+        .store-name-large { font-size: 1.1em; font-weight: 800; color: #222; }
 
-        .categories-nav { display: flex; overflow-x: auto; white-space: nowrap; padding: 10px 0; scrollbar-width: none; background: white; gap: 8px; width: 95%; max-width: 570px; margin: 0 auto; justify-content: flex-start; flex-direction: row; direction: rtl; }
+        .categories-nav { display: flex; overflow-x: auto; white-space: nowrap; padding: 6px 0; scrollbar-width: none; background: white; gap: 6px; width: 95%; max-width: 570px; margin: 0 auto; justify-content: flex-start; flex-direction: row; direction: rtl; }
         .categories-nav::-webkit-scrollbar { display: none; }
-        .cat-item { padding: 7px 18px; border-radius: 20px; background: #f1f2f6; color: #555; cursor: pointer; font-size: 0.85em; font-weight: bold; transition: 0.25s; border: 2px solid transparent; }
+        .cat-item { padding: 5px 14px; border-radius: 18px; background: #f1f2f6; color: #555; cursor: pointer; font-size: 0.78em; font-weight: bold; transition: 0.25s; border: 2px solid transparent; }
         .cat-item.active { background: var(--main-color); color: white; border-color: var(--main-color); }
 
-        .container { max-width: 600px; margin: auto; padding: 150px 15px 120px; box-sizing: border-box; }
-        .category-title { font-size: 1.1em; font-weight: bold; margin: 20px 0 10px; color: #333; padding-right: 10px; border-right: 4px solid var(--main-color); scroll-margin-top: 160px; }
+        .container { max-width: 600px; margin: auto; padding: 130px 15px 120px; box-sizing: border-box; }
+        .category-title { font-size: 1.1em; font-weight: bold; margin: 20px 0 10px; color: #333; padding-right: 10px; border-right: 4px solid var(--main-color); scroll-margin-top: 140px; }
         
         /* ===== بطاقة المنتج ===== */
         .product-card { background: white; border-radius: 15px; padding: 12px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
-        .product-top-row { display: flex; align-items: center; width: 100%; flex-direction: row-reverse; } /* صورة يسار، نص يمين */
+        .product-top-row { display: flex; align-items: center; width: 100%; flex-direction: row-reverse; cursor: pointer; } /* صورة يسار، نص يمين + قابل للنقر */
 
         /* الصورة مع زر + والعداد */
-        .product-img-wrap { position: relative; width: 80px; flex-shrink: 0; margin-right: 12px; margin-left: 13px; cursor: pointer; display: flex; flex-direction: column; align-items: center; overflow: visible; }
+        .product-img-wrap { position: relative; width: 80px; flex-shrink: 0; margin-right: 12px; margin-left: 13px; display: flex; flex-direction: column; align-items: center; overflow: visible; }
         .product-img-inner { position: relative; width: 80px; height: 80px; flex-shrink: 0; }
         .product-img { width: 80px; height: 80px; border-radius: 12px; object-fit: cover; display: block; flex-shrink: 0; }
 
@@ -82,7 +82,7 @@
         .customizable-label-empty { margin-top: 16px; min-height: 1em; width: 80px; }
 
         /* معلومات المنتج - جهة اليمين */
-        .product-info-content { flex: 1; cursor: pointer; }
+        .product-info-content { flex: 1; }
         .product-name { font-weight: bold; font-size: 1.05em; color: #222; margin-bottom: 2px; }
         .sale-price { color: var(--main-color); font-weight: bold; font-size: 1.1em; }
         .original-price { color: #999; text-decoration: line-through; font-size: 0.85em; margin-right: 8px; }
@@ -155,9 +155,9 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
             </button>
         </div>
-        <div id="search-bar" style="display:none;width:95%;max-width:570px;padding:0 0 10px;">
+        <div id="search-bar" style="display:none;width:95%;max-width:570px;padding:0 0 8px;">
             <input id="search-input" type="text" placeholder="ابحث عن منتج..." oninput="filterMenuBySearch(this.value)"
-                style="width:100%;padding:10px 15px;border:2px solid var(--main-color);border-radius:25px;font-size:14px;box-sizing:border-box;outline:none;font-family:inherit;direction:rtl;">
+                style="width:100%;padding:8px 14px;border:2px solid var(--main-color);border-radius:25px;font-size:13px;box-sizing:border-box;outline:none;font-family:inherit;direction:rtl;">
         </div>
         <nav class="categories-nav" id="cat-nav"></nav>
     </div>
@@ -251,7 +251,7 @@
         if (store.welcome_msg) {
             document.getElementById('announcement-bar').style.display = 'flex';
             document.getElementById('display-welcome').innerText = store.welcome_msg;
-            document.getElementById('top-header').style.top = "35px";
+            document.getElementById('top-header').style.top = "30px";
         }
         document.documentElement.style.setProperty('--main-color', store.primary_color || '#24b47e');
 
@@ -311,9 +311,9 @@
 
                 menuHtml += `
                     <div class="product-card">
-                        <div class="product-top-row">
+                        <div class="product-top-row" onclick="openAddonsModal('${p.id}')">
                             <!-- الصورة جهة اليسار -->
-                            <div class="product-img-wrap" onclick="openAddonsModal('${p.id}')">
+                            <div class="product-img-wrap">
                                 <div class="product-img-inner">
                                     <img class="product-img" src="${finalImg}" alt="${p.product_name}">
                                     <button class="img-add-btn" id="addbtn-${p.id}" onclick="event.stopPropagation(); handleAdd('${p.id}')">+</button>
@@ -326,7 +326,7 @@
                                 ${hasAddons ? `<div class="customizable-label">قابل للتخصيص</div>` : `<div class="customizable-label-empty"></div>`}
                             </div>
                             <!-- النص جهة اليمين -->
-                            <div class="product-info-content" onclick="openAddonsModal('${p.id}')">
+                            <div class="product-info-content">
                                 <div class="product-name">${p.product_name}</div>
                                 <div>${priceDisplay}</div>
                             </div>
@@ -632,7 +632,7 @@
         document.getElementById('tab-' + id).classList.add('active');
         const el = document.getElementById(id);
         const headerHeight = document.getElementById('top-header').offsetHeight;
-        const announceHeight = (document.getElementById('announcement-bar').style.display !== 'none') ? 35 : 0;
+        const announceHeight = (document.getElementById('announcement-bar').style.display !== 'none') ? 30 : 0;
         window.scrollTo({ top: el.offsetTop - headerHeight - announceHeight - 10, behavior: 'smooth' });
     }
 
@@ -646,13 +646,13 @@
                     if (activeTab) { activeTab.classList.add('active'); activeTab.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); }
                 }
             });
-        }, { root: null, rootMargin: '-180px 0px -60% 0px', threshold: 0 });
+        }, { root: null, rootMargin: '-160px 0px -60% 0px', threshold: 0 });
         sections.forEach(s => observer.observe(s));
     }
 
     function updateHeaderMetrics() {
         const header = document.getElementById('top-header');
-        const totalHeight = header.offsetHeight + (document.getElementById('announcement-bar').style.display !== 'none' ? 35 : 0);
+        const totalHeight = header.offsetHeight + (document.getElementById('announcement-bar').style.display !== 'none' ? 30 : 0);
         document.querySelector('.container').style.paddingTop = (totalHeight + 10) + "px";
         document.querySelectorAll('.category-title').forEach(title => { title.style.scrollMarginTop = (totalHeight + 10) + "px"; });
     }
