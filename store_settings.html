@@ -242,7 +242,7 @@
 
         <input type="text" id="welcome_msg" placeholder="رسالة الترحيب (مثال: أهلاً وسهلاً بكم)">
         <textarea id="store_description" rows="2" placeholder="وصف المتجر (يظهر في صفحة المتجر)"></textarea>
-        <button class="btn-save" onclick="handleSaveStore()">حفظ البيانات</button>
+        <button class="btn-save" id="btn-save-store" onclick="handleSaveStore()">حفظ البيانات</button>
         <button style="margin-top:10px; background:#95a5a6;" class="btn-save" onclick="toggleForm()">إلغاء</button>
     </div>
 
@@ -552,40 +552,55 @@
             return;
         }
 
-        let logoUrl = document.getElementById('logo_url').value;
+        // ✅ تعطيل الزر وتغيير نصه ولونه
+        const btn = document.getElementById('btn-save-store');
+        btn.disabled = true;
+        btn.textContent = 'جاري حفظ البيانات...';
+        btn.style.background = '#95a5a6';
+        btn.style.cursor = 'not-allowed';
 
-        // ✅ ارفع الصورة للسيرفر فقط عند الضغط على حفظ
-        if (pendingLogoFile) {
-            // احذف الشعار القديم أولاً إن وجد
-            if (logoUrl) await deleteStoreLogo(logoUrl);
+        try {
+            let logoUrl = document.getElementById('logo_url').value;
 
-            const fName = `${Date.now()}.${pendingLogoFile.name.split('.').pop()}`;
-            const { error } = await _supabase.storage.from('logos').upload(fName, pendingLogoFile);
-            if (error) {
-                alert("فشل رفع الشعار: " + error.message);
-                return;
+            if (pendingLogoFile) {
+                if (logoUrl) await deleteStoreLogo(logoUrl);
+                const fName = `${Date.now()}.${pendingLogoFile.name.split('.').pop()}`;
+                const { error } = await _supabase.storage.from('logos').upload(fName, pendingLogoFile);
+                if (error) {
+                    alert("فشل رفع الشعار: " + error.message);
+                    return;
+                }
+                logoUrl = _supabase.storage.from('logos').getPublicUrl(fName).data.publicUrl;
+                pendingLogoFile = null;
             }
-            logoUrl = _supabase.storage.from('logos').getPublicUrl(fName).data.publicUrl;
-            pendingLogoFile = null;
-        }
 
-        const storeData = {
-            store_name: name,
-            store_slug: slug,
-            logo_url: logoUrl,
-            welcome_msg: document.getElementById('welcome_msg').value.trim(),
-            store_description: document.getElementById('store_description').value.trim(),
-            primary_color: document.getElementById('store_primary_color').value
-        };
+            const storeData = {
+                store_name: name,
+                store_slug: slug,
+                logo_url: logoUrl,
+                welcome_msg: document.getElementById('welcome_msg').value.trim(),
+                store_description: document.getElementById('store_description').value.trim(),
+                primary_color: document.getElementById('store_primary_color').value
+            };
 
-        if (storeId) {
-            await _supabase.from('store_settings').update(storeData).eq('id', storeId);
-        } else {
-            const { data: profile } = await _supabase.from('profiles').select('id').eq('phone_number', userPhone).single();
-            storeData.user_id = profile.id;
-            await _supabase.from('store_settings').insert([storeData]);
+            if (storeId) {
+                await _supabase.from('store_settings').update(storeData).eq('id', storeId);
+            } else {
+                const { data: profile } = await _supabase.from('profiles').select('id').eq('phone_number', userPhone).single();
+                storeData.user_id = profile.id;
+                await _supabase.from('store_settings').insert([storeData]);
+            }
+            location.reload();
+
+        } catch (err) {
+            alert('فشل الحفظ: ' + err.message);
+        } finally {
+            // ✅ إعادة الزر لوضعه الطبيعي عند أي فشل
+            btn.disabled = false;
+            btn.textContent = 'حفظ البيانات';
+            btn.style.background = 'var(--primary)';
+            btn.style.cursor = 'pointer';
         }
-        location.reload();
     }
 
     // ===== حذف المتجر مع حذف الشعار =====
