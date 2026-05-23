@@ -89,7 +89,7 @@ thead { display: none !important; }}
 #qr-modal { position: static !important; background: white !important; }}
 .sidebar-icon-buttons { display: flex; justify-content: space-around; align-items: center; background: #f8f9fa; padding: 8px; border-radius: 10px; margin-bottom: 10px; gap: 5px; }
 
-/* ===== NEW: product_type styles ===== */
+/* ===== product_type styles ===== */
 .product-type-toggle {
   display: flex;
   gap: 10px;
@@ -145,7 +145,7 @@ thead { display: none !important; }}
 }
 #btn-manage-addons:hover { background: #e8faf3; }
 
-/* ===== NEW: addons picker modal ===== */
+/* ===== addons picker modal ===== */
 #addons-picker-modal {
   display: none;
   position: fixed;
@@ -236,7 +236,6 @@ thead { display: none !important; }}
   justify-content: center;
   margin-right: 5px;
 }
-/* ===== END NEW ===== */
 </style>
 <base target="_blank">
 </head>
@@ -300,7 +299,6 @@ onclick="sessionStorage.setItem('back_from_manage', 'true'); toggleSidebar(); wi
 <h4 id="form-title" style="margin:0 0 20px 0">تفاصيل المنتج</h4>
 <input type="hidden" id="edit-id">
 
-<!-- ===== NEW: product type toggle ===== -->
 <div class="product-type-toggle">
   <label class="type-radio-label selected-main" id="label-type-main">
     <input type="radio" name="product_type" value="main" checked onchange="onProductTypeChange()">
@@ -311,7 +309,6 @@ onclick="sessionStorage.setItem('back_from_manage', 'true'); toggleSidebar(); wi
     ➕ إضافة
   </label>
 </div>
-<!-- ===== END NEW ===== -->
 
 <div class="clickable-preview" onclick="document.getElementById('p-file').click()"><img id="preview-img" src="" style="display:none"><div id="placeholder-text" style="color:#aaa;text-align:center;font-size:12px">📷<br>ارفع صورة</div></div>
 <input type="file" id="p-file" accept="image/*" onchange="previewImage(this)" style="display:none">
@@ -325,13 +322,11 @@ onclick="sessionStorage.setItem('back_from_manage', 'true'); toggleSidebar(); wi
 <div class="full"><input type="text" id="p-barcode" placeholder="الباركود (اختياري)"></div>
 </div>
 
-<!-- ===== NEW: addons button (shown only for main products) ===== -->
 <div id="addons-section">
   <button type="button" id="btn-manage-addons" onclick="openAddonsPicker()">
     ➕ الإضافات <span id="selected-addons-badge" style="display:none" class="addon-count-badge">0</span>
   </button>
 </div>
-<!-- ===== END NEW ===== -->
 
 <div id="form-actions"><button class="btn-main" id="btn-save" style="width:100%;margin-top:15px" onclick="handleSave()">حفظ المنتج</button></div>
 <button class="btn-outline" style="width:100%;margin-top:8px;justify-content:center" onclick="toggleForm()">إلغاء</button>
@@ -349,7 +344,7 @@ onclick="sessionStorage.setItem('back_from_manage', 'true'); toggleSidebar(); wi
 </div>
 </div>
 
-<!-- ===== NEW: Addons Picker Modal ===== -->
+<!-- Addons Picker Modal -->
 <div id="addons-picker-modal">
   <div id="addons-picker-content">
     <div id="addons-picker-header">
@@ -365,7 +360,6 @@ onclick="sessionStorage.setItem('back_from_manage', 'true'); toggleSidebar(); wi
     </div>
   </div>
 </div>
-<!-- ===== END NEW ===== -->
 
 <div id="scanner-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:10000;justify-content:center;align-items:center;padding:20px;">
 <div style="background:white;width:100%;max-width:500px;padding:30px;border-radius:20px;position:relative;text-align:center;">
@@ -398,10 +392,47 @@ const SB_URL='https://wnvyqvwuzmxzzhilgidh.supabase.co',SB_KEY='eyJhbGciOiJIUzI1
 const storeId=new URLSearchParams(window.location.search).get('store_id'),userPhone=localStorage.getItem('user_phone');
 let allProducts=[],currentImgUrl="",activeTableId=null,storeLogoUrl="",sortableInstance, storeSlug = '';
 
-// ===== NEW: addon state variables =====
-let selectedAddonIds = []; // IDs of addons selected for current product
-let tempAddonIds = [];      // Temporary selection while picker is open
-// ===== END NEW =====
+// addon state variables
+let selectedAddonIds = [];
+let tempAddonIds = [];
+
+// ============================================================
+// ✅ NEW: Helper — extract filename from Supabase Storage URL
+// ============================================================
+function extractStorageFileName(url, bucket) {
+    if (!url || url.includes('placeholder') || url.includes('via.placeholder')) return null;
+    try {
+        // URL pattern: .../storage/v1/object/public/<bucket>/<filename>
+        const marker = `/object/public/${bucket}/`;
+        const idx = url.indexOf(marker);
+        if (idx === -1) return null;
+        const filePath = url.substring(idx + marker.length).split('?')[0];
+        return filePath || null;
+    } catch (e) {
+        return null;
+    }
+}
+
+
+async function deleteProductImage(imageUrl) {
+    if (!imageUrl || imageUrl.includes('placeholder') || imageUrl.includes('via.placeholder')) return;
+    try {
+        const marker = '/object/public/product-images/';
+        const idx = imageUrl.indexOf(marker);
+        if (idx === -1) return;
+        const fileName = decodeURIComponent(imageUrl.substring(idx + marker.length).split('?')[0]);
+        if (!fileName) return;
+        console.log('🗑️ جاري حذف الصورة:', fileName);
+        const { data, error } = await _supabase.storage
+            .from('product-images')
+            .remove([fileName]);
+        if (error) console.warn('❌ فشل الحذف:', error);
+        else console.log('✅ تم حذف الصورة بنجاح:', data);
+    } catch (e) {
+        console.warn('❌ خطأ:', e);
+    }
+}
+
 
 async function init(){if(!storeId)return;await loadCategoriesForDropdown();loadUserAvatar();const{data:store}=await _supabase.from('store_settings').select('store_name,logo_url,store_slug').eq('id',storeId).single();if(store){document.getElementById('store-display-title').innerText="متجر: "+store.store_name;storeSlug=store.store_slug;document.getElementById('main-store-logo').style.cursor='pointer';document.getElementById('main-store-logo').onclick=()=>{window.open(`view_menu.html?s=${store.store_slug}`,'_blank')};if(store.logo_url){const mLogo=document.getElementById('main-store-logo');mLogo.src=store.logo_url;mLogo.style.display='block';storeLogoUrl=store.logo_url}}
 const el=document.getElementById('prod-list');sortableInstance=new Sortable(el,{handle:'.drag-handle',animation:150,ghostClass:'sortable-ghost',onEnd:async function(){showLoader(true);const cards=document.querySelectorAll('.product-card');const updates=[];cards.forEach((card,index)=>{const id=card.id.replace('row-','');const newOrder=index+1;const pIdx=allProducts.findIndex(p=>p.id==id);if(pIdx!==-1)allProducts[pIdx].product_order=newOrder;updates.push(_supabase.from('products').update({product_order:newOrder}).eq('id',id))});await Promise.all(updates);filterData();showLoader(false)}});await loadCategories();loadProducts()}
@@ -464,54 +495,119 @@ function filterData(){const n=document.getElementById('search-name').value.toLow
 renderTable(filtered)}
 async function toggleAvailability(id,current){const nextStatus=!current;const pIdx=allProducts.findIndex(p=>p.id==id);if(pIdx!==-1)allProducts[pIdx].is_available=nextStatus;filterData();await _supabase.from('products').update({is_available:nextStatus}).eq('id',id)}
 function showLoader(s){document.getElementById('loading-overlay').style.display=s?'flex':'none'}
+
+// ✅ MODIFIED: changeImageInTable — stores old image URL before replacing
 function changeImageInTable(id){activeTableId=id;document.getElementById('table-file-input').click()}
-document.getElementById('table-file-input').onchange=async function(e){const file=e.target.files[0];if(!file||!activeTableId)return;showLoader(true);const fName=`${Date.now()}.${file.name.split('.').pop()}`;await _supabase.storage.from('product-images').upload(fName,file);const url=_supabase.storage.from('product-images').getPublicUrl(fName).data.publicUrl;await _supabase.from('products').update({image_url:url}).eq('id',activeTableId);const idx=allProducts.findIndex(p=>p.id==activeTableId);if(idx!==-1)allProducts[idx].image_url=url;filterData();showLoader(false)};
+
+document.getElementById('table-file-input').onchange=async function(e){
+    const file=e.target.files[0];
+    if(!file||!activeTableId)return;
+    showLoader(true);
+
+    // ✅ NEW: حذف الصورة القديمة قبل رفع الجديدة
+    const oldProduct = allProducts.find(p => p.id == activeTableId);
+    if (oldProduct && oldProduct.image_url) {
+        await deleteProductImage(oldProduct.image_url);
+    }
+
+    const fName=`${Date.now()}.${file.name.split('.').pop()}`;
+    await _supabase.storage.from('product-images').upload(fName,file);
+    const url=_supabase.storage.from('product-images').getPublicUrl(fName).data.publicUrl;
+    await _supabase.from('products').update({image_url:url}).eq('id',activeTableId);
+    const idx=allProducts.findIndex(p=>p.id==activeTableId);
+    if(idx!==-1)allProducts[idx].image_url=url;
+    filterData();
+    showLoader(false);
+};
+
 function toggleForm(){const f=document.getElementById('product-form-container');f.style.display=(f.style.display==='block')?'none':'block';if(f.style.display==='none'){document.getElementById('edit-id').value="";document.getElementById('p-name').value="";document.getElementById('p-price').value="";document.getElementById('p-sale').value="";document.getElementById('p-order').value="";document.getElementById('p-desc').value="";document.getElementById('p-barcode').value="";document.getElementById('preview-img').style.display='none';document.getElementById('placeholder-text').style.display='block';
-// ===== NEW: reset type to main on form close =====
 resetProductTypeUI();
-// ===== END NEW =====
 }}
 function previewImage(i){if(i.files&&i.files[0]){const r=new FileReader();r.onload=(e)=>{const img=document.getElementById('preview-img');img.src=e.target.result;img.style.display='block';document.getElementById('placeholder-text').style.display='none'};r.readAsDataURL(i.files[0])}}
 function setupEdit(p){window.scrollTo({top:0,behavior:'smooth'});if(document.getElementById('product-form-container').style.display!=='block')toggleForm();document.getElementById('edit-id').value=p.id;document.getElementById('p-name').value=p.product_name;document.getElementById('p-price').value=p.price;document.getElementById('p-sale').value=p.sale_price||"";document.getElementById('p-order').value=p.product_order||"";document.getElementById('p-desc').value=p.description||"";document.getElementById('p-barcode').value=p.barcode||"";document.getElementById('p-cat').value=p.category_id||"";if(p.image_url){document.getElementById('preview-img').src=p.image_url;document.getElementById('preview-img').style.display='block';document.getElementById('placeholder-text').style.display='none';currentImgUrl=p.image_url}else{document.getElementById('preview-img').style.display='none';document.getElementById('placeholder-text').style.display='block';currentImgUrl="";}
-// ===== NEW: restore product_type on edit =====
 const pType = p.product_type || 'main';
 document.querySelector(`input[name="product_type"][value="${pType}"]`).checked = true;
 onProductTypeChange();
-// Load existing addons for this product if it's main
 if(pType === 'main') {
   loadExistingProductAddons(p.id);
 }
-// ===== END NEW =====
 }
 
-// ===== NEW: handleSave with product_type and addons =====
-async function handleSave(){const name=document.getElementById('p-name').value,price=document.getElementById('p-price').value,catId=document.getElementById('p-cat').value;if(!name||!price||!catId){alert("يرجى إكمال الحقول المطلوبة.");return}showLoader(true);const id=document.getElementById('edit-id').value,file=document.getElementById('p-file').files[0];let url=currentImgUrl;if(file){const fN=`${Date.now()}.${file.name.split('.').pop()}`;await _supabase.storage.from('product-images').upload(fN,file);url=_supabase.storage.from('product-images').getPublicUrl(fN).data.publicUrl}const{data:prof}=await _supabase.from('profiles').select('id').eq('phone_number',userPhone).single();
-// Get selected product type
-const productType = document.querySelector('input[name="product_type"]:checked').value;
-const payload={product_name:name,price:parseFloat(price),sale_price:document.getElementById('p-sale').value?parseFloat(document.getElementById('p-sale').value):null,product_order:parseInt(document.getElementById('p-order').value)||0,description:document.getElementById('p-desc').value,barcode:document.getElementById('p-barcode').value||null,category_id:catId,image_url:url,store_id:storeId,user_id:prof.id,product_type:productType};
-let savedProductId = null;
-if(id && id !== ''){
-  await _supabase.from('products').update(payload).eq('id', id);
-  savedProductId = parseInt(id);
-} else {
-  await _supabase.from('products').insert([payload]);
-  const { data: fetchedProd } = await _supabase
-    .from('products')
-    .select('id')
-    .eq('store_id', storeId)
-    .eq('product_name', name)
-    .order('id', { ascending: false })
-    .limit(1)
-    .single();
-  if(fetchedProd && fetchedProd.id){ savedProductId = parseInt(fetchedProd.id); }
-}
-if(productType === 'main' && savedProductId) {
-  await saveProductAddons(savedProductId);
-}
-toggleForm();await loadProducts()}
-// ===== END NEW =====
+// ✅ MODIFIED: handleSave — حذف الصورة القديمة عند رفع صورة جديدة
+async function handleSave(){
+    const name=document.getElementById('p-name').value,
+          price=document.getElementById('p-price').value,
+          catId=document.getElementById('p-cat').value;
+    if(!name||!price||!catId){alert("يرجى إكمال الحقول المطلوبة.");return}
+    showLoader(true);
+    const id=document.getElementById('edit-id').value,
+          file=document.getElementById('p-file').files[0];
+    let url=currentImgUrl;
 
-async function deleteProd(id){if(confirm("هل أنت متأكد؟")){showLoader(true);await _supabase.from('products').delete().eq('id',id);await loadProducts()}}
+    if(file){
+        // ✅ NEW: حذف الصورة القديمة قبل رفع الجديدة
+        if(currentImgUrl){
+            await deleteProductImage(currentImgUrl);
+        }
+        const fN=`${Date.now()}.${file.name.split('.').pop()}`;
+        await _supabase.storage.from('product-images').upload(fN,file);
+        url=_supabase.storage.from('product-images').getPublicUrl(fN).data.publicUrl;
+    }
+
+    const{data:prof}=await _supabase.from('profiles').select('id').eq('phone_number',userPhone).single();
+    const productType = document.querySelector('input[name="product_type"]:checked').value;
+    const payload={
+        product_name:name,
+        price:parseFloat(price),
+        sale_price:document.getElementById('p-sale').value?parseFloat(document.getElementById('p-sale').value):null,
+        product_order:parseInt(document.getElementById('p-order').value)||0,
+        description:document.getElementById('p-desc').value,
+        barcode:document.getElementById('p-barcode').value||null,
+        category_id:catId,
+        image_url:url,
+        store_id:storeId,
+        user_id:prof.id,
+        product_type:productType
+    };
+
+    let savedProductId = null;
+    if(id && id !== ''){
+        await _supabase.from('products').update(payload).eq('id', id);
+        savedProductId = parseInt(id);
+    } else {
+        await _supabase.from('products').insert([payload]);
+        const { data: fetchedProd } = await _supabase
+            .from('products')
+            .select('id')
+            .eq('store_id', storeId)
+            .eq('product_name', name)
+            .order('id', { ascending: false })
+            .limit(1)
+            .single();
+        if(fetchedProd && fetchedProd.id){ savedProductId = parseInt(fetchedProd.id); }
+    }
+
+    if(productType === 'main' && savedProductId) {
+        await saveProductAddons(savedProductId);
+    }
+    toggleForm();
+    await loadProducts();
+}
+
+// ✅ MODIFIED: deleteProd — حذف الصورة من Storage قبل حذف المنتج
+async function deleteProd(id){
+    if(confirm("هل أنت متأكد من حذف هذا المنتج؟")){
+        showLoader(true);
+        // ✅ NEW: جلب صورة المنتج وحذفها من Storage
+        const product = allProducts.find(p => p.id == id);
+        if(product && product.image_url){
+            await deleteProductImage(product.image_url);
+        }
+        await _supabase.from('products').delete().eq('id',id);
+        await loadProducts();
+    }
+}
+
 function resetFilters(){document.getElementById('search-name').value="";document.getElementById('filter-cat').value="";document.getElementById('filter-status').value="";document.getElementById('sort-main').value="";filterData()}
 function logout(){localStorage.clear();window.location.href='index.html'}
 async function openMenuScanner(){const modal=document.getElementById('scanner-modal');modal.style.display='flex';const btn=document.getElementById('modal-upload-btn');btn.disabled=true;btn.style.opacity="0.5";btn.innerText="جاري التحقق...";try{const{data:profile}=await _supabase.from('profiles').select('id').eq('phone_number',userPhone).single();window.realUserId=profile.id;btn.disabled=false;btn.style.opacity="1";btn.innerText="📸 اختر صورة المنيو للرفع"}catch(e){btn.innerText="❌ خطأ في التحقق";btn.style.background="#e74c3c"}}
@@ -647,32 +743,26 @@ async function getUsername() {
 }
 getUsername();
 
-// ===== NEW: Product Type Functions =====
-
+// ===== Product Type Functions =====
 function onProductTypeChange() {
     const selected = document.querySelector('input[name="product_type"]:checked').value;
     const labelMain = document.getElementById('label-type-main');
     const labelAddon = document.getElementById('label-type-addon');
     const addonsSection = document.getElementById('addons-section');
-
-    // Update label styles
     labelMain.classList.remove('selected-main', 'selected-addon');
     labelAddon.classList.remove('selected-main', 'selected-addon');
-
     if (selected === 'main') {
         labelMain.classList.add('selected-main');
         addonsSection.style.display = 'block';
     } else {
         labelAddon.classList.add('selected-addon');
         addonsSection.style.display = 'none';
-        // Clear addons if switched to addon type
         selectedAddonIds = [];
         updateAddonsBadge();
     }
 }
 
 function resetProductTypeUI() {
-    // Reset to main
     document.querySelector('input[name="product_type"][value="main"]').checked = true;
     selectedAddonIds = [];
     tempAddonIds = [];
@@ -699,14 +789,9 @@ async function openAddonsPicker() {
     const modal = document.getElementById('addons-picker-modal');
     const listEl = document.getElementById('addons-picker-list');
     modal.style.display = 'flex';
-
-    // Copy current selection to temp (always integers)
     tempAddonIds = selectedAddonIds.map(Number);
-
     listEl.innerHTML = '<p style="text-align:center;color:#aaa;padding:20px 0;">جاري تحميل الإضافات...</p>';
-
     try {
-        // Fetch all addon products for this store
         const { data: addons } = await _supabase
             .from('products')
             .select('id, product_name, price, sale_price, image_url')
@@ -714,7 +799,6 @@ async function openAddonsPicker() {
             .eq('product_type', 'addon')
             .eq('is_available', true)
             .order('product_name', { ascending: true });
-
         if (!addons || addons.length === 0) {
             listEl.innerHTML = `
                 <div style="text-align:center;padding:30px 20px;color:#aaa;">
@@ -724,7 +808,6 @@ async function openAddonsPicker() {
                 </div>`;
             return;
         }
-
         const fallback = 'https://via.placeholder.com/45?text=+';
         listEl.innerHTML = addons.map(addon => {
             const imgSrc = (addon.image_url && addon.image_url !== '') ? addon.image_url : fallback;
@@ -741,7 +824,6 @@ async function openAddonsPicker() {
                     </div>
                 </div>`;
         }).join('');
-
     } catch (err) {
         listEl.innerHTML = `<p style="text-align:center;color:#e74c3c;">فشل تحميل الإضافات: ${err.message}</p>`;
     }
@@ -775,15 +857,13 @@ function closeAddonsPicker() {
 
 async function saveProductAddons(productId) {
     const mainId = parseInt(productId);
-    // Delete existing addons for this product first
     const { error: delError } = await _supabase.from('product_addons').delete().eq('main_product_id', mainId);
     if (delError) console.error('خطأ في حذف الإضافات القديمة:', delError);
-
-    // Insert new selections
     if (selectedAddonIds.length > 0) {
         const rows = selectedAddonIds.map(addonId => ({
             main_product_id: mainId,
-            addon_product_id: parseInt(addonId)
+            addon_product_id: parseInt(addonId),
+            store_id: parseInt(storeId)
         }));
         const { error: insError } = await _supabase.from('product_addons').insert(rows);
         if (insError) console.error('خطأ في حفظ الإضافات:', insError);
@@ -802,7 +882,6 @@ async function loadExistingProductAddons(productId) {
         selectedAddonIds = [];
     }
 }
-// ===== END NEW =====
 </script>
 </body>
 </html>
