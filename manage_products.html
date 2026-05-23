@@ -413,21 +413,24 @@ function extractStorageFileName(url, bucket) {
     }
 }
 
-
 async function deleteProductImage(imageUrl) {
     if (!imageUrl || imageUrl.includes('placeholder') || imageUrl.includes('via.placeholder')) return;
     try {
         const marker = '/object/public/product-images/';
         const idx = imageUrl.indexOf(marker);
         if (idx === -1) return;
-        const fileName = decodeURIComponent(imageUrl.substring(idx + marker.length).split('?')[0]);
-        if (!fileName) return;
-        console.log('🗑️ جاري حذف الصورة:', fileName);
+        
+        // استخرج اسم الملف بدون decodeURIComponent أولاً
+        const rawFileName = imageUrl.substring(idx + marker.length).split('?')[0];
+        console.log('📁 اسم الملف الخام:', rawFileName);
+        console.log('🔗 الرابط الكامل:', imageUrl);
+        
         const { data, error } = await _supabase.storage
             .from('product-images')
-            .remove([fileName]);
+            .remove([rawFileName]);
+            
         if (error) console.warn('❌ فشل الحذف:', error);
-        else console.log('✅ تم حذف الصورة بنجاح:', data);
+        else console.log('✅ النتيجة:', data);
     } catch (e) {
         console.warn('❌ خطأ:', e);
     }
