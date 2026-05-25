@@ -183,10 +183,77 @@
             font-family: monospace;
             direction: ltr;
         }
+
+        /* ===== قسم المنطقة الزمنية مع الوقت الحالي ===== */
+        .timezone-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 10px 0;
+            align-items: stretch;
+        }
+        .timezone-half {
+            background: #f9f9f9;
+            border: 1px solid #e8e8e8;
+            border-radius: 10px;
+            padding: 10px 12px;
+            box-sizing: border-box;
+        }
+        .timezone-half-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: #777;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .timezone-half select {
+            width: 100%;
+            padding: 7px 8px;
+            border: 1.5px solid #e0e0e0;
+            border-radius: 7px;
+            font-size: 12px;
+            background: white;
+            color: #333;
+            margin: 0;
+            box-sizing: border-box;
+        }
+        .timezone-half select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        .current-time-display {
+            text-align: center;
+            padding: 6px 4px;
+        }
+        .current-time-clock {
+            font-size: 1.6em;
+            font-weight: 800;
+            color: #2c3e50;
+            letter-spacing: 1px;
+            direction: ltr;
+            font-variant-numeric: tabular-nums;
+            line-height: 1.2;
+        }
+        .current-time-date {
+            font-size: 11px;
+            color: #888;
+            margin-top: 3px;
+            direction: rtl;
+        }
+        .current-time-tz-name {
+            font-size: 10px;
+            color: var(--primary);
+            margin-top: 2px;
+            font-weight: 600;
+        }
         
         @media (max-width: 400px) {
             .welcome-section { font-size: 0.85em; }
             .circle-tool { width: 36px; height: 36px; font-size: 16px; }
+            .current-time-clock { font-size: 1.3em; }
+            .timezone-half select { font-size: 11px; }
         }
     </style>
 <base target="_blank">
@@ -242,6 +309,53 @@
 
         <input type="text" id="welcome_msg" placeholder="رسالة الترحيب (مثال: أهلاً وسهلاً بكم)">
         <textarea id="store_description" rows="2" placeholder="وصف المتجر (يظهر في صفحة المتجر)"></textarea>
+
+        <!-- ===== المنطقة الزمنية + الوقت الحالي (آخر النموذج) ===== -->
+        <div class="timezone-row">
+            <!-- النصف الأيسر: الوقت الحالي -->
+            <div class="timezone-half">
+                <div class="timezone-half-label">🕐 الوقت الحالي</div>
+                <div class="current-time-display">
+                    <div class="current-time-clock" id="live-clock">--:--:--</div>
+                    <div class="current-time-date" id="live-date">--</div>
+                    <div class="current-time-tz-name" id="live-tz-name">--</div>
+                </div>
+            </div>
+            <!-- النصف الأيمن: اختيار المنطقة -->
+            <div class="timezone-half">
+                <div class="timezone-half-label">🌍 المنطقة الزمنية</div>
+                <select id="store_timezone" onchange="updateLiveClock()">
+                    <optgroup label="المملكة العربية السعودية والخليج">
+                        <option value="Asia/Riyadh">الرياض / السعودية</option>
+                        <option value="Asia/Dubai">دبي / الإمارات</option>
+                        <option value="Asia/Kuwait">الكويت</option>
+                        <option value="Asia/Qatar">قطر</option>
+                        <option value="Asia/Bahrain">البحرين</option>
+                        <option value="Asia/Muscat">مسقط / عُمان</option>
+                    </optgroup>
+                    <optgroup label="المنطقة العربية">
+                        <option value="Africa/Cairo">القاهرة / مصر</option>
+                        <option value="Asia/Baghdad">بغداد / العراق</option>
+                        <option value="Asia/Beirut">بيروت / لبنان</option>
+                        <option value="Asia/Damascus">دمشق / سوريا</option>
+                        <option value="Asia/Amman">عمان / الأردن</option>
+                        <option value="Africa/Tunis">تونس</option>
+                        <option value="Africa/Algiers">الجزائر</option>
+                        <option value="Africa/Casablanca">الدار البيضاء / المغرب</option>
+                        <option value="Africa/Tripoli">طرابلس / ليبيا</option>
+                        <option value="Africa/Khartoum">الخرطوم / السودان</option>
+                    </optgroup>
+                    <optgroup label="مناطق أخرى">
+                        <option value="Europe/London">لندن</option>
+                        <option value="Europe/Paris">باريس</option>
+                        <option value="America/New_York">نيويورك</option>
+                        <option value="America/Los_Angeles">لوس أنجلوس</option>
+                        <option value="Asia/Tokyo">طوكيو</option>
+                    </optgroup>
+                </select>
+            </div>
+        </div>
+
         <button class="btn-save" id="btn-save-store" onclick="handleSaveStore()">حفظ البيانات</button>
         <button style="margin-top:10px; background:#95a5a6;" class="btn-save" onclick="toggleForm()">إلغاء</button>
     </div>
@@ -269,8 +383,48 @@
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
     const userPhone = (localStorage.getItem('user_phone') || "").trim();
 
-    // ✅ متغير مؤقت لحفظ ملف الشعار في الذاكرة
     let pendingLogoFile = null;
+    let clockInterval = null;
+
+    // ===== الساعة الحية =====
+    function updateLiveClock() {
+        const tz = document.getElementById('store_timezone').value;
+        const now = new Date();
+
+        // الوقت
+        const timeStr = now.toLocaleTimeString('ar-SA', {
+            timeZone: tz,
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        });
+
+        // التاريخ
+        const dateStr = now.toLocaleDateString('ar-SA', {
+            timeZone: tz,
+            weekday: 'short',
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+
+        // اسم المنطقة
+        const tzShort = now.toLocaleTimeString('en-US', {
+            timeZone: tz,
+            timeZoneName: 'short'
+        }).split(' ').pop();
+
+        document.getElementById('live-clock').textContent = timeStr;
+        document.getElementById('live-date').textContent = dateStr;
+        document.getElementById('live-tz-name').textContent = tzShort;
+    }
+
+    function startClock() {
+        updateLiveClock();
+        if (clockInterval) clearInterval(clockInterval);
+        clockInterval = setInterval(updateLiveClock, 1000);
+    }
 
     // ===== التحقق من الحقول المطلوبة =====
     function validateRequired(input) {
@@ -418,6 +572,12 @@
                                             <path d="M7 14h.01M10 18h.01M7 18h.01M3 14h.01M3 18h.01"></path>
                                         </svg>
                                     </div>
+                                    <div class="circle-tool" onclick="window.location.href='store_schedules.html?store_id=${s.id}'" title="أوقات الدوام" style="border-color:#e8f4fd;">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3498db" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <polyline points="12 6 12 12 16 14"></polyline>
+                                        </svg>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -459,14 +619,15 @@
         const s = document.getElementById('stores-card');
         if (f.style.display === "none" || f.style.display === "") {
             f.style.display = "block"; t.style.display = "none"; s.style.display = "none";
+            startClock(); // ابدأ الساعة عند فتح النموذج
         } else {
             f.style.display = "none"; t.style.display = "block"; s.style.display = "block";
+            if (clockInterval) { clearInterval(clockInterval); clockInterval = null; }
             resetForm();
         }
     }
 
     function resetForm() {
-        // ✅ تجاهل الصورة المؤقتة عند الإلغاء
         pendingLogoFile = null;
         document.getElementById('edit_store_id').value = '';
         document.getElementById('logo_url').value = '';
@@ -479,6 +640,8 @@
         document.getElementById('slug-hint').style.display = 'block';
         document.getElementById('store_primary_color').value = '#24b47e';
         updateColorPreview(document.getElementById('store_primary_color'));
+        document.getElementById('store_timezone').value = 'Asia/Riyadh';
+        updateLiveClock();
     }
 
     function editExistingStore(store) {
@@ -499,17 +662,14 @@
             document.getElementById('logo-preview').src = store.logo_url;
             document.getElementById('logo-preview').style.display = "block";
         }
+        document.getElementById('store_timezone').value = store.timezone || 'Asia/Riyadh';
+        updateLiveClock();
     }
 
-    // ===== رفع الشعار: فقط معاينة محلية بدون رفع للسيرفر =====
     function uploadStoreLogo(input) {
         const file = input.files[0];
         if (!file) return;
-
-        // ✅ احفظ الملف مؤقتاً في الذاكرة فقط
         pendingLogoFile = file;
-
-        // اعرض المعاينة محلياً فقط
         const preview = document.getElementById('logo-preview');
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -519,7 +679,6 @@
         reader.readAsDataURL(file);
     }
 
-    // ===== حذف شعار المتجر من Storage =====
     async function deleteStoreLogo(imageUrl) {
         if (!imageUrl || imageUrl.includes('placeholder') || imageUrl.includes('via.placeholder')) return;
         try {
@@ -536,7 +695,6 @@
         }
     }
 
-    // ===== حفظ المتجر مع رفع الشعار عند الحفظ فقط =====
     async function handleSaveStore() {
         const name = document.getElementById('store_name').value.trim();
         const slug = document.getElementById('store_slug').value.trim();
@@ -552,7 +710,6 @@
             return;
         }
 
-        // ✅ تعطيل الزر وتغيير نصه ولونه
         const btn = document.getElementById('btn-save-store');
         btn.disabled = true;
         btn.textContent = 'جاري حفظ البيانات...';
@@ -580,7 +737,8 @@
                 logo_url: logoUrl,
                 welcome_msg: document.getElementById('welcome_msg').value.trim(),
                 store_description: document.getElementById('store_description').value.trim(),
-                primary_color: document.getElementById('store_primary_color').value
+                primary_color: document.getElementById('store_primary_color').value,
+                timezone: document.getElementById('store_timezone').value
             };
 
             if (storeId) {
@@ -595,7 +753,6 @@
         } catch (err) {
             alert('فشل الحفظ: ' + err.message);
         } finally {
-            // ✅ إعادة الزر لوضعه الطبيعي عند أي فشل
             btn.disabled = false;
             btn.textContent = 'حفظ البيانات';
             btn.style.background = 'var(--primary)';
@@ -603,7 +760,6 @@
         }
     }
 
-    // ===== حذف المتجر مع حذف الشعار =====
     async function deleteStore(id, logoUrl) {
         const firstConfirm = confirm(
             '⚠️ تحذير نهائي!\n\n' +
@@ -624,7 +780,6 @@
         if (!secondConfirm) return;
 
         try {
-            // ✅ احذف شعار المتجر من Storage أولاً
             if (logoUrl) await deleteStoreLogo(logoUrl);
             await _supabase.from('store_settings').delete().eq('id', id);
             location.reload();
