@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>أوقات الدوام | لوحة التاجر</title>
+    <script>if(!localStorage.getItem('user_phone'))window.location.href='index.html';</script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --primary: #24b47e;
+            --primary-dark: #1a9e6a;
+            --danger: #e74c3c;
+            --edit: #3498db;
+            --purple: #6c5ce7;
+            --bg: #f0f4f3;
+            --dark: #1e2a24;
+            --gray: #95a5a6;
+            --card-radius: 16px;
+            --shadow: 0 2px 12px rgba(0,0,0,0.07);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: var(--bg);
+            direction: rtl;
+            min-height: 100vh;
+        }
+
+        .btn-back {
+            background: #34495e;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 12px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        /* ===== CONTAINER ===== */
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 14px 12px 60px;
+        }
+
+        /* ===== STORE INFO CARD ===== */
+        .store-info-card {
+            background: white;
+            border-radius: var(--card-radius);
+            padding: 12px 14px;
+            margin-bottom: 14px;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border: 1px solid #f0f0f0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .store-info-logo {
+            width: 48px; height: 48px;
+            border-radius: 12px;
+            object-fit: cover;
+            border: 1px solid #eee;
+            background: #f5f5f5;
+            flex-shrink: 0;
+        }
+        .store-info-name {
+            font-size: 15px;
+            font-weight: bold;
+            color: var(--dark);
+        }
+        .store-info-sub {
+            font-size: 11px;
+            color: #aaa;
+            margin-top: 2px;
+        }
+
+        /* ===== STATUS BAR ===== */
+        .status-bar {
+            border-radius: var(--card-radius);
+            padding: 14px 16px;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            box-shadow: var(--shadow);
+        }
+        .status-bar.open-status {
+            background: linear-gradient(135deg, #e8faf3, #d4f5e5);
+            border: 1.5px solid #a8e6c8;
+        }
+        .status-bar.closed-status {
+            background: linear-gradient(135deg, #fdf2f2, #fde8e8);
+            border: 1.5px solid #f5b8b8;
+        }
+        .status-bar.unknown-status {
+            background: #f8f9fa;
+            border: 1.5px solid #e0e0e0;
+        }
+        .status-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            min-width: 0;
+        }
+        .status-dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            animation: pulse 2s infinite;
+        }
+        .status-dot.green { background: #24b47e; box-shadow: 0 0 0 3px rgba(36,180,126,0.2); }
+        .status-dot.red   { background: #e74c3c; box-shadow: 0 0 0 3px rgba(231,76,60,0.2); }
+        .status-dot.gray  { background: #95a5a6; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+        .status-text { font-size: 13px; font-weight: bold; color: var(--dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .status-sub  { font-size: 11px; color: #666; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .status-time {
+            font-size: 12px;
+            font-weight: bold;
+            color: #555;
+            background: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            border: 1px solid #eee;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        /* ===== ADD BUTTON ===== */
+        .btn-add {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 14px;
+            width: 100%;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+        .btn-add:hover { background: var(--primary-dark); }
+
+        /* ===== FORM CARD ===== */
+        .form-card {
+            background: white;
+            border-radius: var(--card-radius);
+            padding: 18px 14px;
+            box-shadow: var(--shadow);
+            margin-bottom: 14px;
+            display: none;
+            border: 2px solid var(--primary);
+        }
+        .form-card.open { display: block; }
+
+        .form-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--dark);
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .form-group { display: flex; flex-direction: column; gap: 5px; }
+        .form-group.full { grid-column: span 2; }
+
+        label {
+            font-size: 11px;
+            font-weight: 700;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        select, input[type="time"] {
+            padding: 11px 12px;
+            border: 1.5px solid #e8e8e8;
+            border-radius: 10px;
+            font-size: 14px;
+            background: #fafafa;
+            color: var(--dark);
+            width: 100%;
+            transition: 0.2s;
+            -webkit-appearance: none;
+        }
+        select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: left 12px center; }
+        select:focus, input[type="time"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(36,180,126,0.1);
+        }
+
+        .period-hint {
+            font-size: 11px;
+            font-weight: 600;
+            min-height: 15px;
+            display: block;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+        }
+        .btn-save {
+            flex: 1;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 13px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+        .btn-save:disabled { background: var(--gray); cursor: not-allowed; }
+        .btn-cancel {
+            background: #f1f2f6;
+            color: #555;
+            border: none;
+            padding: 13px 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        /* ===== HINT BAR ===== */
+        .days-order-info {
+            background: #f0faf6;
+            border: 1px solid #c8ead8;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 12px;
+            color: #2e7d5e;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* ===== SECTION TITLE ===== */
+        .section-title {
+            font-size: 12px;
+            font-weight: bold;
+            color: #aaa;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .section-title::after { content:''; flex:1; height:1px; background:#eee; }
+
+        /* ===== SCHEDULE LIST ===== */
+        .schedule-list { display: flex; flex-direction: column; gap: 8px; }
+
+        .schedule-card {
+            background: white;
+            border-radius: var(--card-radius);
+            padding: 12px 14px;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border: 1px solid #f0f0f0;
+        }
+
+        .day-badge {
+            width: 46px;
+            height: 46px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            color: white;
+        }
+        .day-badge.closed-badge { background: linear-gradient(135deg, #bdc3c7, #95a5a6); }
+        .day-badge .day-num { font-size: 16px; font-weight: bold; line-height: 1; }
+        .day-badge .day-short { font-size: 9px; opacity: 0.85; }
+
+        .schedule-info { flex: 1; min-width: 0; }
+        .schedule-day-name { font-size: 13px; font-weight: bold; color: var(--dark); margin-bottom: 3px; }
+        .schedule-time { font-size: 12px; color: #666; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+        .schedule-time.closed-text { color: var(--danger); }
+
+        /* ===== ACTION BUTTONS ===== */
+        .schedule-actions { display: flex; gap: 6px; flex-shrink: 0; }
+        .btn-icon-action {
+            width: 34px; height: 34px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: 0.15s;
+        }
+        .btn-edit-sched { background: #ebf5fb; color: var(--edit); }
+        .btn-del-sched  { background: #fdf2f2; color: var(--danger); }
+
+        /* ===== EMPTY STATE ===== */
+        .empty-state { text-align: center; padding: 40px 20px; color: #bbb; }
+        .empty-state .icon { font-size: 44px; margin-bottom: 10px; }
+        .empty-state p { font-size: 13px; }
+
+        /* ===== LOADING ===== */
+        #loading-overlay {
+            display: none; position: fixed; top:0; left:0;
+            width:100%; height:100%;
+            background: rgba(255,255,255,0.75);
+            z-index: 9999;
+            justify-content: center; align-items: center; flex-direction: column;
+        }
+        .spinner {
+            width:38px; height:38px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 0.9s linear infinite;
+        }
+        @keyframes spin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
+
+
+        /* ===== TIME PICKER ===== */
+        .time-picker-row {
+            display: flex;
+            gap: 6px;
+        }
+        .time-picker-row select {
+            flex: 1;
+            padding: 10px 6px;
+            font-size: 13px;
+            text-align: center;
+        }
+        /* ===== COPY MODAL ===== */
+        #copy-modal {
+            display: none; position: fixed; top:0; left:0;
+            width:100%; height:100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 9998;
+            justify-content: center; align-items: flex-end;
+        }
+        #copy-modal.open { display: flex; }
+        .copy-modal-box {
+            background: white;
+            width: 100%; max-width: 500px;
+            border-radius: 20px 20px 0 0;
+            padding: 20px 16px 28px;
+            animation: slideUp 0.22s ease;
+        }
+        @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+        .copy-modal-title { font-size: 14px; font-weight: bold; color: var(--dark); margin-bottom: 4px; }
+        .copy-modal-sub { font-size: 11px; color: #888; margin-bottom: 14px; }
+        .days-checkboxes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+        .day-check-item {
+            display: flex; align-items: center; gap: 8px;
+            padding: 11px 12px;
+            border: 1.5px solid #eee;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 13px; font-weight: 600; color: #444;
+            transition: 0.15s;
+        }
+        .day-check-item.checked { border-color: var(--primary); background: #e8faf3; color: var(--primary); }
+        .day-check-item.disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+        .copy-select-all { font-size: 12px; color: var(--primary); font-weight: bold; cursor: pointer; margin-bottom: 12px; display: inline-block; }
+        .copy-actions { display: flex; gap: 10px; }
+        .btn-copy-confirm { flex:1; background: var(--primary); color: white; border: none; padding: 13px; border-radius: 10px; font-weight: bold; font-size: 14px; cursor: pointer; }
+        .btn-copy-confirm:disabled { background: var(--gray); cursor: not-allowed; }
+        .btn-copy-cancel { background: #f1f2f6; color: #555; border: none; padding: 13px 16px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+
+        /* ===== MOBILE ===== */
+        @media (max-width: 480px) {
+            .container { padding: 10px 10px 60px; }
+            .form-grid { grid-template-columns: 1fr; }
+            .form-group.full { grid-column: span 1; }
+            .schedule-card { padding: 10px 12px; gap: 10px; }
+            .day-badge { width: 42px; height: 42px; border-radius: 10px; }
+            .day-badge .day-num { font-size: 15px; }
+            .btn-icon-action { width: 32px; height: 32px; font-size: 13px; }
+            .schedule-day-name { font-size: 13px; }
+            .schedule-time { font-size: 11px; }
+            .status-bar { padding: 12px 14px; }
+            .status-text { font-size: 12px; }
+            .status-sub { font-size: 10px; }
+        }
+</style>
+</head>
+<body>
+
+<div id="loading-overlay">
+    <div class="spinner"></div>
+    <p style="color:var(--primary);font-weight:bold;margin-top:10px">جاري المعالجة...</p>
+</div>
+
+
+
+<div class="container">
+
+
+    <!-- شعار واسم المتجر + زر رجوع -->
+    <div class="store-info-card" id="store-info-card" style="display:flex;">
+        <img id="store-logo-header" class="store-info-logo" src="">
+        <div style="flex:1;">
+            <div class="store-info-name" id="store-name-header">...</div>
+            <div class="store-info-sub">🕐 أوقات الدوام</div>
+        </div>
+        <button class="btn-back" onclick="goBack()">رجوع</button>
+    </div>
+
+    <!-- شريط حالة المتجر -->
+    <div id="status-bar" class="status-bar unknown-status">
+        <div class="status-left">
+            <div class="status-dot gray" id="status-dot"></div>
+            <div>
+                <div class="status-text" id="status-text">جاري التحقق من حالة المتجر...</div>
+                <div class="status-sub" id="status-sub"></div>
+            </div>
+        </div>
+        <div class="status-time" id="status-time">--:-- --</div>
+    </div>
+
+    <!-- زر إضافة -->
+    <button class="btn-add" id="btn-toggle-form" onclick="toggleForm()">
+        + إضافة وقت دوام
+    </button>
+
+    <!-- فورم الإضافة / التعديل -->
+    <div class="form-card" id="form-card">
+        <div class="form-title" id="form-title-text">➕ إضافة وقت دوام جديد</div>
+        <input type="hidden" id="edit-id">
+
+        <div class="form-grid">
+            <!-- اليوم -->
+            <div class="form-group full">
+                <label>📅 اليوم</label>
+                <select id="f-day">
+                    <option value="الأحد">الأحد</option>
+                    <option value="الإثنين">الإثنين</option>
+                    <option value="الثلاثاء">الثلاثاء</option>
+                    <option value="الأربعاء">الأربعاء</option>
+                    <option value="الخميس">الخميس</option>
+                    <option value="الجمعة">الجمعة</option>
+                    <option value="السبت">السبت</option>
+                </select>
+            </div>
+
+            <!-- وقت الفتح -->
+            <div class="form-group" id="open-group">
+                <label>🟢 وقت الفتح</label>
+                <div class="time-picker-row">
+                    <select id="f-open-period" onchange="onTimeChange('open')">
+                        <option value="AM">صباحاً</option>
+                        <option value="PM">مساءً</option>
+                    </select>
+                    <select id="f-open-min" onchange="onTimeChange('open')">
+                    </select>
+                    <select id="f-open-hour" onchange="onTimeChange('open')">
+                    </select>
+                </div>
+                <span id="open-period-hint" class="period-hint" style="color:var(--primary);"></span>
+            </div>
+
+            <!-- وقت الإغلاق -->
+            <div class="form-group" id="close-group">
+                <label>🔴 وقت الإغلاق</label>
+                <div class="time-picker-row">
+                    <select id="f-close-period" onchange="onTimeChange('close')">
+                        <option value="AM">صباحاً</option>
+                        <option value="PM">مساءً</option>
+                    </select>
+                    <select id="f-close-min" onchange="onTimeChange('close')">
+                    </select>
+                    <select id="f-close-hour" onchange="onTimeChange('close')">
+                    </select>
+                </div>
+                <span id="close-period-hint" class="period-hint" style="color:var(--danger);"></span>
+            </div>
+
+            <!-- مدة الشفت -->
+            <div class="form-group full">
+                <div id="duration-hint" style="display:none;background:#f0faf6;border:1px solid #c8ead8;border-radius:8px;padding:8px 12px;font-size:13px;color:#2e7d5e;font-weight:bold;text-align:center;">
+                    ⏱️ <span id="duration-text"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button class="btn-save" id="btn-save" onclick="handleSave()">حفظ</button>
+            <button class="btn-cancel" onclick="closeForm()">إلغاء</button>
+        </div>
+    </div>
+
+    <!-- تلميح -->
+    <div class="days-order-info">
+        💡 يمكنك إضافة أكثر من شفت في نفس اليوم (مثال: صباحي ومسائي)
+    </div>
+
+    <!-- قائمة الدوام -->
+    <div class="section-title">جدول الدوام الحالي</div>
+    <div class="schedule-list" id="schedule-list">
+        <div class="empty-state">
+            <div class="icon">📋</div>
+            <p>جاري التحميل...</p>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const SB_URL = 'https://wnvyqvwuzmxzzhilgidh.supabase.co';
+    const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indudnlxdnd1em14enpoaWxnaWRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MTg1MDEsImV4cCI6MjA5MTQ5NDUwMX0.AyD4CYqA0cz9mC-bcOt16uUpueL_cAWT26Q92l574r0';
+    const _supabase = supabase.createClient(SB_URL, SB_KEY);
+
+    const storeId = new URLSearchParams(window.location.search).get('store_id');
+    const userPhone = localStorage.getItem('user_phone');
+
+    // ترتيب الأيام وأسماؤها
+    // القيم تطابق enum day_of_week_arabic في قاعدة البيانات
+    const DAY_ORDER = ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+    const DAY_NAMES = {
+        'الأحد':     { ar: 'الأحد',     short: 'أحد',    num: '1' },
+        'الإثنين':   { ar: 'الإثنين',   short: 'اثنين',  num: '2' },
+        'الثلاثاء':  { ar: 'الثلاثاء',  short: 'ثلاثاء', num: '3' },
+        'الأربعاء':  { ar: 'الأربعاء',  short: 'أربعاء', num: '4' },
+        'الخميس':    { ar: 'الخميس',    short: 'خميس',   num: '5' },
+        'الجمعة':    { ar: 'الجمعة',    short: 'جمعة',   num: '6' },
+        'السبت':     { ar: 'السبت',     short: 'سبت',    num: '7' },
+    };
+
+    let allSchedules = [];
+
+
+
+    // ===== COPY TO DAYS =====
+    let copySourceShift = null; // الشفت المراد نسخه
+
+
+    function openCopyModalById(id) {
+        const shift = allSchedules.find(s => s.id === id);
+        if (shift) openCopyModal(shift);
+    }
+
+    function openCopyModal(shift) {
+        copySourceShift = shift;
+        const isClosed = !shift.open_time && !shift.close_time;
+        const timeDesc = isClosed
+            ? 'إجازة / مغلق'
+            : `${formatTime(shift.open_time)} — ${formatTime(shift.close_time)}`;
+        document.getElementById('copy-modal-sub').textContent =
+            `نسخ: ${DAY_NAMES[shift.day_of_week]?.ar} (${timeDesc}) إلى:`;
+
+        // بناء checkboxes للأيام الأخرى
+        const box = document.getElementById('days-checkboxes');
+        box.innerHTML = DAY_ORDER.map(day => {
+            const isSource = day === shift.day_of_week;
+            return `
+            <div class="day-check-item ${isSource ? 'disabled' : ''}" id="chk-label-${day}" onclick="toggleDayCheck('${day}')">
+                <span class="day-check-icon" id="chk-icon-${day}">${isSource ? '✔️' : '⬜'}</span>
+                <span>${DAY_NAMES[day]?.ar || day}</span>
+            </div>`;
+        }).join('');
+
+        document.getElementById('copy-modal').classList.add('open');
+    }
+
+    function toggleDayCheck(day) {
+        const label = document.getElementById('chk-label-' + day);
+        if (!label || label.classList.contains('disabled')) return;
+        const icon = document.getElementById('chk-icon-' + day);
+        const isChecked = icon.textContent === '✅';
+        icon.textContent = isChecked ? '⬜' : '✅';
+        label.classList.toggle('checked', !isChecked);
+    }
+
+    function toggleSelectAll() {
+        const otherDays = DAY_ORDER.filter(d => d !== copySourceShift?.day_of_week);
+        const allChecked = otherDays.every(d => {
+            const icon = document.getElementById('chk-icon-' + d);
+            return icon && icon.textContent === '✅';
+        });
+        otherDays.forEach(day => {
+            const icon = document.getElementById('chk-icon-' + day);
+            const label = document.getElementById('chk-label-' + day);
+            if (icon) icon.textContent = allChecked ? '⬜' : '✅';
+            if (label) label.classList.toggle('checked', !allChecked);
+        });
+    }
+
+    function closeCopyModal() {
+        document.getElementById('copy-modal').classList.remove('open');
+        copySourceShift = null;
+    }
+
+    async function confirmCopy() {
+        if (!copySourceShift) return;
+        const selectedDays = DAY_ORDER.filter(day => {
+            const label = document.getElementById('chk-label-' + day);
+            const icon = document.getElementById('chk-icon-' + day);
+            return label && !label.classList.contains('disabled') && icon && icon.textContent === '✅';
+        });
+        if (selectedDays.length === 0) { alert('يرجى اختيار يوم واحد على الأقل.'); return; }
+
+        const btn = document.getElementById('btn-copy-confirm');
+        btn.disabled = true;
+        btn.textContent = 'جاري النسخ...';
+
+        try {
+            // ✅ insert فقط — لا تحديث للسجلات الموجودة
+            const rows = selectedDays.map(day => ({
+                store_id: parseInt(storeId),
+                day_of_week: day,
+                open_time: copySourceShift.open_time || null,
+                close_time: copySourceShift.close_time || null,
+            }));
+
+            const { error } = await _supabase
+                .from('store_schedules')
+                .insert(rows);
+
+            if (error) throw new Error(error.message);
+
+            closeCopyModal();
+            await loadSchedules();
+        } catch(err) {
+            alert('فشل النسخ: ' + err.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'تطبيق على الأيام المحددة';
+        }
+    }
+
+    // ===== STATUS BAR =====
+    let storeTimezone = 'Asia/Riyadh';
+    let clockInterval = null;
+
+    async function loadStoreInfo() {
+        try {
+            const { data } = await _supabase
+                .from('store_settings')
+                .select('store_name, logo_url, timezone')
+                .eq('id', storeId)
+                .single();
+            if (data) {
+                if (data.timezone) storeTimezone = data.timezone;
+                const card = document.getElementById('store-info-card');
+                const logo = document.getElementById('store-logo-header');
+                const name = document.getElementById('store-name-header');
+                name.textContent = data.store_name || 'المتجر';
+                if (data.logo_url && !data.logo_url.includes('placeholder')) {
+                    logo.src = data.logo_url;
+                } else {
+                    logo.style.display = 'none';
+                }
+                card.style.display = 'flex';
+            }
+        } catch(e) {}
+    }
+
+    async function loadStoreTimezone() {
+        // timezone loaded in loadStoreInfo
+    }
+
+    function getNowInTimezone(tz) {
+        const now = new Date();
+        const formatter = new Intl.DateTimeFormat('en-US', {
+            timeZone: tz,
+            hour: '2-digit', minute: '2-digit', second: '2-digit',
+            hour12: false,
+            weekday: 'long'
+        });
+        const parts = formatter.formatToParts(now);
+        const get = (t) => parts.find(p => p.type === t)?.value || '';
+        return {
+            weekday: get('weekday').toLowerCase(),
+            hour: parseInt(get('hour')),
+            minute: parseInt(get('minute')),
+            totalMinutes: parseInt(get('hour')) * 60 + parseInt(get('minute'))
+        };
+    }
+
+    function getDisplayTime(tz) {
+        return new Date().toLocaleTimeString('ar-SA', {
+            timeZone: tz,
+            hour: '2-digit', minute: '2-digit',
+            hour12: true
+        });
+    }
+
+    // تحويل اسم اليوم الإنجليزي (من JS Date) إلى قيمة enum عربية
+    const WEEKDAY_MAP = {
+        sunday:    'الأحد',
+        monday:    'الإثنين',
+        tuesday:   'الثلاثاء',
+        wednesday: 'الأربعاء',
+        thursday:  'الخميس',
+        friday:    'الجمعة',
+        saturday:  'السبت'
+    };
+
+    function updateStatusBar() {
+        const { weekday, totalMinutes } = getNowInTimezone(storeTimezone);
+        const currentDay = WEEKDAY_MAP[weekday] || weekday;
+        const displayTime = getDisplayTime(storeTimezone);
+
+        // تحديث الوقت دائماً
+        document.getElementById('status-time').textContent = displayTime;
+
+        if (allSchedules.length === 0) {
+            setStatus('unknown', 'لا توجد أوقات دوام مضافة', '');
+            return;
+        }
+
+        // جلب شفتات اليوم الحالي
+        const todayShifts = allSchedules.filter(s => s.day_of_week === currentDay);
+
+        if (todayShifts.length === 0) {
+            setStatus('closed', 'المتجر مغلق اليوم', `لا توجد شفتات لـ ${DAY_NAMES[currentDay]?.ar || currentDay}`);
+            return;
+        }
+
+        // تحقق إذا أي شفت مغلق بالكامل
+        const allClosed = todayShifts.every(s => !s.open_time && !s.close_time);
+        if (allClosed) {
+            setStatus('closed', 'المتجر مغلق اليوم', 'يوم إجازة');
+            return;
+        }
+
+        // تحقق من الشفتات المفتوحة
+        let isOpenNow = false;
+        let nextOpenText = '';
+
+        for (const shift of todayShifts) {
+            if (!shift.open_time || !shift.close_time) continue;
+            const [oh, om] = shift.open_time.split(':').map(Number);
+            const [ch, cm] = shift.close_time.split(':').map(Number);
+            const openMin = oh * 60 + om;
+            const closeMin = ch * 60 + cm;
+
+            const crossesMidnight = closeMin < openMin;
+            if (crossesMidnight) {
+                // شفت عابر لليوم التالي: مفتوح إذا بعد وقت الفتح أو قبل وقت الإغلاق
+                if (totalMinutes >= openMin || totalMinutes < closeMin) {
+                    isOpenNow = true;
+                    const closeDisplay = new Date(0,0,0,ch,cm).toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit',hour12:true});
+                    setStatus('open', 'المتجر مفتوح الآن 🎉', `يُغلق الساعة ${closeDisplay} (فجراً)`);
+                    return;
+                }
+            } else {
+                if (totalMinutes >= openMin && totalMinutes < closeMin) {
+                    isOpenNow = true;
+                    const closeDisplay = new Date(0,0,0,ch,cm).toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit',hour12:true});
+                    setStatus('open', 'المتجر مفتوح الآن 🎉', `يُغلق الساعة ${closeDisplay}`);
+                    return;
+                }
+            }
+            // أقرب شفت قادم اليوم
+            if (totalMinutes < openMin && !nextOpenText) {
+                const openDisplay = new Date(0,0,0,oh,om).toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit',hour12:true});
+                nextOpenText = `يفتح اليوم الساعة ${openDisplay}`;
+            }
+        }
+
+        if (nextOpenText) {
+            setStatus('closed', 'المتجر مغلق حالياً', nextOpenText);
+        } else {
+            setStatus('closed', 'المتجر أغلق لهذا اليوم', 'يعود غداً إن شاء الله');
+        }
+    }
+
+    function setStatus(type, text, sub) {
+        const bar  = document.getElementById('status-bar');
+        const dot  = document.getElementById('status-dot');
+        const txt  = document.getElementById('status-text');
+        const stxt = document.getElementById('status-sub');
+
+        bar.className = 'status-bar';
+        dot.className = 'status-dot';
+
+        if (type === 'open') {
+            bar.classList.add('open-status');
+            dot.classList.add('green');
+        } else if (type === 'closed') {
+            bar.classList.add('closed-status');
+            dot.classList.add('red');
+        } else {
+            bar.classList.add('unknown-status');
+            dot.classList.add('gray');
+        }
+        txt.textContent = text;
+        stxt.textContent = sub;
+    }
+
+    function startClock() {
+        updateStatusBar();
+        if (clockInterval) clearInterval(clockInterval);
+        clockInterval = setInterval(updateStatusBar, 30000); // كل 30 ثانية
+    }
+
+    // ===== INIT =====
+    async function init() {
+        if (!storeId || !userPhone) {
+            window.location.href = 'index.html';
+            return;
+        }
+        initTimePickers();
+        await loadStoreInfo();
+        await loadSchedules();
+        startClock();
+    }
+
+    // ===== LOAD =====
+    async function loadSchedules() {
+        showLoader(true);
+        const { data, error } = await _supabase
+            .from('store_schedules')
+            .select('*')
+            .eq('store_id', storeId)
+            .order('created_at', { ascending: true });
+
+        allSchedules = data || [];
+        renderList();
+        updateStatusBar();
+        showLoader(false);
+    }
+
+    // ===== RENDER =====
+    function renderList() {
+        const list = document.getElementById('schedule-list');
+
+        if (allSchedules.length === 0) {
+            list.innerHTML = `
+                <div class="empty-state">
+                    <div class="icon">🕐</div>
+                    <p>لا توجد أوقات دوام مضافة بعد</p>
+                    <p style="margin-top:6px;font-size:12px;">اضغط "+ إضافة وقت دوام" للبدء</p>
+                </div>`;
+            return;
+        }
+
+        // رتّب حسب ترتيب الأيام ثم وقت الفتح داخل كل يوم
+        const sorted = [...allSchedules].sort((a, b) => {
+            const dayDiff = DAY_ORDER.indexOf(a.day_of_week) - DAY_ORDER.indexOf(b.day_of_week);
+            if (dayDiff !== 0) return dayDiff;
+            // نفس اليوم: رتّب حسب وقت الفتح
+            const aTime = a.open_time || '00:00';
+            const bTime = b.open_time || '00:00';
+            return aTime.localeCompare(bTime);
+        });
+
+        list.innerHTML = sorted.map(s => {
+            const day = DAY_NAMES[s.day_of_week] || { ar: s.day_of_week, short: '?', num: '?' };
+            const isClosed = !s.open_time && !s.close_time;
+
+            const overnight = !isClosed && s.open_time && s.close_time &&
+                s.close_time.substring(0,5) < s.open_time.substring(0,5);
+            const cardDuration = (!isClosed && s.open_time && s.close_time)
+                ? calcDuration(s.open_time.substring(0,5), s.close_time.substring(0,5)) : null;
+            const timeText = isClosed
+                ? `<span class="schedule-time closed-text">🔴 مغلق / إجازة</span>`
+                : `<span class="schedule-time">🟢 ${formatTime(s.open_time)} — 🔴 ${formatTime(s.close_time)}${overnight ? ' <span style="font-size:10px;background:#fff3cd;color:#856404;padding:1px 5px;border-radius:4px;margin-right:4px;">يمتد لليوم التالي</span>' : ''}</span>
+                   ${cardDuration ? `<span style="font-size:11px;color:#888;margin-top:2px;display:block;">⏱️ ${cardDuration}</span>` : ''}`;
+
+            return `
+            <div class="schedule-card" id="scard-${s.id}">
+                <div class="day-badge ${isClosed ? 'closed-badge' : ''}">
+                    <span class="day-num">${day.num}</span>
+                    <span class="day-short">${day.short}</span>
+                </div>
+                <div class="schedule-info">
+                    <div class="schedule-day-name">${day.ar}</div>
+                    ${timeText}
+                </div>
+                <div class="schedule-actions">
+                    <button class="btn-icon-action btn-edit-sched" onclick="setupEdit(${s.id})" title="تعديل" style="font-size:14px">✎</button>
+                    <button class="btn-icon-action" onclick="openCopyModalById(${s.id})" title="نسخ لأيام أخرى" style="background:#f0f4ff;color:#6c5ce7;font-size:14px">⧉</button>
+                    <button class="btn-icon-action btn-del-sched" onclick="deleteSchedule(${s.id})" title="حذف" style="font-size:14px">🗑</button>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    // ===== FORMAT TIME =====
+    function formatTime(t) {
+        if (!t) return '--:--';
+        const [h, m] = t.split(':');
+        const hour = parseInt(h);
+        const ampm = hour >= 12 ? 'مساءً' : 'صباحاً';
+        const hour12 = hour % 12 || 12;
+        return `${hour12}:${m} ${ampm}`;
+    }
+
+
+
+    // ===== CUSTOM TIME PICKER =====
+    function buildHourOptions(selectId) {
+        const sel = document.getElementById(selectId);
+        sel.innerHTML = '';
+        for (let h = 1; h <= 12; h++) {
+            const opt = document.createElement('option');
+            opt.value = String(h).padStart(2, '0');
+            opt.textContent = String(h).padStart(2, '0');
+            sel.appendChild(opt);
+        }
+    }
+
+    function buildMinuteOptions(selectId) {
+        const sel = document.getElementById(selectId);
+        sel.innerHTML = '';
+        for (let m = 0; m < 60; m++) {
+            const opt = document.createElement('option');
+            opt.value = String(m).padStart(2, '0');
+            opt.textContent = String(m).padStart(2, '0');
+            sel.appendChild(opt);
+        }
+    }
+
+    function initTimePickers() {
+        buildHourOptions('f-open-hour');
+        buildHourOptions('f-close-hour');
+        buildMinuteOptions('f-open-min');
+        buildMinuteOptions('f-close-min');
+        setTimeDropdown('open', '09:00');
+        setTimeDropdown('close', '17:00');
+    }
+
+    function onTimeChange(which) {
+        // sync hidden value and update hints
+        updateTimePeriodHints();
+    }
+
+    // Convert 24h string "HH:MM" to dropdown values
+    function setTimeDropdown(which, time24) {
+        if (!time24) return;
+        const [hStr, mStr] = time24.split(':');
+        let h = parseInt(hStr);
+        const m = mStr ? mStr.substring(0,2) : '00';
+        const period = h >= 12 ? 'PM' : 'AM';
+        const h12 = h % 12 || 12;
+
+        const hourSel = document.getElementById(`f-${which}-hour`);
+        const minSel  = document.getElementById(`f-${which}-min`);
+        const perSel  = document.getElementById(`f-${which}-period`);
+
+        if (hourSel) hourSel.value = String(h12).padStart(2,'0');
+        if (minSel) minSel.value = m;
+        if (perSel) perSel.value = period;
+    }
+
+    // Get 24h "HH:MM" from dropdowns
+    function getTimeFrom(which) {
+        const h12 = parseInt(document.getElementById(`f-${which}-hour`)?.value || '12');
+        const min = document.getElementById(`f-${which}-min`)?.value || '00';
+        const period = document.getElementById(`f-${which}-period`)?.value || 'AM';
+        let h24 = h12 % 12;
+        if (period === 'PM') h24 += 12;
+        return `${String(h24).padStart(2,'0')}:${min}`;
+    }
+
+    // ===== TIME PERIOD HINTS =====
+    function getPeriod(timeStr) {
+        if (!timeStr) return '';
+        const h = parseInt(timeStr.split(':')[0]);
+        if (h >= 0 && h < 5)   return 'فجراً 🌙';
+        if (h >= 5 && h < 12)  return 'صباحاً ☀️';
+        if (h >= 12 && h < 17) return 'ظهراً 🌤️';
+        if (h >= 17 && h < 20) return 'عصراً 🌇';
+        return 'مساءً 🌆';
+    }
+
+    function calcDuration(openStr, closeStr) {
+        if (!openStr || !closeStr) return null;
+        const [oh, om] = openStr.split(':').map(Number);
+        const [ch, cm] = closeStr.split(':').map(Number);
+        let openMin = oh * 60 + om;
+        let closeMin = ch * 60 + cm;
+        if (closeMin <= openMin) closeMin += 24 * 60; // شفت يمتد لليوم التالي
+        const diff = closeMin - openMin;
+        const hours = Math.floor(diff / 60);
+        const mins  = diff % 60;
+        if (hours === 0) return `${mins} دقيقة`;
+        if (mins === 0)  return `${hours} ساعة`;
+        return `${hours} ساعة و ${mins} دقيقة`;
+    }
+
+    function updateTimePeriodHints() {
+        const open  = getTimeFrom('open');
+        const close = getTimeFrom('close');
+
+        document.getElementById('open-period-hint').textContent  = open  ? getPeriod(open)  : '';
+        document.getElementById('close-period-hint').textContent = close ? getPeriod(close) : '';
+
+        const durationEl = document.getElementById('duration-hint');
+        const durationTxt = document.getElementById('duration-text');
+        const duration = calcDuration(open, close);
+        if (duration) {
+            durationTxt.textContent = `مدة الشفت: ${duration}`;
+            durationEl.style.display = 'block';
+        } else {
+            durationEl.style.display = 'none';
+        }
+    }
+
+    // ===== TOGGLE FORM =====
+    function toggleForm() {
+        const card = document.getElementById('form-card');
+        if (card.classList.contains('open')) {
+            closeForm();
+        } else {
+            card.classList.add('open');
+            document.getElementById('btn-toggle-form').textContent = '✕ إغلاق';
+            document.getElementById('form-title-text').textContent = '➕ إضافة وقت دوام جديد';
+            document.getElementById('edit-id').value = '';
+            resetForm();
+            card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+
+    function closeForm() {
+        document.getElementById('form-card').classList.remove('open');
+        document.getElementById('btn-toggle-form').textContent = '+ إضافة وقت دوام';
+        resetForm();
+    }
+
+    function resetForm() {
+        document.getElementById('f-day').value = 'الأحد';
+        setTimeDropdown('open',  '09:00');
+        setTimeDropdown('close', '17:00');
+        document.getElementById('open-period-hint').textContent  = '';
+        document.getElementById('close-period-hint').textContent = '';
+        document.getElementById('duration-hint').style.display = 'none';
+        document.getElementById('btn-save').disabled = false;
+        document.getElementById('btn-save').textContent = 'حفظ';
+        document.getElementById('btn-save').style.background = 'var(--primary)';
+        updateTimePeriodHints();
+    }
+
+    // ===== TOGGLE CLOSED =====
+
+
+
+
+    // ===== SETUP EDIT =====
+    function setupEdit(id) {
+        const s = allSchedules.find(x => x.id === id);
+        if (!s) return;
+
+        const card = document.getElementById('form-card');
+        card.classList.add('open');
+        document.getElementById('btn-toggle-form').textContent = '✕ إغلاق';
+        document.getElementById('form-title-text').textContent = '✏️ تعديل وقت الدوام';
+        document.getElementById('edit-id').value = s.id;
+        document.getElementById('f-day').value = s.day_of_week;
+
+        const closed = !s.open_time && !s.close_time;
+        isClosed = closed;
+
+
+        if (!closed) {
+            document.getElementById('f-open').value = s.open_time ? s.open_time.substring(0,5) : '';
+            document.getElementById('f-close').value = s.close_time ? s.close_time.substring(0,5) : '';
+        } else {
+            document.getElementById('f-open').value = '';
+            document.getElementById('f-close').value = '';
+        }
+        updateTimePeriodHints();
+        card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // ===== SAVE =====
+    async function handleSave() {
+        const day = document.getElementById('f-day').value;
+        const open  = getTimeFrom('open');
+        const close = getTimeFrom('close');
+        const editId = document.getElementById('edit-id').value;
+
+        if (!open || !close) {
+            alert('يرجى تحديد وقت الفتح والإغلاق.');
+            return;
+        }
+
+
+        // تعطيل الزر
+        const btn = document.getElementById('btn-save');
+        btn.disabled = true;
+        btn.textContent = 'جاري الحفظ...';
+        btn.style.background = 'var(--gray)';
+
+        try {
+            const payload = {
+                store_id: parseInt(storeId),
+                day_of_week: day,
+                open_time: open,
+                close_time: close,
+            };
+
+            if (editId) {
+                await _supabase.from('store_schedules').update(payload).eq('id', editId);
+            } else {
+                await _supabase.from('store_schedules').insert([payload]);
+            }
+
+            closeForm();
+            await loadSchedules();
+
+        } catch (err) {
+            alert('فشل الحفظ: ' + err.message);
+            btn.disabled = false;
+            btn.textContent = 'حفظ';
+            btn.style.background = 'var(--primary)';
+        }
+    }
+
+    // ===== DELETE =====
+    async function deleteSchedule(id) {
+        if (!confirm('هل تريد حذف هذا الوقت؟')) return;
+        showLoader(true);
+        await _supabase.from('store_schedules').delete().eq('id', id);
+        allSchedules = allSchedules.filter(s => s.id !== id);
+        renderList();
+        showLoader(false);
+    }
+
+    // ===== BACK =====
+    function goBack() {
+        const params = new URLSearchParams(window.location.search);
+        const storeId = params.get('store_id');
+        if (storeId) {
+            window.location.href = `store_settings.html?mode=edit&store_id=${storeId}`;
+        } else {
+            window.history.back();
+        }
+    }
+
+    // ===== LOADER =====
+    function showLoader(s) {
+        document.getElementById('loading-overlay').style.display = s ? 'flex' : 'none';
+    }
+
+    init();
+</script>
+
+<!-- Copy to Days Modal -->
+<div id="copy-modal">
+    <div class="copy-modal-box">
+        <div class="copy-modal-title">📋 نسخ الوقت إلى أيام أخرى</div>
+        <div class="copy-modal-sub" id="copy-modal-sub">سيتم تطبيق نفس وقت الدوام على الأيام المحددة</div>
+        <span class="copy-select-all" onclick="toggleSelectAll()">تحديد الكل</span>
+        <div class="days-checkboxes" id="days-checkboxes"></div>
+        <div class="copy-actions">
+            <button class="btn-copy-confirm" id="btn-copy-confirm" onclick="confirmCopy()">تطبيق على الأيام المحددة</button>
+            <button class="btn-copy-cancel" onclick="closeCopyModal()">إلغاء</button>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
