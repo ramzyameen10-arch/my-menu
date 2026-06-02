@@ -35,10 +35,11 @@
         .link-group { display: flex; align-items: center; justify-content: center; gap: 15px; margin: 15px 0; }
         .circle-tool { width: 40px; height: 40px; border-radius: 50%; border: 1px solid #eee; display: flex; align-items: center; justify-content: center; background: #fff; cursor: pointer; transition: 0.2s; font-size: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
         .circle-tool:hover { background: #f8f9fa; transform: scale(1.1); }
-        .actions-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-        .btn-action { padding: 12px; border-radius: 12px; border: none; cursor: pointer; font-size: 14px; color: white; font-weight: bold; }
+        .actions-group { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 10px; }
+        .btn-action { padding: 11px 4px; border-radius: 12px; border: none; cursor: pointer; font-size: 12px; color: white; font-weight: bold; }
         .btn-category { background: #8e44ad; }
         .btn-product { background: #f39c12; }
+        .btn-delivery { background: #db2777; }
         #qr-modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:9999; justify-content:center; align-items:center; }
         .modal-body { background:white; padding:20px; border-radius:15px; text-align:center; max-width:300px; width:90%; }
         #form-container { display: none; }
@@ -91,6 +92,7 @@
         .manual-url-wrapper input:focus { outline: none; border-color: var(--primary); }
         .manual-url-icon { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 15px; pointer-events: none; }
         .manual-url-hint { font-size: 10px; color: #888; padding-right: 2px; margin-bottom: 10px; }
+        .manual-alt-tip { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 7px; padding: 7px 10px; margin-bottom: 10px; font-size: 10px; color: #0369a1; }
         .btn-verify-url { width: 100%; padding: 10px; background: #2563eb; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
         .btn-verify-url:hover { background: #1d4ed8; }
         .manual-verified-box { display: none; margin-top: 10px; }
@@ -247,7 +249,7 @@
             <!-- التبويبان -->
             <div class="location-tabs">
                 <button class="location-tab-btn active" id="tab-manual" onclick="switchLocationTab('manual')">
-                    🔗 رابط خرائط جوجل
+                    🔗 رابط Google Maps
                     <span class="recommended-badge">✦ موصى به</span>
                 </button>
                 <button class="location-tab-btn" id="tab-map" onclick="switchLocationTab('map')">
@@ -261,29 +263,34 @@
                     <span class="manual-tip-icon">💡</span>
                     <span>
                         <strong>لماذا هذا الخيار أفضل؟</strong>
-                        إذا كان متجرك مسجلاً في خرائط جوجل Google Maps، فالرابط المباشر يوصل الزبائن إلى صفحة متجرك الرسمية مع التقييمات والصور والمعلومات الكاملة.
+                        إذا كان متجرك مسجلاً في Google Maps، فالرابط المباشر يوصل الزبائن إلى صفحة متجرك الرسمية مع التقييمات والصور والمعلومات الكاملة.
                     </span>
                 </div>
-                <div class="manual-steps">كيف تحصل على الرابط؟</div>
+                <div class="manual-steps">كيف تحصل على الرابط الكامل؟</div>
                 <div class="manual-steps-detail">
-                    1. افتح خرائط جوجل Google Maps وابحث عن متجرك<br>
-                    2. انقر على اسم المتجر ثم اختر "مشاركة"<br>
-                    3. انسخ الرابط والصقه هنا
+                    1. افتح Google Maps وابحث عن متجرك<br>
+                    2. انقر على اسم المتجر لفتح صفحته<br>
+                    3. <span style="font-weight:800;color:#166534;">انسخ الرابط من شريط العنوان</span> في المتصفح مباشرة<br>
+                    4. الصقه هنا
+                </div>
+                <div class="manual-alt-tip">
+                    <span>⚡ الرابط من شريط العنوان يحتوي على الإحداثيات تلقائياً — أدق من زر "مشاركة"</span>
                 </div>
                 <div class="manual-url-wrapper">
-                    <input type="url" id="manual_maps_url" placeholder="https://maps.app.goo.gl/..." oninput="onManualMapsInput(this)">
+                    <input type="url" id="manual_maps_url" placeholder="https://www.google.com/maps/place/.../@lat,lng" oninput="onManualMapsInput(this)">
                     <span class="manual-url-icon">🔗</span>
                 </div>
-                <div class="manual-url-hint">مثال: https://maps.app.goo.gl/xxxx أو https://www.google.com/maps/place/...</div>
+                <div class="manual-url-hint">يُقبل أيضاً رابط المشاركة: https://maps.app.goo.gl/xxxx (بدون إحداثيات)</div>
                 <button class="btn-verify-url" onclick="verifyManualMapsLink()">✅ التحقق وحفظ الرابط</button>
                 <div class="manual-verified-box" id="manual-verified">
                     <div class="manual-verified-inner">
                         <div class="verified-check">✓</div>
                         <div>
                             <span style="display:block;font-size:11px;color:#166534;font-weight:600;">تم تأكيد رابط الموقع</span>
-                            <a id="verified-link-preview" href="#" target="_blank" style="font-size:12px;color:#15803d;font-weight:700;text-decoration:none;">عرض الموقع على خرائط جوجل Google Maps ←</a>
+                            <a id="verified-link-preview" href="#" target="_blank" style="font-size:12px;color:#15803d;font-weight:700;text-decoration:none;">عرض الموقع على Google Maps ←</a>
                         </div>
                     </div>
+                    <div id="manual-coords-info" style="display:none;font-size:11px;color:#166534;margin-top:6px;padding:5px 8px;background:#f0fdf4;border-radius:6px;font-family:monospace;direction:ltr;text-align:left;"></div>
                     <button class="location-clear-btn" onclick="clearManualMaps()">✕ إزالة الرابط</button>
                 </div>
             </div>
@@ -291,7 +298,7 @@
             <!-- لوحة الخريطة -->
             <div class="location-panel" id="panel-map">
                 <div class="map-panel-note">
-                    ⚠️ استخدم هذا الخيار فقط إذا لم يكن متجرك مسجلاً في خرائط جوجل Google Maps. سيتم توجيه الزبائن إلى إحداثيات محددة على الخريطة.
+                    ⚠️ استخدم هذا الخيار فقط إذا لم يكن متجرك مسجلاً في Google Maps. سيتم توجيه الزبائن إلى إحداثيات محددة على الخريطة.
                 </div>
                 <button class="btn-open-map" onclick="openMapModal()">
                     🗺️ تحديد الموقع على الخريطة
@@ -302,7 +309,7 @@
                         <span style="font-size:1.3em;">📍</span>
                         <span style="flex:1;">
                             <span style="display:block;font-size:11px;color:#9a3412;font-weight:600;">تم تحديد الموقع</span>
-                            <span style="display:block;font-size:13px;color:#7c2d12;font-weight:800;">عرض على خرائط جوجل Google Maps ←</span>
+                            <span style="display:block;font-size:13px;color:#7c2d12;font-weight:800;">عرض على Google Maps ←</span>
                         </span>
                     </a>
                     <button class="location-clear-btn" onclick="clearLocation()">✕ إزالة الموقع</button>
@@ -409,27 +416,105 @@
         input.style.borderColor = v.length > 10 ? (isValid ? '#24b47e' : '#e74c3c') : '#e0e0e0';
     }
 
-    function verifyManualMapsLink() {
+    // ===== استخراج الإحداثيات من رابط Google Maps =====
+    function extractCoordsFromUrl(url) {
+        // نمط 1: /@lat,lng  مثل: /@24.7136,46.6753,17z
+        let m = url.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+        if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+
+        // نمط 2: ?q=lat,lng  مثل: ?q=24.7136,46.6753
+        m = url.match(/[?&]q=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+        if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+
+        // نمط 3: /place/.../@lat,lng
+        m = url.match(/\/place\/[^/]+\/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+        if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+
+        // نمط 4: ll=lat,lng
+        m = url.match(/ll=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+        if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+
+        // نمط 5: !3dlat!4dlng  (رابط مشاركة مباشر)
+        m = url.match(/!3d(-?\d+\.?\d*)!4d(-?\d+\.?\d*)/);
+        if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+
+        return null;
+    }
+
+    async function verifyManualMapsLink() {
         const url = document.getElementById('manual_maps_url').value.trim();
-        if (!url) { alert('الرجاء لصق رابط خرائط جوجل Google Maps أولاً'); return; }
+        if (!url) { alert('الرجاء لصق رابط Google Maps أولاً'); return; }
         const valid = url.startsWith('http') && (url.includes('google.com/maps') || url.includes('maps.app.goo.gl') || url.includes('goo.gl/maps'));
         if (!valid) {
             alert('الرابط لا يبدو صحيحاً\nتأكد أنه يبدأ بـ:\nhttps://maps.app.goo.gl\nأو https://www.google.com/maps');
             return;
         }
+
+        const btn = document.querySelector('.btn-verify-url');
+        btn.disabled = true;
+        btn.textContent = '⏳ جاري معالجة الرابط...';
+
+        let lat = null, lng = null;
+
+        // محاولة استخراج الإحداثيات مباشرة من الرابط
+        const coords = extractCoordsFromUrl(url);
+        if (coords) {
+            lat = coords.lat;
+            lng = coords.lng;
+        } else if (url.includes('maps.app.goo.gl') || (url.includes('google.com/maps') && !url.includes('@'))) {
+            // رابط مختصر أو بدون إحداثيات — نحاول استخراج اسم المكان والبحث عنه
+            try {
+                // نستخرج اسم المكان من الرابط إن وُجد
+                const placeMatch = url.match(/\/place\/([^/]+)\//);
+                const placeName = placeMatch ? decodeURIComponent(placeMatch[1].replace(/\+/g, ' ')) : null;
+                if (placeName) {
+                    btn.textContent = '🔍 جاري البحث عن الموقع...';
+                    const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(placeName)}&format=json&limit=1&accept-language=ar`);
+                    const data = await res.json();
+                    if (data && data.length > 0) {
+                        lat = parseFloat(data[0].lat);
+                        lng = parseFloat(data[0].lon);
+                    }
+                }
+            } catch(e) { /* تجاهل أخطاء البحث */ }
+        }
+
+        // حفظ البيانات
+        document.getElementById('field_google_maps_url').value = url;
+        const coordsInfo = document.getElementById('manual-coords-info');
+
+        if (lat !== null && lng !== null) {
+            document.getElementById('field_latitude').value  = lat;
+            document.getElementById('field_longitude').value = lng;
+            coordsInfo.innerHTML = `✅ تم استخراج الإحداثيات: <b>${lat.toFixed(6)}, ${lng.toFixed(6)}</b>`;
+            coordsInfo.style.color = '#166534';
+            coordsInfo.style.background = '#f0fdf4';
+            coordsInfo.style.display = 'block';
+        } else {
+            document.getElementById('field_latitude').value  = '';
+            document.getElementById('field_longitude').value = '';
+            // رابط مختصر — نوضح للتاجر كيف يحصل على الإحداثيات
+            coordsInfo.innerHTML = '⚠️ هذا رابط مختصر ولا يحتوي على إحداثيات.<br>'
+                + '<span style="font-size:10px;">للحصول على الإحداثيات: افتح الرابط في المتصفح ثم انسخ الرابط الكامل من شريط العنوان</span>';
+            coordsInfo.style.color = '#92400e';
+            coordsInfo.style.background = '#fffbeb';
+            coordsInfo.style.display = 'block';
+        }
+
         document.getElementById('verified-link-preview').href = url;
         document.getElementById('manual-verified').style.display = 'block';
         document.getElementById('manual_maps_url').style.borderColor = '#24b47e';
-        // حفظ الرابط في الحقل المخفي (بدون إحداثيات — رابط يدوي)
-        document.getElementById('field_google_maps_url').value = url;
-        document.getElementById('field_latitude').value = '';
-        document.getElementById('field_longitude').value = '';
+
+        btn.disabled = false;
+        btn.textContent = '✅ التحقق وحفظ الرابط';
     }
 
     function clearManualMaps() {
         document.getElementById('manual_maps_url').value = '';
         document.getElementById('manual_maps_url').style.borderColor = '#e0e0e0';
         document.getElementById('manual-verified').style.display = 'none';
+        document.getElementById('manual-coords-info').style.display = 'none';
+        document.getElementById('manual-coords-info').textContent = '';
         document.getElementById('field_google_maps_url').value = '';
         document.getElementById('field_latitude').value = '';
         document.getElementById('field_longitude').value = '';
@@ -651,6 +736,9 @@
                                     <div class="circle-tool" onclick="window.location.href='store_schedules.html?store_id=${s.id}'" title="أوقات الدوام" style="border-color:#e8f4fd;">
                                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3498db" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                                     </div>
+                                    <div class="circle-tool" onclick="window.location.href='shipping_settings.html?store_id=${s.id}'" title="إعدادات الشحن والتوصيل" style="border-color:#fce7f3;">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#db2777" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"></rect><path d="M16 8h4l3 5v3h-7V8z"></path><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+                                    </div>
                                     ${s.google_maps_url ? `
                                     <div class="circle-tool" onclick="window.open('${s.google_maps_url}', '_blank')" title="الموقع على الخريطة" style="border-color:#fde8d8;">
                                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e67e22" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
@@ -661,6 +749,7 @@
                         <div class="actions-group">
                             <button class="btn-action btn-product" onclick="window.location.href='manage_products.html?store_id=${s.id}'">المنتجات</button>
                             <button class="btn-action btn-category" onclick="window.location.href='manage_categories.html?store_id=${s.id}'">التصنيفات</button>
+                            <button class="btn-action btn-delivery" onclick="window.location.href='shipping_settings.html?store_id=${s.id}'">التوصيل</button>
                         </div>
                     </div>`;
                 }).join('');
@@ -744,6 +833,20 @@
                 document.getElementById('manual_maps_url').value = store.google_maps_url;
                 document.getElementById('manual_maps_url').style.borderColor = '#24b47e';
                 document.getElementById('verified-link-preview').href = store.google_maps_url;
+                document.getElementById('manual-coords-info').style.display = 'none';
+                document.getElementById('manual-verified').style.display = 'block';
+                switchLocationTab('manual');
+            } else if (!store.latitude_from_map) {
+                // رابط يدوي مع إحداثيات مستخرجة
+                document.getElementById('field_latitude').value  = store.latitude;
+                document.getElementById('field_longitude').value = store.longitude;
+                document.getElementById('manual_maps_url').value = store.google_maps_url;
+                document.getElementById('manual_maps_url').style.borderColor = '#24b47e';
+                document.getElementById('verified-link-preview').href = store.google_maps_url;
+                const ci = document.getElementById('manual-coords-info');
+                ci.textContent = `📌 الإحداثيات: ${parseFloat(store.latitude).toFixed(6)}, ${parseFloat(store.longitude).toFixed(6)}`;
+                ci.style.display = 'block';
+                ci.style.color = '#166534';
                 document.getElementById('manual-verified').style.display = 'block';
                 switchLocationTab('manual');
             } else {
