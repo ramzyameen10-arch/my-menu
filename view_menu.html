@@ -453,6 +453,14 @@
             background: #9ca3af !important;
         }
 
+        /* ===== Body scroll lock ===== */
+        body.modal-open {
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+        }
+
     </style>
 <base target="_blank">
 <base target="_blank">
@@ -582,7 +590,7 @@
                 <h2 style="margin:0; font-size: 1.2em;">مراجعة الطلب</h2>
                 <button class="clear-cart-btn" onclick="clearCart()">تفريغ السلة 🗑️</button>
             </div>
-            <button onclick="document.getElementById('modal-overlay').style.display='none'" style="border:none; background:none; font-size:1.8em; cursor:pointer; color:#999;">&times;</button>
+            <button onclick="document.getElementById('modal-overlay').style.display='none'; unlockBodyScroll();" style="border:none; background:none; font-size:1.8em; cursor:pointer; color:#999;">&times;</button>
         </div>
 
         <div id="cart-items-list"></div>
@@ -760,6 +768,11 @@
     const LS_LAT_KEY   = 'menu_customer_lat';
     const LS_LNG_KEY   = 'menu_customer_lng';
 
+    // ===== متغيرات التحكم في الرجوع =====
+    let cartModalPushed = false;
+    let customerModalPushed = false;
+    let scrollY = 0;
+
     // ===== Sidebar =====
     function openSidebar() {
         document.getElementById('sidebar-panel').classList.add('open');
@@ -771,6 +784,74 @@
         document.getElementById('sidebar-overlay').classList.remove('open');
         document.body.style.overflow = '';
     }
+
+    // ===== Body Scroll Lock =====
+    function lockBodyScroll() {
+        scrollY = window.scrollY;
+        document.body.classList.add('modal-open');
+        document.body.style.top = `-${scrollY}px`;
+    }
+
+    function unlockBodyScroll() {
+        document.body.classList.remove('modal-open');
+        document.body.style.top = '';
+        window.scrollTo(0, scrollY);
+    }
+
+    // ===== Back Button Handler =====
+    function pushCartHistory() {
+        if (!cartModalPushed) {
+            history.pushState({ cartOpen: true }, '', window.location.href);
+            cartModalPushed = true;
+        }
+    }
+
+    function pushCustomerHistory() {
+        if (!customerModalPushed) {
+            history.pushState({ customerOpen: true }, '', window.location.href);
+            customerModalPushed = true;
+        }
+    }
+
+    function popCartHistory() {
+        if (cartModalPushed) {
+            history.back();
+            cartModalPushed = false;
+        }
+    }
+
+    function popCustomerHistory() {
+        if (customerModalPushed) {
+            history.back();
+            customerModalPushed = false;
+        }
+    }
+
+    window.addEventListener('popstate', function(e) {
+        const customerModal = document.getElementById('customer-modal-overlay');
+        const cartModal = document.getElementById('modal-overlay');
+
+        // الأولوية: إذا كان نموذج العميل مفتوح → أغلقه وعد للسلة
+        if (customerModal && customerModal.style.display === 'flex') {
+            customerModal.style.display = 'none';
+            if (customerMap) { customerMap.remove(); customerMap = null; }
+            customerModalPushed = false;
+            // إعادة فتح السلة مباشرة
+            cartModal.style.display = 'flex';
+            lockBodyScroll();
+            e.preventDefault();
+            return;
+        }
+
+        // ثانياً: إذا كانت السلة مفتوحة → أغلقها
+        if (cartModal && cartModal.style.display === 'flex') {
+            cartModal.style.display = 'none';
+            unlockBodyScroll();
+            cartModalPushed = false;
+            e.preventDefault();
+            return;
+        }
+    });
 
     async function buildSidebar(store, schedules) {
         if (store.logo_url) {
@@ -1411,7 +1492,10 @@
         }
 
         document.getElementById('cart-bar').style.display = count > 0 ? 'flex' : 'none';
-        if (count === 0) document.getElementById('modal-overlay').style.display = 'none';
+        if (count === 0) { 
+            document.getElementById('modal-overlay').style.display = 'none';
+            unlockBodyScroll();
+        }
     }
 
     function openCartModal() {
@@ -1458,6 +1542,8 @@
 
         if (selectedDeliveryType === 'delivery') renderShippingMethodsList();
         document.getElementById('modal-overlay').style.display = 'flex';
+        lockBodyScroll();
+        pushCartHistory();
         updateTotals();
     }
 
@@ -1466,6 +1552,7 @@
         if (!item) return;
         window._returnToCart = true;
         document.getElementById('modal-overlay').style.display = 'none';
+        unlockBodyScroll();
         openAddonsModal(item.product.id, uid);
     }
 
@@ -1486,6 +1573,7 @@
             selectedDeliveryType = 'pickup'; selectedShippingMethod = null; selectedCity = null; shippingCost = 0;
             updateTotals();
             document.getElementById('modal-overlay').style.display = 'none';
+            unlockBodyScroll();
         }
     }
 	
@@ -1496,6 +1584,7 @@
     cart = {}; cartItems = []; selectedDeliveryType = 'pickup'; selectedShippingMethod = null; selectedCity = null; shippingCost = 0;
     if (typeof updateTotals === "function") updateTotals();
     const modal = document.getElementById('modal-overlay'); if (modal) modal.style.display = 'none';
+    unlockBodyScroll();
 
     // 2. إعادة تعيين جميع الإعدادات الافتراضية
     const btnPickup = document.getElementById('btn-pickup');
@@ -1532,7 +1621,12 @@
 
 
 
-    function closeCartModal(e) { if (e.target.id === 'modal-overlay') e.target.style.display = 'none'; }
+    function closeCartModal(e) { 
+        if (e.target.id === 'modal-overlay') {
+            e.target.style.display = 'none';
+            unlockBodyScroll();
+        }
+    }
 
     // ===== نموذج بيانات العميل =====
 
@@ -1580,16 +1674,17 @@
         setTimeout(() => {
             initCustomerMap(savedLat, savedLng);
         }, 100);
+
+        // دفع حالة في history للرجوع
+        pushCustomerHistory();
     }
 
     function closeCustomerModal() {
         document.getElementById('customer-modal-overlay').style.display = 'none';
+        if (customerMap) { customerMap.remove(); customerMap = null; }
+        popCustomerHistory();
         // أعد فتح سلة الطلبات
         openCartModal();
-        if (customerMap) {
-            customerMap.remove();
-            customerMap = null;
-        }
     }
 
     function initCustomerMap(savedLat, savedLng) {
@@ -1839,6 +1934,7 @@
             // إغلاق النموذج
             document.getElementById('customer-modal-overlay').style.display = 'none';
             if (customerMap) { customerMap.remove(); customerMap = null; }
+            popCustomerHistory();
 
             // فتح الواتساب
             sendToWhatsApp(name, phone, orderNum);
