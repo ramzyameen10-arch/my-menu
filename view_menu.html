@@ -246,7 +246,7 @@
         #customer-map { width: 100%; height: 100%; }
         .map-pin-overlay {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -100%);
-            pointer-events: none; z-index: 9999; font-size: 2.8em; 
+            pointer-events: none; z-index: 997; font-size: 2.8em; 
             filter: drop-shadow(0 3px 6px rgba(0,0,0,0.4));
             text-shadow: 0 1px 3px rgba(0,0,0,0.3);
             line-height: 1;
@@ -351,7 +351,110 @@
             background: #d1fae5; color: #065f46; border-radius: 8px;
             padding: 3px 10px; font-size: 0.73em; font-weight: 700;
         }
+    
+        /* ===== Map Locate Button Inside Map ===== */
+        .map-locate-btn-fab {
+            position: absolute;
+            bottom: 12px;
+            left: 12px;
+            z-index: 997;
+            background: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: inherit;
+            font-size: 0.8em;
+            font-weight: 700;
+            color: #1a73e8;
+            transition: all 0.2s;
+            direction: rtl;
+        }
+        .map-locate-btn-fab:hover {
+            background: #f8f9fa;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.3);
+        }
+        .map-locate-btn-fab:active {
+            transform: scale(0.96);
+        }
+        .map-locate-btn-fab:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .map-locate-btn-fab .locate-icon-box {
+            width: 22px;
+            height: 22px;
+            background: #e8f0fe;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .map-locate-btn-fab .locate-icon-box svg {
+            width: 14px;
+            height: 14px;
+            color: #1a73e8;
+        }
+
+        /* ===== Map Overlay Lock ===== */
+        .map-overlay-lock {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.55);
+            backdrop-filter: blur(2px);
+            z-index: 999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .map-overlay-lock.show {
+            display: flex;
+        }
+        .map-overlay-lock-content {
+            background: white;
+            padding: 10px 18px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85em;
+            font-weight: 700;
+            color: #555;
+            direction: rtl;
+        }
+        .map-overlay-lock-content svg {
+            width: 18px;
+            height: 18px;
+            color: var(--main-color);
+            flex-shrink: 0;
+        }
+
+        /* ===== Disabled WhatsApp Button ===== */
+        .whatsapp-btn:disabled,
+        .whatsapp-btn.disabled {
+            background: #9ca3af !important;
+            cursor: not-allowed !important;
+            opacity: 0.7;
+        }
+        .whatsapp-btn:disabled:hover,
+        .whatsapp-btn.disabled:hover {
+            background: #9ca3af !important;
+        }
+
     </style>
+<base target="_blank">
 <base target="_blank">
 <base target="_blank">
 </head>
@@ -523,7 +626,7 @@
             </div>
         </div>
 
-        <button class="whatsapp-btn" onclick="openCustomerModal()">إرسال الطلب عبر الواتساب 📲</button>
+        <button class="whatsapp-btn" id="whatsapp-send-btn" onclick="openCustomerModal()">إرسال الطلب عبر الواتساب 📲</button>
     </div>
 </div>
 
@@ -542,13 +645,14 @@
             <!-- حقل الاسم -->
             <div class="customer-field-group">
                 <div class="customer-field-label"><span>👤</span> الاسم الكامل <span style="color:#ef4444;">*</span></div>
-                <input type="text" id="input-customer-name" class="customer-input" placeholder="اكتب اسمك الكامل..." maxlength="60">
+                <input type="text" id="input-customer-name" class="customer-input" placeholder="اكتب اسمك الكامل..." maxlength="60" onfocus="lockMap()">
             </div>
 
             <!-- حقل الهاتف -->
             <div class="customer-field-group">
                 <div class="customer-field-label"><span>📱</span> رقم الهاتف <span style="color:#ef4444;">*</span></div>
-                <input type="tel" id="input-customer-phone" class="customer-input" placeholder="05xxxxxxxx" maxlength="15" dir="ltr" style="text-align:right;">
+                <input type="tel" id="input-customer-phone" class="customer-input" placeholder="05xxxxxxxx" maxlength="15" dir="ltr" style="text-align:right;"
+                    onfocus="lockMap()">
             </div>
 
             <!-- قسم الخريطة -->
@@ -559,10 +663,6 @@
                     </div>
                     <div class="map-header-badges">
                         <span id="location-status-badge" class="location-badge not-saved">لم يُحدد</span>
-                        <button class="map-locate-btn-inline" id="map-locate-btn" onclick="locateMe()">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4"/></svg>
-                            تحديد تلقائي
-                        </button>
                         <button class="map-clear-btn" id="map-clear-btn" onclick="clearSavedLocation()" style="display:none;">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                             مسح الموقع
@@ -572,8 +672,20 @@
                 <div class="map-container">
                     <div class="map-inner">
                         <div id="customer-map"></div>
+                        <div class="map-pin-overlay" id="map-pin-marker">📍</div>
+                        <button class="map-locate-btn-fab" id="map-locate-btn-fab" onclick="locateMe()">
+                            <span class="locate-icon-box">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4"/></svg>
+                            </span>
+                            موقعي الحالي
+                        </button>
+                        <div class="map-overlay-lock" id="map-overlay-lock" onclick="focusMapInput()">
+                            <div class="map-overlay-lock-content">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                                اضغط لتعديل الموقع
+                            </div>
+                        </div>
                     </div>
-                    <div class="map-pin-overlay" id="map-pin-marker">📍</div>
                 </div>
                 <div class="map-coords-display" id="map-coords-display">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
@@ -761,6 +873,7 @@
         }).join('');
 
         const badge = document.getElementById('sidebar-status-badge');
+        const whatsappBtn = document.getElementById('whatsapp-send-btn');
         if (isOpenNow) {
             statusDot.classList.remove('closed');
             statusText.innerText = 'مفتوح الآن';
@@ -768,12 +881,22 @@
             document.getElementById('closed-floating-card').style.display = 'none';
             if (closingSoonCloseTime) showClosingSoonCard(closingSoonCloseTime, nowMins);
             else document.getElementById('closing-soon-card').style.display = 'none';
+            if (whatsappBtn) {
+                whatsappBtn.disabled = false;
+                whatsappBtn.innerText = 'إرسال الطلب عبر الواتساب 📲';
+                whatsappBtn.classList.remove('disabled');
+            }
         } else {
             statusDot.classList.add('closed');
             statusText.innerText = 'مغلق حالياً';
             badge.classList.add('closed-badge');
             document.getElementById('closing-soon-card').style.display = 'none';
             showClosedFloatingCard(schedules, timezone);
+            if (whatsappBtn) {
+                whatsappBtn.disabled = true;
+                whatsappBtn.innerText = 'المتجر مغلق الآن 🔒';
+                whatsappBtn.classList.add('disabled');
+            }
         }
     }
 
@@ -924,6 +1047,52 @@
         setTimeout(() => { updateHeaderMetrics(); setupScrollObserver(); }, 200);
         document.getElementById('loader').style.display = 'none';
         document.getElementById('main-content').style.display = 'block';
+
+        // Initial WhatsApp button state based on store status
+        const now = new Date();
+        const nowStr = now.toLocaleDateString('en-US', { timeZone: storeTimezone, weekday: 'long' });
+        const daysEn = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+        const todayIndex = daysEn.indexOf(nowStr.toLowerCase());
+        const nowTimeStr = now.toLocaleTimeString('en-GB', { timeZone: storeTimezone, hour: '2-digit', minute: '2-digit', hour12: false });
+        const nowMins = timeStrToMinutes(nowTimeStr);
+        let isOpen = false;
+
+        if (!schedules || schedules.length === 0) {
+            isOpen = true;
+        } else {
+            const dayArToIndex = {
+                'الأحد':0,'الاحد':0,'sunday':0,'الاثنين':1,'الإثنين':1,'monday':1,
+                'الثلاثاء':2,'tuesday':2,'الأربعاء':3,'الاربعاء':3,'wednesday':3,
+                'الخميس':4,'thursday':4,'الجمعة':5,'الجمعه':5,'friday':5,'السبت':6,'saturday':6
+            };
+            const scheduleMap = {};
+            schedules.forEach(s => {
+                const raw = (s.day_of_week || '').trim();
+                const idx = dayArToIndex[raw] ?? dayArToIndex[raw.toLowerCase()];
+                if (idx === undefined) return;
+                if (!scheduleMap[idx]) scheduleMap[idx] = [];
+                scheduleMap[idx].push(s);
+            });
+
+            (scheduleMap[todayIndex] || []).forEach(s => {
+                if (isShiftOpenNow(s.open_time, s.close_time, nowMins)) isOpen = true;
+            });
+            if (!isOpen) {
+                const yesterdayIndex = (todayIndex + 6) % 7;
+                (scheduleMap[yesterdayIndex] || []).forEach(s => {
+                    const openMins = timeStrToMinutes(s.open_time);
+                    const closeMins = timeStrToMinutes(s.close_time);
+                    if (closeMins < openMins && nowMins < closeMins) isOpen = true;
+                });
+            }
+        }
+
+        const whatsappBtn = document.getElementById('whatsapp-send-btn');
+        if (whatsappBtn && !isOpen) {
+            whatsappBtn.disabled = true;
+            whatsappBtn.innerText = 'المتجر مغلق الآن 🔒';
+            whatsappBtn.classList.add('disabled');
+        }
     }
 
     function renderMenu(products) {
@@ -1394,6 +1563,11 @@
         customerLng = null;
 
         document.getElementById('customer-modal-overlay').style.display = 'flex';
+
+        // الخريطة مغلقة افتراضياً
+        setTimeout(() => {
+            lockMap();
+        }, 150);
         document.getElementById('modal-overlay').style.display = 'none';
 
         // إخفاء/إظهار الخريطة حسب نوع الاستلام
@@ -1510,10 +1684,29 @@
         }
     }
 
+
+    // ===== Map Lock/Unlock =====
+    function lockMap() {
+        const overlay = document.getElementById('map-overlay-lock');
+        if (overlay) overlay.classList.add('show');
+    }
+    function unlockMap() {
+        const overlay = document.getElementById('map-overlay-lock');
+        if (overlay) overlay.classList.remove('show');
+    }
+    function focusMapInput() {
+        unlockMap();
+        // Focus on the map area by scrolling to it smoothly
+        const mapContainer = document.querySelector('.map-container');
+        if (mapContainer) {
+            mapContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+
     function locateMe() {
         if (!navigator.geolocation) { alert('المتصفح لا يدعم تحديد الموقع'); return; }
-        const btn = document.getElementById('map-locate-btn');
-        if (btn) { btn.disabled = true; btn.innerHTML = '⏳...'; }
+        const btn = document.getElementById('map-locate-btn-fab');
+        if (btn) { btn.disabled = true; btn.innerHTML = '<span class="locate-icon-box"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4"/></svg></span> ⏳...'; }
         navigator.geolocation.getCurrentPosition(
             (pos) => {
                 const lat = pos.coords.latitude;
@@ -1527,14 +1720,14 @@
                 document.getElementById('map-clear-btn').style.display = 'inline-flex';
                 if (btn) {
                     btn.disabled = false;
-                    btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4"/></svg> ✅';
+                    btn.innerHTML = '<span class="locate-icon-box"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4"/></svg></span> موقعي الحالي';
                 }
             },
             () => {
                 alert('تعذّر تحديد موقعك. تأكد من إعطاء الإذن.');
                 if (btn) {
                     btn.disabled = false;
-                    btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4"/></svg> تحديد تلقائي';
+                    btn.innerHTML = '<span class="locate-icon-box"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4"/></svg></span> موقعي الحالي';
                 }
             },
             { enableHighAccuracy: true, timeout: 8000 }
@@ -1676,7 +1869,7 @@
         const notes = document.getElementById('order-notes').value.trim();
         const storeName = document.getElementById('display-store-name').innerText;
 
-        let msg = `*🛍️ طلب جديد #${orderNum}*\n`;
+        let msg = `*🛍️ طلب جديد رقم #${orderNum}*\n`;
         msg += `*من متجر: ${storeName}*\n`;
         msg += `━━━━━━━━━━━━━━━\n\n`;
 
