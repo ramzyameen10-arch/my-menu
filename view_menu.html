@@ -465,6 +465,7 @@
 <base target="_blank">
 <base target="_blank">
 <base target="_blank">
+<base target="_blank">
 </head>
 <body>
 
@@ -643,7 +644,7 @@
     <div class="customer-modal" onclick="event.stopPropagation()">
         <div class="customer-modal-header">
             <div>
-                <div class="customer-modal-title">📋 بيانات العميل</div>
+                <div class="customer-modal-title">📋 معلومات التوصيل</div>
                 
             </div>
             <button class="customer-modal-close" onclick="closeCustomerModal()">✕</button>
@@ -1900,7 +1901,7 @@
             // بناء عنوان التوصيل
             let deliveryAddress = notes;
             if (customerLat && customerLng && !locationSkipped) {
-                deliveryAddress = `https://maps.google.com/maps?q=${customerLat.toFixed(6)},${customerLng.toFixed(6)}\n${notes}`;
+                deliveryAddress = `https://maps.google.com/maps?q=${customerLat.toFixed(6)},${customerLng.toFixed(6)}`;
             }
 
             // حفظ في جدول orders
@@ -1914,6 +1915,7 @@
                 shipping_method: selectedShippingMethod ? selectedShippingMethod.id : null,
                 shipping_city: selectedCity ? selectedCity.name : null,
                 delivery_address: deliveryAddress || null,
+                notes: notes || null,
                 status: 'pending',
                 click_status: 'clicked'
             };

@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>الطلبات</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+    --primary:#24b47e; --primary-d:#1a9469; --primary-bg:#f0faf6;
+    --danger:#e74c3c;  --warn:#f59e0b;    --info:#3b82f6;
+    --purple:#8b5cf6;  --pink:#db2777;
+    --bg:#f3f6f5; --card:#fff; --border:#e4ecea;
+    --text:#1a2a22; --muted:#7a9188; --light:#f8faf9;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl;color:var(--text);display:flex;flex-direction:column;}
+
+/* ====== HEADER ====== */
+.hdr{
+    flex-shrink:0;
+    background:#fff;
+    padding:0 14px;
+    height:56px;
+    display:flex;align-items:center;justify-content:space-between;
+    border-bottom:1px solid var(--border);
+    box-shadow:0 1px 6px rgba(0,0,0,.06);
+    position:relative;z-index:50;
+}
+.hdr-right{display:flex;align-items:center;gap:10px;}
+.btn-back{
+    background:var(--bg);border:1.5px solid var(--border);
+    padding:6px 12px;border-radius:9px;
+    font-size:13px;font-weight:700;color:#555;
+    cursor:pointer;display:flex;align-items:center;gap:4px;
+    font-family:inherit;transition:background .15s;
+}
+.btn-back:active{background:#e4ece8;}
+.hdr-title{font-size:14px;font-weight:800;color:var(--text);}
+.hdr-sub{font-size:11px;color:var(--muted);}
+.hdr-left{display:flex;align-items:center;gap:8px;}
+.ico-btn{
+    width:36px;height:36px;border-radius:10px;
+    border:1.5px solid var(--border);background:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-size:17px;cursor:pointer;position:relative;
+    transition:background .15s;
+}
+.ico-btn:active{background:var(--bg);}
+.badge-dot{
+    position:absolute;top:-3px;right:-3px;
+    width:10px;height:10px;border-radius:50%;
+    background:var(--danger);border:2px solid #fff;
+    display:none;
+}
+.badge-dot.on{display:block;}
+
+/* ====== FILTER BAR ====== */
+.filter-wrap{
+    flex-shrink:0;
+    background:#fff;border-bottom:1px solid var(--border);
+    overflow-x:auto;scrollbar-width:none;
+}
+.filter-wrap::-webkit-scrollbar{display:none;}
+.filter-inner{display:inline-flex;gap:0;padding:0 8px;white-space:nowrap;}
+.fp{
+    display:inline-flex;align-items:center;gap:5px;
+    padding:11px 13px;
+    border:none;border-bottom:3px solid transparent;
+    background:none;font-size:12px;font-weight:700;
+    color:var(--muted);cursor:pointer;font-family:inherit;
+    transition:color .15s;
+}
+.fp.on{color:var(--primary);border-bottom-color:var(--primary);}
+.fcnt{
+    background:#eaeeed;color:#666;
+    font-size:10px;font-weight:800;
+    padding:1px 6px;border-radius:10px;min-width:18px;text-align:center;
+}
+.fp.on .fcnt{background:var(--primary);color:#fff;}
+.fcnt.hot{background:var(--danger)!important;color:#fff!important;animation:pop 1.4s infinite;}
+@keyframes pop{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
+
+/* ====== STATS ROW ====== */
+.stats{
+    flex-shrink:0;
+    display:grid;grid-template-columns:repeat(4,1fr);
+    gap:8px;padding:10px 12px 6px;
+}
+.sc{
+    background:#fff;border:1px solid var(--border);
+    border-radius:12px;padding:10px 6px;text-align:center;
+}
+.sc.hl{background:linear-gradient(135deg,var(--primary),var(--primary-d));border:none;}
+.sc-v{font-size:1.25em;font-weight:900;color:var(--text);line-height:1;}
+.sc-l{font-size:10px;color:var(--muted);margin-top:3px;font-weight:600;}
+.sc.hl .sc-v,.sc.hl .sc-l{color:#fff;}
+
+/* ====== LIST ====== */
+.list-wrap{
+    flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;
+    padding:8px 12px 80px;
+}
+.list-wrap::-webkit-scrollbar{width:3px;}
+.list-wrap::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+
+/* تاريخ فاصل */
+.day-sep{
+    font-size:11px;font-weight:800;color:var(--muted);
+    margin:12px 0 6px;display:flex;align-items:center;gap:8px;
+}
+.day-sep::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* صف الطلب */
+.order-row{
+    background:#fff;border:1.5px solid var(--border);
+    border-radius:14px;margin-bottom:8px;
+    display:flex;align-items:center;gap:0;
+    overflow:hidden;cursor:pointer;
+    transition:box-shadow .15s,transform .1s;
+    position:relative;
+}
+.order-row:active{transform:scale(.985);box-shadow:0 2px 12px rgba(0,0,0,.08);}
+.order-row.is-new{border-color:#fbbf24;box-shadow:0 0 0 2px rgba(251,191,36,.2);}
+
+/* شريط اللون الجانبي */
+.row-bar{width:4px;align-self:stretch;flex-shrink:0;border-radius:0;}
+.bar-pending  {background:var(--warn);}
+.bar-confirmed{background:var(--info);}
+.bar-preparing{background:#eab308;}
+.bar-ready    {background:var(--primary);}
+.bar-delivered{background:#22c55e;}
+.bar-cancelled{background:#d1d5db;}
+
+/* محتوى الصف */
+.row-body{flex:1;padding:11px 12px;min-width:0;}
+.row-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;}
+.row-num{font-size:12px;font-weight:800;color:var(--text);}
+.row-time{font-size:11px;color:var(--muted);}
+.row-mid{display:flex;align-items:center;justify-content:space-between;}
+.row-name{font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;}
+.row-total{font-size:14px;font-weight:900;color:var(--primary);white-space:nowrap;}
+.row-bot{display:flex;align-items:center;justify-content:space-between;margin-top:5px;}
+.row-items-preview{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:190px;}
+.row-type{font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;white-space:nowrap;}
+.type-delivery{background:#fdf4ff;color:#7e22ce;border:1px solid #e9d5ff;}
+.type-pickup  {background:#f0f9ff;color:#0369a1;border:1px solid #bae6fd;}
+
+/* سهم الفتح */
+.row-arrow{
+    width:36px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+    color:#c8d4ce;font-size:16px;
+}
+
+/* حالة الطلب (نقطة + نص) */
+.status-pill{
+    display:inline-flex;align-items:center;gap:4px;
+    font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;border:1px solid;
+}
+.sp-pending  {background:#fff7ed;color:#b45309;border-color:#fed7aa;}
+.sp-confirmed{background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe;}
+.sp-preparing{background:#fefce8;color:#854d0e;border-color:#fde68a;}
+.sp-ready    {background:#ecfdf5;color:#065f46;border-color:#6ee7b7;}
+.sp-delivered{background:#f0fdf4;color:#166534;border-color:#86efac;}
+.sp-cancelled{background:#f9fafb;color:#6b7280;border-color:#e5e7eb;}
+
+/* ====== EMPTY / LOADING ====== */
+.center-msg{
+    display:flex;flex-direction:column;align-items:center;
+    justify-content:center;padding:60px 20px;gap:14px;
+    color:var(--muted);text-align:center;
+}
+.spin{
+    width:38px;height:38px;border:3px solid var(--border);
+    border-top-color:var(--primary);border-radius:50%;
+    animation:spin .75s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty-ico{
+    width:80px;height:80px;background:#fff;
+    border:2px solid var(--border);border-radius:20px;
+    display:flex;align-items:center;justify-content:center;font-size:36px;
+}
+.empty-t{font-size:15px;font-weight:700;color:#444;}
+.empty-s{font-size:12px;color:#aaa;max-width:220px;line-height:1.7;}
+
+/* ====== BOTTOM BAR ====== */
+.btm-bar{
+    position:fixed;bottom:0;left:0;right:0;
+    background:#fff;border-top:1px solid var(--border);
+    padding:8px 16px;
+    display:flex;align-items:center;justify-content:space-between;
+    z-index:80;box-shadow:0 -3px 14px rgba(0,0,0,.07);
+}
+.btm-total-lbl{font-size:11px;color:var(--muted);font-weight:600;}
+.btm-total-val{font-size:17px;font-weight:900;color:var(--text);}
+.btm-total-val em{color:var(--primary);font-style:normal;font-size:12px;}
+.btm-new-btn{
+    display:none;align-items:center;gap:6px;
+    background:var(--danger);color:#fff;
+    border:none;padding:9px 14px;border-radius:10px;
+    font-size:12px;font-weight:700;cursor:pointer;
+    font-family:inherit;animation:pulse-r 2s infinite;
+}
+.btm-new-btn.on{display:flex;}
+@keyframes pulse-r{0%,100%{box-shadow:0 0 0 0 rgba(231,76,60,.4)}50%{box-shadow:0 0 0 8px rgba(231,76,60,0)}}
+
+/* ====== DRAWER (تفاصيل الطلب) ====== */
+.overlay{
+    display:none;position:fixed;inset:0;
+    background:rgba(0,0,0,.45);z-index:200;
+}
+.overlay.on{display:block;}
+
+.drawer{
+    position:fixed;bottom:0;left:0;right:0;
+    background:#fff;z-index:210;
+    border-radius:22px 22px 0 0;
+    max-height:90vh;display:flex;flex-direction:column;
+    transform:translateY(100%);
+    transition:transform .28s cubic-bezier(.4,0,.2,1);
+    max-width:600px;margin:0 auto;
+}
+.drawer.open{transform:translateY(0);}
+
+/* grip */
+.drawer-grip{
+    flex-shrink:0;padding:12px 0 4px;
+    display:flex;justify-content:center;
+}
+.grip-bar{width:40px;height:4px;background:#e0e0e0;border-radius:2px;}
+
+/* هيدر الـ drawer */
+.drawer-hdr{
+    flex-shrink:0;
+    padding:0 16px 12px;
+    display:flex;align-items:center;justify-content:space-between;
+    border-bottom:1px solid var(--border);
+}
+.drawer-order-num{font-size:15px;font-weight:800;color:var(--text);}
+.drawer-close{
+    width:32px;height:32px;border-radius:9px;
+    background:var(--bg);border:none;
+    display:flex;align-items:center;justify-content:center;
+    font-size:17px;cursor:pointer;color:#666;
+}
+
+/* محتوى الـ drawer */
+.drawer-body{
+    flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;
+    padding:14px 16px 10px;
+}
+.drawer-body::-webkit-scrollbar{width:3px;}
+.drawer-body::-webkit-scrollbar-thumb{background:var(--border);}
+
+/* أقسام التفاصيل */
+.d-section{margin-bottom:14px;}
+.d-sec-title{
+    font-size:11px;font-weight:800;color:var(--muted);
+    letter-spacing:.5px;margin-bottom:8px;
+    display:flex;align-items:center;gap:5px;
+}
+.d-card{
+    background:var(--light);border:1px solid var(--border);
+    border-radius:12px;padding:12px;
+}
+
+/* معلومات العميل */
+.cust-row{display:flex;align-items:center;gap:10px;}
+.cust-av{
+    width:42px;height:42px;border-radius:12px;
+    background:linear-gradient(135deg,var(--primary),var(--primary-d));
+    color:#fff;font-size:16px;font-weight:800;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.cust-n{font-size:14px;font-weight:700;color:var(--text);}
+.cust-p{font-size:12px;color:var(--muted);direction:ltr;display:block;margin-top:2px;}
+.call-btn{
+    margin-right:auto;
+    background:var(--primary-bg);border:1.5px solid var(--primary);
+    color:var(--primary);padding:6px 12px;border-radius:9px;
+    font-size:12px;font-weight:700;cursor:pointer;
+    font-family:inherit;display:flex;align-items:center;gap:4px;
+}
+
+/* عناصر الطلب */
+.item-row{
+    display:flex;align-items:center;gap:8px;
+    padding:7px 0;border-bottom:1px dashed #dde8e0;
+}
+.item-row:last-child{border-bottom:none;}
+.item-qty{
+    width:24px;height:24px;border-radius:7px;
+    background:var(--primary);color:#fff;
+    font-size:11px;font-weight:800;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.item-name{flex:1;font-size:13px;font-weight:600;color:var(--text);}
+.item-price{font-size:13px;font-weight:700;color:var(--primary);white-space:nowrap;}
+
+/* الإجمالي */
+.total-rows{border-top:1.5px solid var(--border);margin-top:8px;padding-top:8px;}
+.t-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
+.t-lbl{font-size:12px;color:var(--muted);}
+.t-val{font-size:12px;font-weight:700;color:var(--text);}
+.t-grand .t-lbl{font-size:14px;font-weight:800;color:var(--text);}
+.t-grand .t-val{font-size:16px;font-weight:900;color:var(--primary);}
+
+/* توصيل */
+.ship-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:5px;}
+.ship-ico{font-size:16px;flex-shrink:0;margin-top:1px;}
+.ship-t{font-size:12px;font-weight:700;color:var(--text);}
+.ship-s{font-size:11px;color:var(--muted);margin-top:2px;}
+
+/* ملاحظة */
+.note-box{
+    background:#fffbeb;border:1px solid #fde68a;border-radius:10px;
+    padding:10px 12px;display:flex;gap:6px;align-items:flex-start;
+    font-size:12px;color:#92400e;line-height:1.6;
+}
+
+/* ====== أزرار الإجراء في الـ drawer ====== */
+.drawer-actions{
+    flex-shrink:0;
+    padding:10px 16px 20px;
+    border-top:1px solid var(--border);
+    background:#fff;
+}
+.actions-grid{
+    display:grid;gap:8px;
+    grid-template-columns:1fr 1fr;
+}
+.actions-grid.single{grid-template-columns:1fr;}
+.act{
+    padding:12px 8px;border-radius:12px;
+    border:1.5px solid;font-size:13px;font-weight:700;
+    cursor:pointer;font-family:inherit;
+    display:flex;align-items:center;justify-content:center;gap:5px;
+    transition:transform .1s,filter .1s;
+}
+.act:active{transform:scale(.96);filter:brightness(.95);}
+.a-confirm  {background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe;}
+.a-prepare  {background:#fefce8;color:#854d0e;border-color:#fde68a;}
+.a-ready    {background:#ecfdf5;color:#065f46;border-color:#6ee7b7;}
+.a-deliver  {background:#f0fdf4;color:#166534;border-color:#86efac;}
+.a-cancel   {background:#fef2f2;color:#991b1b;border-color:#fca5a5;}
+.a-call     {background:var(--primary-bg);color:var(--primary-d);border-color:#86efac;}
+.a-change   {background:#f5f3ff;color:#6d28d9;border-color:#ddd6fe;}
+
+/* ====== MINI STATUS MODAL ====== */
+.status-modal{
+    position:fixed;inset:0;background:rgba(0,0,0,.5);
+    z-index:300;display:none;align-items:flex-end;justify-content:center;
+}
+.status-modal.on{display:flex;}
+.status-sheet{
+    background:#fff;width:100%;max-width:500px;
+    border-radius:22px 22px 0 0;padding:0 0 24px;
+    animation:slideUp .22s ease;
+}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.ss-grip{display:flex;justify-content:center;padding:12px 0 4px;}
+.ss-title{font-size:14px;font-weight:800;color:var(--text);text-align:center;margin-bottom:14px;padding:0 16px;}
+.ss-opts{display:flex;flex-direction:column;gap:7px;padding:0 16px;}
+.ss-opt{
+    display:flex;align-items:center;gap:10px;
+    padding:13px 14px;border-radius:12px;border:1.5px solid var(--border);
+    background:#fff;cursor:pointer;font-size:13px;font-weight:600;
+    font-family:inherit;width:100%;text-align:right;
+    transition:border-color .15s,background .15s;
+}
+.ss-opt:hover,.ss-opt.sel{border-color:var(--primary);background:var(--primary-bg);}
+.ss-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.ss-confirm{
+    width:calc(100% - 32px);margin:12px 16px 0;
+    padding:13px;background:var(--primary);color:#fff;
+    border:none;border-radius:12px;font-size:14px;font-weight:700;
+    cursor:pointer;font-family:inherit;
+}
+.ss-cancel{
+    width:100%;margin-top:6px;padding:10px;
+    background:none;color:var(--muted);border:none;
+    font-size:12px;cursor:pointer;font-family:inherit;
+}
+
+/* ====== LIVE INDICATOR ====== */
+.live-bar{
+    flex-shrink:0;background:#f0fdf4;border-bottom:1px solid #c6f0dc;
+    padding:5px 16px;display:flex;align-items:center;justify-content:space-between;
+    font-size:11px;color:#166534;font-weight:600;
+}
+.live-dot{
+    width:7px;height:7px;border-radius:50%;background:var(--primary);
+    display:inline-block;margin-left:5px;animation:blink 2s infinite;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+@media(max-width:380px){
+    .stats{grid-template-columns:repeat(2,1fr);}
+    .sc-v{font-size:1.1em;}
+}
+</style>
+<base target="_blank">
+<base target="_blank">
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+    <div class="hdr-right">
+        <button class="btn-back" onclick="goBack()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            رجوع
+        </button>
+        <div>
+            <div class="hdr-title" id="store-name">—</div>
+            <div class="hdr-sub">إدارة الطلبات</div>
+        </div>
+    </div>
+    <div class="hdr-left">
+        <div class="ico-btn" onclick="loadOrders()" title="تحديث">↻</div>
+        <div class="ico-btn" id="notif-ico">🔔<div class="badge-dot" id="notif-dot"></div></div>
+    </div>
+</div>
+
+<!-- LIVE BAR -->
+<div class="live-bar">
+    <span><span class="live-dot"></span> تحديث تلقائي كل دقيقة</span>
+    <span id="last-upd">—</span>
+</div>
+
+<!-- FILTER -->
+<div class="filter-wrap">
+    <div class="filter-inner">
+        <button class="fp on" data-f="all"       onclick="setFilter('all')">الكل       <span class="fcnt" id="c-all">0</span></button>
+        <button class="fp"    data-f="pending"   onclick="setFilter('pending')">🕐 جديد    <span class="fcnt" id="c-pending">0</span></button>
+        <button class="fp"    data-f="confirmed" onclick="setFilter('confirmed')">✅ مؤكد   <span class="fcnt" id="c-confirmed">0</span></button>
+        <button class="fp"    data-f="preparing" onclick="setFilter('preparing')">👨‍🍳 يُحضَّر <span class="fcnt" id="c-preparing">0</span></button>
+        <button class="fp"    data-f="ready"     onclick="setFilter('ready')">🔔 جاهز     <span class="fcnt" id="c-ready">0</span></button>
+        <button class="fp"    data-f="delivered" onclick="setFilter('delivered')">🏠 مُسلَّم <span class="fcnt" id="c-delivered">0</span></button>
+        <button class="fp"    data-f="cancelled" onclick="setFilter('cancelled')">❌ ملغي   <span class="fcnt" id="c-cancelled">0</span></button>
+    </div>
+</div>
+
+<!-- STATS -->
+<div class="stats">
+    <div class="sc hl"><div class="sc-v" id="s-today">0</div><div class="sc-l">طلبات اليوم</div></div>
+    <div class="sc">   <div class="sc-v" id="s-pend">0</div> <div class="sc-l">تنتظر التأكيد</div></div>
+    <div class="sc">   <div class="sc-v" id="s-rev">0</div>  <div class="sc-l">إيرادات اليوم</div></div>
+    <div class="sc">   <div class="sc-v" id="s-all">0</div>  <div class="sc-l">إجمالي الطلبات</div></div>
+</div>
+
+<!-- LIST -->
+<div class="list-wrap" id="list-wrap">
+    <div class="center-msg"><div class="spin"></div><span>جاري التحميل...</span></div>
+</div>
+
+<!-- BOTTOM BAR -->
+<div class="btm-bar">
+    <div>
+        <div class="btm-total-lbl">الإجمالي المعروض</div>
+        <div class="btm-total-val" id="btm-total">0 <em>ر.س</em></div>
+    </div>
+    <button class="btm-new-btn" id="new-btn" onclick="setFilter('pending')">
+        🔴 <span id="new-cnt">0</span> طلب جديد
+    </button>
+</div>
+
+<!-- OVERLAY -->
+<div class="overlay" id="overlay" onclick="closeDrawer()"></div>
+
+<!-- DRAWER -->
+<div class="drawer" id="drawer">
+    <div class="drawer-grip"><div class="grip-bar"></div></div>
+    <div class="drawer-hdr">
+        <span class="drawer-order-num" id="d-num">—</span>
+        <button class="drawer-close" onclick="closeDrawer()">✕</button>
+    </div>
+    <div class="drawer-body" id="d-body"><!-- filled dynamically --></div>
+    <div class="drawer-actions" id="d-actions"><!-- filled dynamically --></div>
+</div>
+
+<!-- STATUS MODAL -->
+<div class="status-modal" id="status-modal" onclick="closeStatusModal()">
+    <div class="status-sheet" onclick="event.stopPropagation()">
+        <div class="ss-grip"><div class="grip-bar"></div></div>
+        <div class="ss-title">تغيير حالة الطلب</div>
+        <div class="ss-opts">
+            <button class="ss-opt" onclick="selSt('pending')">  <div class="ss-dot" style="background:#f59e0b"></div>🕐 جديد / قيد الانتظار</button>
+            <button class="ss-opt" onclick="selSt('confirmed')"><div class="ss-dot" style="background:#3b82f6"></div>✅ تم التأكيد</button>
+            <button class="ss-opt" onclick="selSt('preparing')"><div class="ss-dot" style="background:#eab308"></div>👨‍🍳 قيد التحضير</button>
+            <button class="ss-opt" onclick="selSt('ready')">    <div class="ss-dot" style="background:#10b981"></div>🔔 جاهز</button>
+            <button class="ss-opt" onclick="selSt('delivered')"><div class="ss-dot" style="background:#22c55e"></div>🏠 تم التسليم</button>
+            <button class="ss-opt" onclick="selSt('cancelled')"><div class="ss-dot" style="background:#ef4444"></div>❌ ملغي</button>
+        </div>
+        <button class="ss-confirm" onclick="confirmSt()">تأكيد التغيير</button>
+        <button class="ss-cancel"  onclick="closeStatusModal()">إلغاء</button>
+    </div>
+</div>
+
+<script>
+/* ================================================
+   CONFIG
+================================================ */
+const SB_URL='https://wnvyqvwuzmxzzhilgidh.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indudnlxdnd1em14enpoaWxnaWRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MTg1MDEsImV4cCI6MjA5MTQ5NDUwMX0.AyD4CYqA0cz9mC-bcOt16uUpueL_cAWT26Q92l574r0';
+const _sb=supabase.createClient(SB_URL,SB_KEY);
+
+const userPhone=(localStorage.getItem('user_phone')||'').trim();
+const storeId=new URLSearchParams(window.location.search).get('store_id');
+
+let allOrders=[], curFilter='all', timer=null;
+let drawerOrder=null;
+let pendCh={id:null,st:null};
+
+/* ================================================
+   AUTH — بدون شاشة اعتراضية
+================================================ */
+async function init(){
+    // إذا غير مسجل → index مباشرة
+    if(!userPhone||!storeId){ window.location.replace('index.html'); return; }
+
+    try{
+        const {data:profile}=await _sb.from('profiles').select('id').eq('phone_number',userPhone).single();
+        if(!profile){ window.location.replace('index.html'); return; }
+
+        const {data:store}=await _sb.from('store_settings').select('id,store_name')
+            .eq('id',storeId).eq('user_id',profile.id).single();
+        if(!store){ window.location.replace('index.html'); return; }
+
+        document.getElementById('store-name').textContent=store.store_name;
+        await loadOrders();
+        timer=setInterval(()=>loadOrders(true),60000);
+        
+    }catch(e){ window.location.replace('index.html'); }
+}
+
+/* ================================================
+   LOAD ORDERS
+================================================ */
+async function loadOrders(silent=false){
+    if(!silent) showLoading();
+    try{
+        const{data,error}=await _sb.from('orders').select('*')
+            .eq('store_id',storeId).order('created_at',{ascending:false});
+        if(error) throw error;
+
+        const prevPend=allOrders.filter(o=>o.status==='pending').length;
+        allOrders=data||[];
+        const newPend=allOrders.filter(o=>o.status==='pending').length;
+
+        if(silent&&newPend>prevPend&&prevPend>=0) notifyNew(newPend);
+
+        updateStats();
+        renderList();
+        updateTS();
+
+        // تحديث الـ drawer إذا كان مفتوح
+        if(drawerOrder){
+            const fresh=allOrders.find(o=>o.id==drawerOrder.id);
+            if(fresh){ drawerOrder=fresh; fillDrawer(fresh); }
+        }
+    }catch(e){
+        if(!silent) showErr(e.message);
+    }
+}
+
+function showLoading(){
+    document.getElementById('list-wrap').innerHTML=
+        '<div class="center-msg"><div class="spin"></div><span>جاري التحميل...</span></div>';
+}
+function showErr(m){
+    document.getElementById('list-wrap').innerHTML=
+        `<div class="center-msg"><div class="empty-ico">⚠️</div><div class="empty-t">فشل التحميل</div><div class="empty-s">${m}</div></div>`;
+}
+function updateTS(){
+    document.getElementById('last-upd').textContent=
+        'آخر تحديث '+new Date().toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit'});
+}
+
+/* ================================================
+   STATS
+================================================ */
+function updateStats(){
+    const today=new Date().toISOString().slice(0,10);
+    const todayO=allOrders.filter(o=>(o.created_at||'').startsWith(today));
+    const pend=allOrders.filter(o=>o.status==='pending').length;
+    const rev=todayO.filter(o=>o.status!=='cancelled').reduce((s,o)=>s+(parseFloat(o.total_value)||0),0);
+
+    document.getElementById('s-today').textContent=todayO.length;
+    document.getElementById('s-pend').textContent=pend;
+    document.getElementById('s-rev').textContent=rev.toFixed(0);
+    document.getElementById('s-all').textContent=allOrders.length;
+
+    const cnts={pending:0,confirmed:0,preparing:0,ready:0,delivered:0,cancelled:0};
+    allOrders.forEach(o=>{if(cnts[o.status]!==undefined)cnts[o.status]++;});
+
+    document.getElementById('c-all').textContent=allOrders.length;
+    ['pending','confirmed','preparing','ready','delivered','cancelled'].forEach(k=>{
+        const el=document.getElementById('c-'+k);
+        el.textContent=cnts[k];
+        el.classList.toggle('hot',k==='pending'&&cnts[k]>0);
+    });
+
+    const nb=document.getElementById('new-btn');
+    if(pend>0){
+        document.getElementById('new-cnt').textContent=pend;
+        nb.classList.add('on');
+        document.getElementById('notif-dot').classList.add('on');
+    } else {
+        nb.classList.remove('on');
+        document.getElementById('notif-dot').classList.remove('on');
+    }
+}
+
+/* ================================================
+   FILTER
+================================================ */
+function setFilter(f){
+    curFilter=f;
+    document.querySelectorAll('.fp').forEach(p=>p.classList.toggle('on',p.dataset.f===f));
+    renderList();
+}
+
+/* ================================================
+   RENDER LIST — صف واحد لكل طلب
+================================================ */
+const stMap={
+    pending:  {lbl:'قيد الانتظار',cls:'sp-pending',  bar:'bar-pending'  },
+    confirmed:{lbl:'مؤكد',        cls:'sp-confirmed',bar:'bar-confirmed'},
+    preparing:{lbl:'يُحضَّر',     cls:'sp-preparing',bar:'bar-preparing'},
+    ready:    {lbl:'جاهز',        cls:'sp-ready',    bar:'bar-ready'    },
+    delivered:{lbl:'مُسلَّم',     cls:'sp-delivered',bar:'bar-delivered'},
+    cancelled:{lbl:'ملغي',        cls:'sp-cancelled',bar:'bar-cancelled'},
+};
+
+function renderList(){
+    const filtered=curFilter==='all'?allOrders:allOrders.filter(o=>o.status===curFilter);
+    const wrap=document.getElementById('list-wrap');
+
+    if(!filtered.length){
+        wrap.innerHTML=`<div class="center-msg">
+            <div class="empty-ico">📭</div>
+            <div class="empty-t">لا توجد طلبات</div>
+            <div class="empty-s">${curFilter==='all'?'لم تصل أي طلبات بعد':'لا توجد طلبات بهذه الحالة'}</div>
+        </div>`;
+        document.getElementById('btm-total').innerHTML='0 <em>ر.س</em>';
+        return;
+    }
+
+    // تجميع بالتاريخ
+    const groups={};
+    filtered.forEach(o=>{
+        const k=(o.created_at||'').slice(0,10)||'?';
+        if(!groups[k])groups[k]=[];
+        groups[k].push(o);
+    });
+
+    const todayStr=new Date().toISOString().slice(0,10);
+    const yesterday=new Date(Date.now()-864e5).toISOString().slice(0,10);
+
+    let html='';
+    Object.keys(groups).sort((a,b)=>b.localeCompare(a)).forEach(dk=>{
+        const lbl=dk===todayStr?'📅 اليوم':dk===yesterday?'📅 أمس':dk;
+        html+=`<div class="day-sep">${lbl}</div>`;
+        groups[dk].forEach(o=>{ html+=buildRow(o); });
+    });
+
+    wrap.innerHTML=html;
+
+    // إجمالي
+    const tot=filtered.reduce((s,o)=>o.status!=='cancelled'?s+(parseFloat(o.total_value)||0):s,0);
+    document.getElementById('btm-total').innerHTML=`${tot.toFixed(2)} <em>ر.س</em>`;
+}
+
+function buildRow(o){
+    const st=stMap[o.status]||stMap.pending;
+    const num=o.order_number?`#${o.order_number}`:`#${String(o.id).slice(-6).toUpperCase()}`;
+    const time=o.created_at?new Date(o.created_at).toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit',hour12:true}):'--';
+    const name=o.customer_name||'عميل';
+    const total=(parseFloat(o.total_value)||0).toFixed(2);
+    const isDelivery=o.delivery_address||(o.shipping_method&&o.shipping_method!=='pickup');
+
+    // ملخص العناصر
+    let preview='';
+    try{
+        const items=typeof o.cart_items==='string'?JSON.parse(o.cart_items):(o.cart_items||[]);
+        preview=items.slice(0,3).map(i=>`${i.name||i.product_name||'منتج'} ×${i.quantity||1}`).join(' · ');
+        if(items.length>3) preview+=` +${items.length-3}`;
+    }catch(e){}
+
+    return`<div class="order-row${o.status==='pending'?' is-new':''}" onclick="openDrawer('${o.id}')">
+        <div class="row-bar ${st.bar}"></div>
+        <div class="row-body">
+            <div class="row-top">
+                <span class="row-num">${num}</span>
+                <span class="status-pill ${st.cls}">${st.lbl}</span>
+            </div>
+            <div class="row-mid">
+                <span class="row-name">${name}</span>
+                <span class="row-total">${total} ر.س</span>
+            </div>
+            <div class="row-bot">
+                <span class="row-items-preview">${preview}</span>
+                <span class="row-type ${isDelivery?'type-delivery':'type-pickup'}">${isDelivery?'🚗 توصيل':'🏪 استلام'}</span>
+            </div>
+        </div>
+        <div class="row-arrow">‹</div>
+    </div>`;
+}
+
+/* ================================================
+   DRAWER — تفاصيل الطلب
+================================================ */
+function openDrawer(id){
+    const o=allOrders.find(x=>x.id==id);
+    if(!o) return;
+    drawerOrder=o;
+    fillDrawer(o);
+    document.getElementById('overlay').classList.add('on');
+    document.getElementById('drawer').classList.add('open');
+    document.body.style.overflow='hidden';
+}
+
+function closeDrawer(){
+    drawerOrder=null;
+    document.getElementById('overlay').classList.remove('on');
+    document.getElementById('drawer').classList.remove('open');
+    document.body.style.overflow='';
+}
+
+function fillDrawer(o){
+    const st=stMap[o.status]||stMap.pending;
+    const num=o.order_number?`#${o.order_number}`:`#${String(o.id).slice(-6).toUpperCase()}`;
+    document.getElementById('d-num').innerHTML=`${num} <span class="status-pill ${st.cls}" style="margin-right:6px;">${st.lbl}</span>`;
+
+    const name=o.customer_name||'عميل';
+    const phone=o.customer_phone||'';
+    const initials=name.trim().charAt(0);
+    const isDelivery=o.delivery_address||(o.shipping_method&&o.shipping_method!=='pickup');
+    const orderVal=(parseFloat(o.order_value)||0).toFixed(2);
+    const shipCost=(parseFloat(o.shipping_cost)||0).toFixed(2);
+    const totalVal=(parseFloat(o.total_value)||0).toFixed(2);
+    const createdFull=o.created_at?new Date(o.created_at).toLocaleString('ar-SA',{hour:'2-digit',minute:'2-digit',day:'numeric',month:'short',hour12:true}):'--';
+    const note=o.notes||o.note||'';
+
+    // عناصر الطلب
+    let itemsHtml='';
+    try{
+        const items=typeof o.cart_items==='string'?JSON.parse(o.cart_items):(o.cart_items||[]);
+        itemsHtml=items.map(i=>{
+            const qty=i.quantity||i.qty||1;
+            const price=(parseFloat(i.price||i.unit_price||0)*qty).toFixed(2);
+            const iname=i.name||i.product_name||i.item_name||'منتج';
+            return`<div class="item-row">
+                <div class="item-qty">${qty}</div>
+                <span class="item-name">${iname}</span>
+                <span class="item-price">${price} ر.س</span>
+            </div>`;
+        }).join('');
+    }catch(e){ itemsHtml='<p style="font-size:12px;color:#aaa;">لا توجد تفاصيل</p>'; }
+
+    document.getElementById('d-body').innerHTML=`
+        <!-- العميل -->
+        <div class="d-section">
+            <div class="d-sec-title">👤 معلومات العميل</div>
+            <div class="d-card">
+                <div class="cust-row">
+                    <div class="cust-av">${initials}</div>
+                    <div style="flex:1">
+                        <div class="cust-n">${name}</div>
+                        ${phone?`<span class="cust-p">📱 ${phone}</span>`:''}
+                    </div>
+                    ${phone?`<button class="call-btn" onclick="callCust('${phone}')">📞 اتصال</button>`:''}
+                </div>
+            </div>
+        </div>
+
+        <!-- التوصيل / الاستلام -->
+        <div class="d-section">
+            <div class="d-sec-title">${isDelivery?'🚗 معلومات التوصيل':'🏪 استلام من المتجر'}</div>
+            <div class="d-card">
+                ${o.shipping_city?`<div class="ship-row"><span class="ship-ico">📍</span><div><div class="ship-t">المدينة</div><div class="ship-s">${o.shipping_city}</div></div></div>`:''}
+                ${o.delivery_address?`<div class="ship-row"><span class="ship-ico">🏠</span><div style="flex:1"><div class="ship-t">العنوان</div><div class="ship-s">${o.delivery_address}</div></div><button class="call-btn" onclick="window.open('${o.delivery_address}','_blank')" style="margin-right:0;margin-left:8px;flex-shrink:0;">🗺️ معاينة</button></div>`:''}
+                ${!o.shipping_city&&!o.delivery_address?`<div style="font-size:12px;color:var(--muted);">استلام من المتجر مباشرة</div>`:''}
+            </div>
+        </div>
+		
+		
+        ${note?`<div class="d-section">
+            <div class="d-sec-title">💬 ملاحظات العميل</div>
+            <div class="note-box">💬 <span>${note}</span></div>
+        </div>`:''}
+
+        <!-- عناصر الطلب -->
+        <div class="d-section">
+            <div class="d-sec-title">🛒 عناصر الطلب</div>
+            <div class="d-card">
+                ${itemsHtml}
+                <div class="total-rows">
+                    <div class="t-row"><span class="t-lbl">المنتجات</span><span class="t-val">${orderVal} ر.س</span></div>
+                    ${parseFloat(shipCost)>0?`<div class="t-row"><span class="t-lbl">رسوم التوصيل</span><span class="t-val">${shipCost} ر.س</span></div>`:''}
+                    <div class="t-row t-grand"><span class="t-lbl">الإجمالي</span><span class="t-val">${totalVal} ر.س</span></div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- وقت الطلب -->
+        <div style="text-align:center;font-size:11px;color:var(--muted);padding:4px 0 8px;">
+            🕐 ${createdFull}
+        </div>
+    `;
+
+    // أزرار الإجراء
+    fillActions(o);
+}
+
+function fillActions(o){
+    let btns='';
+    if(o.status==='pending'){
+        btns=`<div class="actions-grid">
+            <button class="act a-confirm" onclick="doStatus('${o.id}','confirmed')">✅ تأكيد الطلب</button>
+            <button class="act a-cancel"  onclick="doStatus('${o.id}','cancelled')">❌ إلغاء</button>
+            ${o.customer_phone?`<button class="act a-call" onclick="callCust('${o.customer_phone}')">📞 الاتصال بالعميل</button>`:''}
+            <button class="act a-change" onclick="openStatusModal('${o.id}')">⚙ تغيير الحالة</button>
+        </div>`;
+    } else if(o.status==='confirmed'){
+        btns=`<div class="actions-grid">
+            <button class="act a-prepare" onclick="doStatus('${o.id}','preparing')">👨‍🍳 بدء التحضير</button>
+            <button class="act a-cancel"  onclick="doStatus('${o.id}','cancelled')">❌ إلغاء</button>
+            ${o.customer_phone?`<button class="act a-call" onclick="callCust('${o.customer_phone}')">📞 اتصال</button>`:''}
+            <button class="act a-change" onclick="openStatusModal('${o.id}')">⚙ تغيير</button>
+        </div>`;
+    } else if(o.status==='preparing'){
+        btns=`<div class="actions-grid">
+            <button class="act a-ready"   onclick="doStatus('${o.id}','ready')">🔔 جاهز للتسليم</button>
+            <button class="act a-cancel"  onclick="doStatus('${o.id}','cancelled')">❌ إلغاء</button>
+            ${o.customer_phone?`<button class="act a-call" onclick="callCust('${o.customer_phone}')">📞 اتصال</button>`:''}
+            <button class="act a-change" onclick="openStatusModal('${o.id}')">⚙ تغيير</button>
+        </div>`;
+    } else if(o.status==='ready'){
+        btns=`<div class="actions-grid">
+            <button class="act a-deliver" onclick="doStatus('${o.id}','delivered')">✔ تأكيد التسليم</button>
+            ${o.customer_phone?`<button class="act a-call" onclick="callCust('${o.customer_phone}')">📞 اتصال</button>`:''}
+            <button class="act a-change" onclick="openStatusModal('${o.id}')">⚙ تغيير الحالة</button>
+        </div>`;
+    } else {
+        btns=`<div class="actions-grid single">
+            <button class="act a-change" onclick="openStatusModal('${o.id}')">⚙ تغيير الحالة</button>
+        </div>`;
+    }
+    document.getElementById('d-actions').innerHTML=btns;
+}
+
+/* ================================================
+   STATUS CHANGE
+================================================ */
+async function doStatus(id,newSt){
+    try{
+        const{error}=await _sb.from('orders').update({status:newSt}).eq('id',id);
+        if(error) throw error;
+        const idx=allOrders.findIndex(o=>o.id==id);
+        if(idx!==-1) allOrders[idx].status=newSt;
+        updateStats();
+        renderList();
+        // تحديث الـ drawer
+        if(drawerOrder&&drawerOrder.id==id){
+            drawerOrder.status=newSt;
+            fillDrawer(drawerOrder);
+        }
+    }catch(e){ alert('فشل تغيير الحالة: '+e.message); }
+}
+
+function openStatusModal(id){
+    pendCh={id,st:null};
+    document.querySelectorAll('.ss-opt').forEach(o=>o.classList.remove('sel'));
+    document.getElementById('status-modal').classList.add('on');
+}
+function closeStatusModal(){ document.getElementById('status-modal').classList.remove('on'); pendCh={id:null,st:null}; }
+function selSt(s){
+    pendCh.st=s;
+    document.querySelectorAll('.ss-opt').forEach(o=>o.classList.remove('sel'));
+    event.currentTarget.classList.add('sel');
+}
+async function confirmSt(){
+    if(!pendCh.id||!pendCh.st){ alert('اختر حالة أولاً'); return; }
+    await doStatus(pendCh.id,pendCh.st);
+    closeStatusModal();
+}
+
+/* ================================================
+   HELPERS
+================================================ */
+function callCust(p){ window.location.href='tel:'+p; }
+function goBack(){ sessionStorage.setItem('back_from_manage','true'); window.location.href='store_settings.html'; }
+
+function notifyNew(c){
+    if(navigator.vibrate) navigator.vibrate([200,80,200]);
+    if('Notification'in window&&Notification.permission==='granted')
+        new Notification('🔔 طلب جديد!',{body:`${c} طلب بانتظار التأكيد`});
+}
+
+/* ================================================
+   START
+================================================ */
+init();
+</script>
+</body>
+</html>
