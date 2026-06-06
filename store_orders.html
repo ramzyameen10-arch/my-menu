@@ -297,6 +297,13 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl
     display:flex;align-items:center;justify-content:center;flex-shrink:0;
     margin-top:1px;
 }
+/* شارة إجمالي الأصناف */
+.items-summary-badge{
+    font-size:11px;font-weight:700;
+    background:var(--primary-bg);color:var(--primary-d);
+    border:1px solid #a7f3d0;border-radius:8px;
+    padding:2px 9px;
+}
 /* ===== تفاصيل الصنف (الاسم + الإضافات) ===== */
 .item-details{display:flex;flex-direction:column;flex:1;gap:4px;min-width:0;}
 .item-name{font-size:13px;font-weight:600;color:var(--text);}
@@ -411,10 +418,50 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl
     .stats{grid-template-columns:repeat(2,1fr);}
     .sc-v{font-size:1.1em;}
 }
+
+/* ====== ALERT BANNER (طلب جديد) ====== */
+.alert-banner{
+    display:none;
+    position:fixed;top:0;left:0;right:0;z-index:500;
+    background:linear-gradient(135deg,#dc2626,#b91c1c);
+    color:#fff;padding:14px 16px;
+    flex-direction:column;gap:6px;
+    box-shadow:0 4px 20px rgba(220,38,38,.5);
+    animation:banner-in .3s ease;
+}
+.alert-banner.on{display:flex;}
+@keyframes banner-in{from{transform:translateY(-100%)}to{transform:translateY(0)}}
+.alert-banner-top{display:flex;align-items:center;justify-content:space-between;}
+.alert-banner-title{font-size:15px;font-weight:900;display:flex;align-items:center;gap:7px;}
+.alert-banner-sub{font-size:12px;opacity:.9;font-weight:600;}
+.alert-close-btn{
+    background:rgba(255,255,255,.2);border:none;color:#fff;
+    width:32px;height:32px;border-radius:9px;font-size:18px;
+    cursor:pointer;display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;font-family:inherit;
+}
+.alert-close-btn:active{background:rgba(255,255,255,.35);}
+.alert-pulse{
+    width:10px;height:10px;border-radius:50%;background:#fff;
+    display:inline-block;animation:a-pulse 1s infinite;flex-shrink:0;
+}
+@keyframes a-pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.5);opacity:.5}}
 </style>
 <base target="_blank">
 </head>
 <body>
+
+<!-- ALERT BANNER -->
+<div class="alert-banner" id="alert-banner">
+    <div class="alert-banner-top">
+        <div class="alert-banner-title">
+            <span class="alert-pulse"></span>
+            🔔 طلب جديد بانتظار التأكيد!
+        </div>
+        <button class="alert-close-btn" onclick="dismissAlert()">✕</button>
+    </div>
+    <div class="alert-banner-sub" id="alert-banner-sub">لديك طلبات جديدة</div>
+</div>
 
 <!-- HEADER -->
 <div class="hdr">
@@ -706,7 +753,16 @@ function openDrawer(id){
     document.getElementById('overlay').classList.add('on');
     document.getElementById('drawer').classList.add('open');
     document.body.style.overflow='hidden';
+    // أضف حالة للتاريخ حتى يعترض زر الرجوع
+    history.pushState({drawer:true},'');
 }
+
+// اعتراض زر الرجوع — إذا الـ drawer مفتوح أغلقه بدل التنقل
+window.addEventListener('popstate',function(e){
+    if(document.getElementById('drawer').classList.contains('open')){
+        closeDrawer();
+    }
+});
 
 function closeDrawer(){
     drawerOrder=null;
@@ -732,8 +788,12 @@ function fillDrawer(o){
 
     /* ---- عناصر الطلب مع الإضافات ---- */
     let itemsHtml='';
+    let totalQty=0;
+    let totalItemsCount=0;
     try{
         const items=typeof o.cart_items==='string'?JSON.parse(o.cart_items):(o.cart_items||[]);
+        totalItemsCount=items.length;
+        totalQty=items.reduce((s,i)=>s+(parseInt(i.quantity||i.qty||1)),0);
         itemsHtml=items.map(i=>{
             const qty=i.quantity||i.qty||1;
             const price=(parseFloat(i.price||i.unit_price||0)*qty).toFixed(2);
@@ -795,11 +855,15 @@ function fillDrawer(o){
 
         <!-- عناصر الطلب -->
         <div class="d-section">
-            <div class="d-sec-title">🛒 عناصر الطلب</div>
+            <div class="d-sec-title" style="justify-content:space-between;">
+                <span>🛒 عناصر الطلب</span>
+                <span class="items-summary-badge">${totalItemsCount} صنف · ${totalQty} قطعة</span>
+            </div>
             <div class="d-card">
                 ${itemsHtml}
                 <div class="total-rows">
-                    <div class="t-row"><span class="t-lbl">المنتجات</span><span class="t-val">${orderVal} ر.س</span></div>
+                    <div class="t-row"><span class="t-lbl">العدد</span><span class="t-val">${totalQty}</span></div>
+                    <div class="t-row"><span class="t-lbl">المجموع الفرعي</span><span class="t-val">${orderVal} ر.س</span></div>
                     ${parseFloat(shipCost)>0?`<div class="t-row"><span class="t-lbl">رسوم التوصيل</span><span class="t-val">${shipCost} ر.س</span></div>`:''}
                     <div class="t-row t-grand"><span class="t-lbl">الإجمالي</span><span class="t-val">${totalVal} ر.س</span></div>
                 </div>
@@ -820,27 +884,23 @@ function fillActions(o){
         btns=`<div class="actions-grid">
             <button class="act a-confirm" onclick="doStatus('${o.id}','confirmed')">✅ تأكيد الطلب</button>
             <button class="act a-cancel"  onclick="doStatus('${o.id}','cancelled')">❌ إلغاء</button>
-            ${o.customer_phone?`<button class="act a-call" onclick="callCust('${o.customer_phone}')">📞 الاتصال بالعميل</button>`:''}
             <button class="act a-change" onclick="openStatusModal('${o.id}')">⚙ تغيير الحالة</button>
         </div>`;
     } else if(o.status==='confirmed'){
         btns=`<div class="actions-grid">
             <button class="act a-prepare" onclick="doStatus('${o.id}','preparing')">👨‍🍳 بدء التحضير</button>
             <button class="act a-cancel"  onclick="doStatus('${o.id}','cancelled')">❌ إلغاء</button>
-            ${o.customer_phone?`<button class="act a-call" onclick="callCust('${o.customer_phone}')">📞 اتصال</button>`:''}
             <button class="act a-change" onclick="openStatusModal('${o.id}')">⚙ تغيير</button>
         </div>`;
     } else if(o.status==='preparing'){
         btns=`<div class="actions-grid">
             <button class="act a-ready"   onclick="doStatus('${o.id}','ready')">🔔 جاهز للتسليم</button>
             <button class="act a-cancel"  onclick="doStatus('${o.id}','cancelled')">❌ إلغاء</button>
-            ${o.customer_phone?`<button class="act a-call" onclick="callCust('${o.customer_phone}')">📞 اتصال</button>`:''}
             <button class="act a-change" onclick="openStatusModal('${o.id}')">⚙ تغيير</button>
         </div>`;
     } else if(o.status==='ready'){
         btns=`<div class="actions-grid">
             <button class="act a-deliver" onclick="doStatus('${o.id}','delivered')">✔ تأكيد التسليم</button>
-            ${o.customer_phone?`<button class="act a-call" onclick="callCust('${o.customer_phone}')">📞 اتصال</button>`:''}
             <button class="act a-change" onclick="openStatusModal('${o.id}')">⚙ تغيير الحالة</button>
         </div>`;
     } else {
@@ -893,15 +953,74 @@ function callCust(p){ window.location.href='tel:'+p; }
 function waCust(p){ window.open('https://wa.me/'+p.replace(/\D/g,''),'_blank'); }
 function goBack(){ sessionStorage.setItem('back_from_manage','true'); window.location.href='store_settings.html'; }
 
-function notifyNew(c){
-    if(navigator.vibrate) navigator.vibrate([200,80,200]);
+/* ================================================
+   ALERT SYSTEM — تنبيه مستمر حتى الإغلاق
+================================================ */
+let alertInterval=null;
+let alertActive=false;
+
+function playBeep(){
     try{
-        const audio=new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-        audio.volume=1;
-        audio.play().catch(()=>{});
+        // Web Audio API — لا يحتاج رابط خارجي، أعلى جودة وموثوقية
+        const ctx=new(window.AudioContext||window.webkitAudioContext)();
+        const times=[[0,.12],[.18,.12],[.36,.18]];
+        times.forEach(([start,dur])=>{
+            const osc=ctx.createOscillator();
+            const gain=ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.type='sine';
+            osc.frequency.value=880;
+            gain.gain.setValueAtTime(0,ctx.currentTime+start);
+            gain.gain.linearRampToValueAtTime(1,ctx.currentTime+start+0.01);
+            gain.gain.linearRampToValueAtTime(0,ctx.currentTime+start+dur);
+            osc.start(ctx.currentTime+start);
+            osc.stop(ctx.currentTime+start+dur+0.05);
+        });
     }catch(e){}
+    if(navigator.vibrate) navigator.vibrate([200,80,200,80,300]);
+}
+
+function showAlertBanner(count){
+    const banner=document.getElementById('alert-banner');
+    const sub=document.getElementById('alert-banner-sub');
+    sub.textContent=`لديك ${count} طلب${count>1?'ات':''} بانتظار التأكيد`;
+    banner.classList.add('on');
+}
+
+function dismissAlert(){
+    // إيقاف التكرار وإخفاء البانر
+    clearInterval(alertInterval);
+    alertInterval=null;
+    alertActive=false;
+    document.getElementById('alert-banner').classList.remove('on');
+}
+
+function notifyNew(count){
+    // إذا كان التنبيه نشطاً بالفعل فقط حدّث العداد
+    if(alertActive){
+        showAlertBanner(count);
+        return;
+    }
+    alertActive=true;
+    showAlertBanner(count);
+    playBeep();
+
+    // كرر الصوت كل 10 ثواني حتى يُغلق الإشعار
+    alertInterval=setInterval(()=>{
+        if(!alertActive){ clearInterval(alertInterval); return; }
+        // تحقق أن لا يزال هناك طلبات معلقة
+        const pend=allOrders.filter(o=>o.status==='pending').length;
+        if(pend===0){ dismissAlert(); return; }
+        showAlertBanner(pend);
+        playBeep();
+    },10000);
+
+    // إشعار المتصفح
     if('Notification'in window&&Notification.permission==='granted')
-        new Notification('🔔 طلب جديد!',{body:`${c} طلب بانتظار التأكيد`});
+        new Notification('🔔 طلب جديد!',{body:`${count} طلب بانتظار التأكيد`,icon:'',tag:'new-order'});
+    else if('Notification'in window&&Notification.permission!=='denied')
+        Notification.requestPermission();
 }
 
 /* ================================================
