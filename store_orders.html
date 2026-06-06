@@ -286,8 +286,8 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl
 
 /* عناصر الطلب */
 .item-row{
-    display:flex;align-items:center;gap:8px;
-    padding:7px 0;border-bottom:1px dashed #dde8e0;
+    display:flex;align-items:flex-start;gap:8px;
+    padding:9px 0;border-bottom:1px dashed #dde8e0;
 }
 .item-row:last-child{border-bottom:none;}
 .item-qty{
@@ -295,9 +295,20 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl
     background:var(--primary);color:#fff;
     font-size:11px;font-weight:800;
     display:flex;align-items:center;justify-content:center;flex-shrink:0;
+    margin-top:1px;
 }
-.item-name{flex:1;font-size:13px;font-weight:600;color:var(--text);}
-.item-price{font-size:13px;font-weight:700;color:var(--primary);white-space:nowrap;}
+/* ===== تفاصيل الصنف (الاسم + الإضافات) ===== */
+.item-details{display:flex;flex-direction:column;flex:1;gap:4px;min-width:0;}
+.item-name{font-size:13px;font-weight:600;color:var(--text);}
+.item-addons{display:flex;flex-wrap:wrap;gap:4px;}
+.addon-tag{
+    font-size:10px;font-weight:600;color:#6d28d9;
+    background:#f5f3ff;border:1px solid #ddd6fe;
+    border-radius:6px;padding:2px 7px;
+    display:inline-flex;align-items:center;gap:2px;
+    white-space:nowrap;
+}
+.item-price{font-size:13px;font-weight:700;color:var(--primary);white-space:nowrap;padding-top:2px;}
 
 /* الإجمالي */
 .total-rows{border-top:1.5px solid var(--border);margin-top:8px;padding-top:8px;}
@@ -401,9 +412,6 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl
     .sc-v{font-size:1.1em;}
 }
 </style>
-<base target="_blank">
-<base target="_blank">
-<base target="_blank">
 <base target="_blank">
 </head>
 <body>
@@ -517,24 +525,19 @@ let drawerOrder=null;
 let pendCh={id:null,st:null};
 
 /* ================================================
-   AUTH — بدون شاشة اعتراضية
+   AUTH
 ================================================ */
 async function init(){
-    // إذا غير مسجل → index مباشرة
     if(!userPhone||!storeId){ window.location.replace('index.html'); return; }
-
     try{
         const {data:profile}=await _sb.from('profiles').select('id').eq('phone_number',userPhone).single();
         if(!profile){ window.location.replace('index.html'); return; }
-
         const {data:store}=await _sb.from('store_settings').select('id,store_name')
             .eq('id',storeId).eq('user_id',profile.id).single();
         if(!store){ window.location.replace('index.html'); return; }
-
         document.getElementById('store-name').textContent=store.store_name;
         await loadOrders();
         timer=setInterval(()=>loadOrders(true),30000);
-        
     }catch(e){ window.location.replace('index.html'); }
 }
 
@@ -547,18 +550,13 @@ async function loadOrders(silent=false){
         const{data,error}=await _sb.from('orders').select('*')
             .eq('store_id',storeId).order('created_at',{ascending:false});
         if(error) throw error;
-
         const prevPend=allOrders.filter(o=>o.status==='pending').length;
         allOrders=data||[];
         const newPend=allOrders.filter(o=>o.status==='pending').length;
-
         if(silent&&newPend>prevPend&&prevPend>=0) notifyNew(newPend);
-
         updateStats();
         renderList();
         updateTS();
-
-        // تحديث الـ drawer إذا كان مفتوح
         if(drawerOrder){
             const fresh=allOrders.find(o=>o.id==drawerOrder.id);
             if(fresh){ drawerOrder=fresh; fillDrawer(fresh); }
@@ -589,22 +587,18 @@ function updateStats(){
     const todayO=allOrders.filter(o=>(o.created_at||'').startsWith(today));
     const pend=allOrders.filter(o=>o.status==='pending').length;
     const rev=todayO.filter(o=>o.status!=='cancelled').reduce((s,o)=>s+(parseFloat(o.total_value)||0),0);
-
     document.getElementById('s-today').textContent=todayO.length;
     document.getElementById('s-pend').textContent=pend;
     document.getElementById('s-rev').textContent=rev.toFixed(0);
     document.getElementById('s-all').textContent=allOrders.length;
-
     const cnts={pending:0,confirmed:0,preparing:0,ready:0,delivered:0,cancelled:0};
     allOrders.forEach(o=>{if(cnts[o.status]!==undefined)cnts[o.status]++;});
-
     document.getElementById('c-all').textContent=allOrders.length;
     ['pending','confirmed','preparing','ready','delivered','cancelled'].forEach(k=>{
         const el=document.getElementById('c-'+k);
         el.textContent=cnts[k];
         el.classList.toggle('hot',k==='pending'&&cnts[k]>0);
     });
-
     const nb=document.getElementById('new-btn');
     if(pend>0){
         document.getElementById('new-cnt').textContent=pend;
@@ -626,7 +620,7 @@ function setFilter(f){
 }
 
 /* ================================================
-   RENDER LIST — صف واحد لكل طلب
+   RENDER LIST
 ================================================ */
 const stMap={
     pending:  {lbl:'قيد الانتظار',cls:'sp-pending',  bar:'bar-pending'  },
@@ -640,7 +634,6 @@ const stMap={
 function renderList(){
     const filtered=curFilter==='all'?allOrders:allOrders.filter(o=>o.status===curFilter);
     const wrap=document.getElementById('list-wrap');
-
     if(!filtered.length){
         wrap.innerHTML=`<div class="center-msg">
             <div class="empty-ico">📭</div>
@@ -650,28 +643,21 @@ function renderList(){
         document.getElementById('btm-total').innerHTML='0 <em>ر.س</em>';
         return;
     }
-
-    // تجميع بالتاريخ
     const groups={};
     filtered.forEach(o=>{
         const k=(o.created_at||'').slice(0,10)||'?';
         if(!groups[k])groups[k]=[];
         groups[k].push(o);
     });
-
     const todayStr=new Date().toISOString().slice(0,10);
     const yesterday=new Date(Date.now()-864e5).toISOString().slice(0,10);
-
     let html='';
     Object.keys(groups).sort((a,b)=>b.localeCompare(a)).forEach(dk=>{
         const lbl=dk===todayStr?'📅 اليوم':dk===yesterday?'📅 أمس':dk;
         html+=`<div class="day-sep">${lbl}</div>`;
         groups[dk].forEach(o=>{ html+=buildRow(o); });
     });
-
     wrap.innerHTML=html;
-
-    // إجمالي
     const tot=filtered.reduce((s,o)=>o.status!=='cancelled'?s+(parseFloat(o.total_value)||0):s,0);
     document.getElementById('btm-total').innerHTML=`${tot.toFixed(2)} <em>ر.س</em>`;
 }
@@ -683,15 +669,12 @@ function buildRow(o){
     const name=o.customer_name||'عميل';
     const total=(parseFloat(o.total_value)||0).toFixed(2);
     const isDelivery=o.delivery_address||(o.shipping_method&&o.shipping_method!=='pickup');
-
-    // ملخص العناصر
     let preview='';
     try{
         const items=typeof o.cart_items==='string'?JSON.parse(o.cart_items):(o.cart_items||[]);
-        preview=items.slice(0,3).map(i=>`${i.name||i.product_name||'منتج'} ×${i.quantity||1}`).join(' · ');
+        preview=items.slice(0,3).map(i=>`${i.name||i.product_name||'منتج'} ×${i.quantity||i.qty||1}`).join(' · ');
         if(items.length>3) preview+=` +${items.length-3}`;
     }catch(e){}
-
     return`<div class="order-row${o.status==='pending'?' is-new':''}" onclick="openDrawer('${o.id}')">
         <div class="row-bar ${st.bar}"></div>
         <div class="row-body">
@@ -713,7 +696,7 @@ function buildRow(o){
 }
 
 /* ================================================
-   DRAWER — تفاصيل الطلب
+   DRAWER
 ================================================ */
 function openDrawer(id){
     const o=allOrders.find(x=>x.id==id);
@@ -747,7 +730,7 @@ function fillDrawer(o){
     const createdFull=o.created_at?new Date(o.created_at).toLocaleString('ar-SA',{hour:'2-digit',minute:'2-digit',day:'numeric',month:'short',hour12:true}):'--';
     const note=o.notes||o.note||'';
 
-    // عناصر الطلب
+    /* ---- عناصر الطلب مع الإضافات ---- */
     let itemsHtml='';
     try{
         const items=typeof o.cart_items==='string'?JSON.parse(o.cart_items):(o.cart_items||[]);
@@ -755,9 +738,25 @@ function fillDrawer(o){
             const qty=i.quantity||i.qty||1;
             const price=(parseFloat(i.price||i.unit_price||0)*qty).toFixed(2);
             const iname=i.name||i.product_name||i.item_name||'منتج';
+
+            // بناء شارات الإضافات
+            const addons=Array.isArray(i.addons)?i.addons:[];
+            let addonsHtml='';
+            if(addons.length){
+                const tags=addons.map(a=>{
+                    const aname=a.name||a.addon_name||a.title||String(a);
+                    const aprice=parseFloat(a.price||a.addon_price||0);
+                    return`<span class="addon-tag">➕ ${aname}${aprice>0?' (+'+aprice.toFixed(2)+' ر.س)':''}</span>`;
+                }).join('');
+                addonsHtml=`<div class="item-addons">${tags}</div>`;
+            }
+
             return`<div class="item-row">
                 <div class="item-qty">${qty}</div>
-                <span class="item-name">${iname}</span>
+                <div class="item-details">
+                    <span class="item-name">${iname}</span>
+                    ${addonsHtml}
+                </div>
                 <span class="item-price">${price} ر.س</span>
             </div>`;
         }).join('');
@@ -788,8 +787,7 @@ function fillDrawer(o){
                 ${!o.shipping_city&&!o.delivery_address?`<div style="font-size:12px;color:var(--muted);">استلام من المتجر مباشرة</div>`:''}
             </div>
         </div>
-		
-		
+
         ${note?`<div class="d-section">
             <div class="d-sec-title">💬 ملاحظات العميل</div>
             <div class="note-box">💬 <span>${note}</span></div>
@@ -808,14 +806,11 @@ function fillDrawer(o){
             </div>
         </div>
 
-
-        <!-- وقت الطلب -->
         <div style="text-align:center;font-size:11px;color:var(--muted);padding:4px 0 8px;">
             🕐 ${createdFull}
         </div>
     `;
 
-    // أزرار الإجراء
     fillActions(o);
 }
 
@@ -867,7 +862,6 @@ async function doStatus(id,newSt){
         if(idx!==-1) allOrders[idx].status=newSt;
         updateStats();
         renderList();
-        // تحديث الـ drawer
         if(drawerOrder&&drawerOrder.id==id){
             drawerOrder.status=newSt;
             fillDrawer(drawerOrder);
@@ -901,10 +895,9 @@ function goBack(){ sessionStorage.setItem('back_from_manage','true'); window.loc
 
 function notifyNew(c){
     if(navigator.vibrate) navigator.vibrate([200,80,200]);
-    // تشغيل صوت التنبيه
     try{
         const audio=new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-        audio.volume=0.6;
+        audio.volume=1;
         audio.play().catch(()=>{});
     }catch(e){}
     if('Notification'in window&&Notification.permission==='granted')
