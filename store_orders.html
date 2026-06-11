@@ -29,14 +29,22 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl
     position:relative;z-index:50;
 }
 .hdr-right{display:flex;align-items:center;gap:10px;}
+.store-logo{
+    width:42px;height:42px;border-radius:50%;
+    object-fit:cover;border:2px solid var(--primary);
+    background:#eee;flex-shrink:0;
+}
 .btn-back{
-    background:var(--bg);border:1.5px solid var(--border);
-    padding:6px 12px;border-radius:9px;
-    font-size:13px;font-weight:700;color:#555;
+    background:#34495e;color:#fff;
+    padding:6px 14px;border-radius:10px;
+    border:none;
+    font-size:13px;font-weight:600;
     cursor:pointer;display:flex;align-items:center;gap:4px;
     font-family:inherit;transition:background .15s;
+    flex-shrink:0;
 }
-.btn-back:active{background:#e4ece8;}
+.btn-back:hover{background:#2c3e50;}
+.btn-back:active{background:#2c3e50;}
 .hdr-title{font-size:14px;font-weight:800;color:var(--text);}
 .hdr-sub{font-size:11px;color:var(--muted);}
 .hdr-left{display:flex;align-items:center;gap:8px;}
@@ -419,6 +427,28 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl
     .sc-v{font-size:1.1em;}
 }
 
+/* ====== شريط طلب إذن الإشعارات ====== */
+.notif-bar{
+    display:none;
+    background:#1e40af;color:#fff;
+    padding:10px 14px;
+    flex-direction:row;align-items:center;gap:10px;
+    font-size:12px;font-weight:700;
+    flex-shrink:0;
+}
+.notif-bar.on{display:flex;}
+.notif-bar-btn{
+    background:#fff;color:#1e40af;
+    border:none;padding:6px 14px;border-radius:8px;
+    font-size:12px;font-weight:800;cursor:pointer;
+    font-family:inherit;white-space:nowrap;flex-shrink:0;
+}
+.notif-bar-dismiss{
+    margin-right:auto;background:none;border:none;
+    color:rgba(255,255,255,.7);font-size:16px;cursor:pointer;
+    padding:0 4px;flex-shrink:0;
+}
+
 /* ====== ALERT BANNER (طلب جديد) ====== */
 .alert-banner{
     display:none;
@@ -448,8 +478,16 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl
 @keyframes a-pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.5);opacity:.5}}
 </style>
 <base target="_blank">
+<base target="_blank">
 </head>
 <body>
+
+<!-- شريط إذن الإشعارات -->
+<div class="notif-bar" id="notif-bar">
+    <span>🔔 فعّل الإشعارات لتنبيهك بالطلبات الجديدة</span>
+    <button class="notif-bar-btn" onclick="askNotifPermission()">تفعيل الإشعارات</button>
+    <button class="notif-bar-dismiss" onclick="document.getElementById('notif-bar').classList.remove('on')">✕</button>
+</div>
 
 <!-- ALERT BANNER -->
 <div class="alert-banner" id="alert-banner">
@@ -466,10 +504,7 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl
 <!-- HEADER -->
 <div class="hdr">
     <div class="hdr-right">
-        <button class="btn-back" onclick="goBack()">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-            رجوع
-        </button>
+        <img class="store-logo" id="store-logo-img" src="https://via.placeholder.com/45" alt="شعار المتجر">
         <div>
             <div class="hdr-title" id="store-name">—</div>
             <div class="hdr-sub">إدارة الطلبات</div>
@@ -478,6 +513,7 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl
     <div class="hdr-left">
         <div class="ico-btn" onclick="loadOrders()" title="تحديث">↻</div>
         <div class="ico-btn" id="notif-ico">🔔<div class="badge-dot" id="notif-dot"></div></div>
+        <button class="btn-back" onclick="goBack()">رجوع</button>
     </div>
 </div>
 
@@ -579,13 +615,35 @@ async function init(){
     try{
         const {data:profile}=await _sb.from('profiles').select('id').eq('phone_number',userPhone).single();
         if(!profile){ window.location.replace('index.html'); return; }
-        const {data:store}=await _sb.from('store_settings').select('id,store_name')
+        const {data:store}=await _sb.from('store_settings').select('id,store_name,logo_url')
             .eq('id',storeId).eq('user_id',profile.id).single();
         if(!store){ window.location.replace('index.html'); return; }
         document.getElementById('store-name').textContent=store.store_name;
+        if(store.logo_url){ document.getElementById('store-logo-img').src=store.logo_url; }
+
+        // اطلب إذن الإشعارات فور فتح الصفحة
+        if('Notification' in window){
+            if(Notification.permission==='default'){
+                // أظهر شريط الطلب بدل popup مباشرة
+                document.getElementById('notif-bar').classList.add('on');
+            }
+            // إذا مرفوض سابقاً — أظهر الشريط كتذكير
+            if(Notification.permission==='denied'){
+                document.getElementById('notif-bar').classList.add('on');
+            }
+        }
+
         await loadOrders();
         timer=setInterval(()=>loadOrders(true),30000);
     }catch(e){ window.location.replace('index.html'); }
+}
+
+async function askNotifPermission(){
+    if(!('Notification' in window)) return;
+    const result=await Notification.requestPermission();
+    if(result==='granted'){
+        document.getElementById('notif-bar').classList.remove('on');
+    }
 }
 
 /* ================================================
@@ -1019,8 +1077,6 @@ function notifyNew(count){
     // إشعار المتصفح
     if('Notification'in window&&Notification.permission==='granted')
         new Notification('🔔 طلب جديد!',{body:`${count} طلب بانتظار التأكيد`,icon:'',tag:'new-order'});
-    else if('Notification'in window&&Notification.permission!=='denied')
-        Notification.requestPermission();
 }
 
 /* ================================================
