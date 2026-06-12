@@ -1899,10 +1899,11 @@
             const notes = document.getElementById('order-notes').value.trim();
 
             // بناء عنوان التوصيل
-            let deliveryAddress = "";
-            if (selectedDeliveryType === 'delivery' && customerLat && customerLng && !locationSkipped) {
-                deliveryAddress = `https://maps.google.com/maps?q=${customerLat.toFixed(6)},${customerLng.toFixed(6)}`;
-            }
+			// بعد التعديل
+let deliveryAddress = null;
+if (selectedDeliveryType === 'delivery' && customerLat && customerLng && !locationSkipped) {
+    deliveryAddress = `https://maps.google.com/maps?q=${customerLat.toFixed(6)},${customerLng.toFixed(6)}`;
+}
 
             // حفظ في جدول orders
             const orderPayload = {
@@ -1914,7 +1915,7 @@
                 shipping_cost: shippingCost,
                 shipping_method: selectedShippingMethod ? selectedShippingMethod.id : null,
                 shipping_city: selectedCity ? selectedCity.name : null,
-                delivery_address: deliveryAddress || null,
+                delivery_address: selectedDeliveryType === 'delivery' ? (deliveryAddress || null) : null,
                 notes: notes || null,
                 status: 'pending',
                 click_status: 'clicked'
