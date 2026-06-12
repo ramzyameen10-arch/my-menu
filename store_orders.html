@@ -479,6 +479,7 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl
 </style>
 <base target="_blank">
 <base target="_blank">
+<base target="_blank">
 </head>
 <body>
 
@@ -606,6 +607,7 @@ const storeId=new URLSearchParams(window.location.search).get('store_id');
 let allOrders=[], curFilter='all', timer=null;
 let drawerOrder=null;
 let pendCh={id:null,st:null};
+let shippingMethodsCache={}; // cache: { methodId: name }
 
 /* ================================================
    AUTH
@@ -633,9 +635,21 @@ async function init(){
             }
         }
 
+        await loadShippingMethods();
         await loadOrders();
         timer=setInterval(()=>loadOrders(true),30000);
     }catch(e){ window.location.replace('index.html'); }
+}
+
+async function loadShippingMethods(){
+    try{
+        const {data,error}=await _sb.from('shipping_methods')
+            .select('id,name')
+            .eq('store_id',storeId)
+            .eq('is_active',true);
+        if(error) throw error;
+        (data||[]).forEach(m=>{ shippingMethodsCache[m.id]=m.name; });
+    }catch(e){ console.log('shipping_methods load error',e); }
 }
 
 async function askNotifPermission(){
@@ -881,37 +895,57 @@ function fillDrawer(o){
     }catch(e){ itemsHtml='<p style="font-size:12px;color:#aaa;">لا توجد تفاصيل</p>'; }
 
     document.getElementById('d-body').innerHTML=`
-        <!-- العميل -->
+        <!-- ===== معلومات العميل + التوصيل (كرت واحد مدمج - مضغوط) ===== -->
         <div class="d-section">
-            <div class="d-sec-title">👤 معلومات العميل</div>
-            <div class="d-card">
-                <div class="cust-row">
-                    <div class="cust-av">${initials}</div>
-                    <div style="flex:1">
-                        <div class="cust-n">${name}</div>
-                        ${phone?`<span class="cust-p">📱 ${phone}</span>`:''}
+            <div class="d-sec-title" style="justify-content:space-between;">
+                <span>👤 معلومات العميل</span>
+                ${isDelivery 
+                    ? `<span style="background:#fdf4ff; color:#7e22ce; border:1px solid #e9d5ff; padding:2px 8px; border-radius:8px; font-size:11px; display:inline-flex; align-items:center; gap:4px;">🚗 طلب توصيل</span>` 
+                    : `<span style="background:#f0f9ff; color:#0369a1; border:1px solid #bae6fd; padding:2px 8px; border-radius:8px; font-size:11px; display:inline-flex; align-items:center; gap:4px;">🏪 استلام من المتجر</span>`
+                }
+            </div>
+            <div class="d-card" style="padding:10px;">
+                <!-- صف واحد: اسم + جوال + أزرار -->
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                    <div class="cust-av" style="width:36px; height:36px; font-size:14px;">${initials}</div>
+                    <div style="flex:1; min-width:0;">
+                        <div class="cust-n" style="font-size:13px;">${name}</div>
+                        ${phone?`<span class="cust-p" style="font-size:11px;">📱 ${phone}</span>`:''}
                     </div>
-                    ${phone?`<button class="call-btn" onclick="callCust('${phone}')">📞 اتصال</button><button class="call-btn" onclick="waCust('${phone}')" style="background:#dcfce7;border-color:#22c55e;color:#15803d;margin-right:6px;">💬 واتساب</button>`:''}
+                    <div style="display:flex; gap:4px; flex-shrink:0;">
+                        ${phone?`<button class="call-btn" onclick="callCust('${phone}')" style="padding:5px 10px; font-size:11px;">📞</button><button class="call-btn" onclick="waCust('${phone}')" style="padding:5px 10px; font-size:11px; background:#dcfce7;border-color:#22c55e;color:#15803d;">💬</button>`:''}
+                    </div>
+                </div>
+
+                <!-- فاصل -->
+                <div style="border-top:1px dashed #dde8e0; margin:8px 0;"></div>
+
+                <!-- معلومات التوصيل المدمجة - صف واحد أفقي مع زر المشاركة -->
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; flex-wrap:wrap; font-size:11px;">
+                    <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                        ${o.shipping_city ? `<span style="background:#f0f9ff; color:#0369a1; padding:2px 6px; border-radius:6px; font-weight:600;">📍 ${o.shipping_city}</span>` : ''}
+
+                        ${o.delivery_address ? `
+                        <button onclick="window.open('${o.delivery_address}','_blank')" style="background:#fef2f2; color:#dc2626; padding:2px 6px; border-radius:6px; font-weight:600; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:3px; font-family:inherit; font-size:11px;">
+                            <svg viewBox="0 0 384 512" style="width:12px; height:14px; fill:#dc2626;"><path d="M172.268 501.67C26.97 291.031 0 269.413 0 192 0 85.961 85.961 0 192 0s192 85.961 192 192c0 77.413-26.97 99.031-172.268 309.67-9.535 13.774-29.93 13.773-39.464 0zM192 272c44.183 0 80-35.817 80-80s-35.817-80-80-80-80 35.817-80 80 35.817 80 80 80z"/></svg>
+                            معاينة الموقع
+                        </button>` : ''}
+
+                        ${o.distance_to_client_km ? `<span style="background:#f0fdf4; color:#166534; padding:2px 6px; border-radius:6px; font-weight:600;">📏 ${o.distance_to_client_km} كم</span>` : ''}
+
+                        ${o.duration_to_client_min ? `<span style="background:#fffbeb; color:#92400e; padding:2px 6px; border-radius:6px; font-weight:600;">🚗 ${o.duration_to_client_min} د</span>` : ''}
+
+                        ${!isDelivery ? `<span style="color:var(--muted);">🏪 استلام من المتجر</span>` : ''}
+                    </div>
+
+                    <button class="call-btn" onclick="shareOrderToWhatsApp(drawerOrder)" style="margin:0; padding:5px 10px; font-size:11px; background:linear-gradient(135deg,#25d366,#128C7E); color:white; border:none; display:flex; align-items:center; gap:4px; border-radius:8px; font-weight:700; flex-shrink:0;">
+                        📤 إرسال للمندوب
+                    </button>
                 </div>
             </div>
         </div>
 
-        <!-- التوصيل / الاستلام -->
-        <div class="d-section">
-            <div class="d-sec-title">${isDelivery?'🚗 معلومات التوصيل':'🏪 استلام من المتجر'}</div>
-            <div class="d-card">
-                ${o.shipping_city?`<div class="ship-row"><span class="ship-ico">📍</span><div><div class="ship-t">المدينة</div><div class="ship-s">${o.shipping_city}</div></div></div>`:''}
-                ${o.delivery_address?`<div class="ship-row"><span class="ship-ico">🏠</span><div style="flex:1"><div class="ship-t">العنوان</div><div class="ship-s">${o.delivery_address}</div></div><button class="call-btn" onclick="window.open('${o.delivery_address}','_blank')" style="margin-right:0;margin-left:8px;flex-shrink:0;">🗺️ معاينة</button></div>`:''}
-                ${!o.shipping_city&&!o.delivery_address?`<div style="font-size:12px;color:var(--muted);">استلام من المتجر مباشرة</div>`:''}
-            </div>
-        </div>
-
-        ${note?`<div class="d-section">
-            <div class="d-sec-title">💬 ملاحظات العميل</div>
-            <div class="note-box">💬 <span>${note}</span></div>
-        </div>`:''}
-
-        <!-- عناصر الطلب -->
+		<!-- عناصر الطلب -->
         <div class="d-section">
             <div class="d-sec-title" style="justify-content:space-between;">
                 <span>🛒 عناصر الطلب</span>
@@ -923,6 +957,7 @@ function fillDrawer(o){
                     <div class="t-row"><span class="t-lbl">العدد</span><span class="t-val">${totalQty}</span></div>
                     <div class="t-row"><span class="t-lbl">المجموع الفرعي</span><span class="t-val">${orderVal} ر.س</span></div>
                     ${parseFloat(shipCost)>0?`<div class="t-row"><span class="t-lbl">رسوم التوصيل</span><span class="t-val">${shipCost} ر.س</span></div>`:''}
+                    ${o.shipping_method ? `<div class="t-row"><span class="t-val" style="color:var(--info);font-weight:700;font-size:12px;">${shippingMethodsCache[o.shipping_method] || (o.shipping_method === 'delivery' ? '🚗 توصيل' : o.shipping_method === 'pickup' ? '🏪 استلام' : o.shipping_method)}</span></div>` : ''}
                     <div class="t-row t-grand"><span class="t-lbl">الإجمالي</span><span class="t-val">${totalVal} ر.س</span></div>
                 </div>
             </div>
@@ -1009,6 +1044,50 @@ async function confirmSt(){
 ================================================ */
 function callCust(p){ window.location.href='tel:'+p; }
 function waCust(p){ window.open('https://wa.me/'+p.replace(/\D/g,''),'_blank'); }
+
+/* ====== إرسال معلومات الطلب للمندوب عبر واتساب ====== */
+function shareOrderToWhatsApp(order) {
+    const orderNum = order.order_number ? `#${order.order_number}` : `#${String(order.id).slice(-6).toUpperCase()}`;
+    const name = order.customer_name || 'عميل';
+    const phone = order.customer_phone || 'غير متوفر';
+    const total = (parseFloat(order.total_value) || 0).toFixed(2);
+    const storeName = document.getElementById('store-name').textContent || 'المتجر';
+    const shipMethodName = shippingMethodsCache[order.shipping_method] || (order.shipping_method === 'delivery' ? 'توصيل' : order.shipping_method === 'pickup' ? 'استلام من المتجر' : order.shipping_method || '');
+
+    const isDelivery = order.delivery_address || (order.shipping_method && order.shipping_method !== 'pickup');
+
+    let shareText = '';
+
+    if (isDelivery) {
+        const location = order.delivery_address || 'غير متوفر';
+        const distance = order.distance_to_client_km ? `${order.distance_to_client_km} كم` : 'غير متوفر';
+        const duration = order.duration_to_client_min ? `${order.duration_to_client_min} دقيقة` : 'غير متوفر';
+
+        shareText = `📦 *طلب جديد للتوصيل*
+🏪 *من متجر:* ${storeName}
+🔢 *رقم الطلب:* ${orderNum}
+👤 *اسم العميل:* ${name}
+📱 *رقم الجوال:* ${phone}
+📍 *موقع العميل:* ${location}
+📏 *المسافة:* ${distance}
+🚗 *الوقت المقدر:* ${duration}
+🚚 *${shipMethodName}*
+💰 *قيمة الطلب:* ${total} ر.س`;
+    } else {
+        shareText = `📦 *طلب جديد: استلام من المتجر*
+🏪 *من متجر:* ${storeName}
+🔢 *رقم الطلب:* ${orderNum}
+👤 *اسم العميل:* ${name}
+📱 *رقم الجوال:* ${phone}
+🚚 *${shipMethodName}*
+💰 *قيمة الطلب:* ${total} ر.س`;
+    }
+
+    // فتح واتساب ويب مع النص مُعد مسبقاً — يسمح باختيار المندوب من جهات الاتصال
+    const waUrl = 'https://wa.me/?text=' + encodeURIComponent(shareText);
+    window.open(waUrl, '_blank');
+}
+
 function goBack(){ sessionStorage.setItem('back_from_manage','true'); window.location.href='store_settings.html'; }
 
 /* ================================================
