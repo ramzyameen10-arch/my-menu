@@ -476,7 +476,37 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl
     display:inline-block;animation:a-pulse 1s infinite;flex-shrink:0;
 }
 @keyframes a-pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.5);opacity:.5}}
+
+/* ====== PRINT BUTTON ====== */
+.print-btn{
+    width:32px;height:32px;border-radius:9px;
+    background:var(--primary-bg);border:1.5px solid var(--primary);
+    display:flex;align-items:center;justify-content:center;
+    font-size:16px;cursor:pointer;color:var(--primary-d);
+    margin-left:8px;
+}
+.print-btn:active{background:var(--primary);color:#fff;}
+
+/* ====== DELAY TIMER ====== */
+.delay-timer{
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    background:#fef2f2;border:1.5px solid #fca5a5;
+    border-radius:10px;padding:8px 14px;margin:8px 0;
+    font-size:13px;font-weight:800;color:#991b1b;
+}
+.delay-timer .timer-ico{
+    font-size:16px;animation:tick-pulse 1s infinite;
+}
+@keyframes tick-pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.delay-timer .timer-val{
+    font-family:'Courier New',monospace;
+    font-size:15px;font-weight:900;letter-spacing:1px;
+    background:#fff;border-radius:6px;padding:2px 8px;
+    border:1px solid #fca5a5;color:#dc2626;
+}
 </style>
+<base target="_blank">
+<base target="_blank">
 <base target="_blank">
 <base target="_blank">
 <base target="_blank">
@@ -569,7 +599,13 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl
     <div class="drawer-grip"><div class="grip-bar"></div></div>
     <div class="drawer-hdr">
         <span class="drawer-order-num" id="d-num">—</span>
-        <button class="drawer-close" onclick="closeDrawer()">✕</button>
+        <div style="display:flex;align-items:center;gap:6px;">
+            <div id="drawer-time-info" style="display:flex;flex-direction:column;align-items:center;gap:1px;margin-left:4px;">
+                <!-- filled dynamically -->
+            </div>
+            <button class="print-btn" onclick="printOrder()" title="طباعة الفاتورة">🖨️</button>
+            <button class="drawer-close" onclick="closeDrawer()">✕</button>
+        </div>
     </div>
     <div class="drawer-body" id="d-body"><!-- filled dynamically --></div>
     <div class="drawer-actions" id="d-actions"><!-- filled dynamically --></div>
@@ -848,6 +884,26 @@ function fillDrawer(o){
     const num=o.order_number?`#${o.order_number}`:`#${String(o.id).slice(-6).toUpperCase()}`;
     document.getElementById('d-num').innerHTML=`${num} <span class="status-pill ${st.cls}" style="margin-right:6px;">${st.lbl}</span>`;
 
+    // Update time-info in drawer header (small, next to print button)
+    const orderCreated2 = o.created_at ? new Date(o.created_at) : null;
+    let timeInfoHtml = '';
+    if (orderCreated2) {
+        const timeStr = orderCreated2.toLocaleTimeString('ar-SA', {hour:'2-digit', minute:'2-digit', hour12:true});
+        const now2 = new Date();
+        const diffMs2 = now2 - orderCreated2;
+        const diffMins2 = Math.floor(diffMs2 / 60000);
+        const diffHours2 = Math.floor(diffMins2 / 60);
+        const remainingMins2 = diffMins2 % 60;
+        const sinceText = diffHours2 > 0 
+            ? `منذ ${diffHours2}س ${remainingMins2}د` 
+            : `منذ ${diffMins2}د`;
+        timeInfoHtml = `
+            <div style="font-size:9px;font-weight:600;color:#7a9188;white-space:nowrap;line-height:1.2;text-align:center;">🕐 ${timeStr}</div>
+            <div style="font-size:9px;font-weight:800;color:#dc2626;white-space:nowrap;background:#fef2f2;padding:1px 5px;border-radius:5px;border:1px solid #fca5a5;line-height:1.2;text-align:center;">⏱️ ${sinceText}</div>
+        `;
+    }
+    document.getElementById('drawer-time-info').innerHTML = timeInfoHtml;
+
     const name=o.customer_name||'عميل';
     const phone=o.customer_phone||'';
     const initials=name.trim().charAt(0);
@@ -893,6 +949,25 @@ function fillDrawer(o){
             </div>`;
         }).join('');
     }catch(e){ itemsHtml='<p style="font-size:12px;color:#aaa;">لا توجد تفاصيل</p>'; }
+
+    // Calculate delay time
+    const orderCreated = o.created_at ? new Date(o.created_at) : null;
+    const now = new Date();
+    let delayHtml = '';
+    if (orderCreated) {
+        const diffMs = now - orderCreated;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMins / 60);
+        const remainingMins = diffMins % 60;
+        const delayText = diffHours > 0 
+            ? `${diffHours} ساعة ${remainingMins} دقيقة` 
+            : `${diffMins} دقيقة`;
+        delayHtml = `<div class="delay-timer" id="delay-timer-${o.id}">
+            <span class="timer-ico">⏱️</span>
+            <span>منذ</span>
+            <span class="timer-val" data-created="${o.created_at}">${delayText}</span>
+        </div>`;
+    }
 
     document.getElementById('d-body').innerHTML=`
         <!-- ===== معلومات العميل + التوصيل (كرت واحد مدمج - مضغوط) ===== -->
@@ -945,6 +1020,17 @@ function fillDrawer(o){
             </div>
         </div>
 
+        <!-- ملاحظات العميل -->
+        ${note ? `
+        <div class="d-section">
+            <div class="d-sec-title">📝 ملاحظات العميل</div>
+            <div class="note-box">
+                <span style="font-size:14px;">💬</span>
+                <span>${note}</span>
+            </div>
+        </div>
+        ` : ''}
+
 		<!-- عناصر الطلب -->
         <div class="d-section">
             <div class="d-sec-title" style="justify-content:space-between;">
@@ -963,9 +1049,6 @@ function fillDrawer(o){
             </div>
         </div>
 
-        <div style="text-align:center;font-size:11px;color:var(--muted);padding:4px 0 8px;">
-            🕐 ${createdFull}
-        </div>
     `;
 
     fillActions(o);
@@ -1088,6 +1171,333 @@ function shareOrderToWhatsApp(order) {
     window.open(waUrl, '_blank');
 }
 
+
+/* ====== طباعة الفاتورة ====== */
+function printOrder(){
+    if(!drawerOrder) return;
+    const o = drawerOrder;
+    const storeName = document.getElementById('store-name').textContent || 'المتجر';
+    const num = o.order_number ? `#${o.order_number}` : `#${String(o.id).slice(-6).toUpperCase()}`;
+    const name = o.customer_name || 'عميل';
+    const phone = o.customer_phone || '';
+    const orderVal = (parseFloat(o.order_value) || 0).toFixed(2);
+    const shipCost = (parseFloat(o.shipping_cost) || 0).toFixed(2);
+    const totalVal = (parseFloat(o.total_value) || 0).toFixed(2);
+    const createdFull = o.created_at ? new Date(o.created_at).toLocaleString('ar-SA', {hour:'2-digit', minute:'2-digit', day:'numeric', month:'short', year:'numeric', hour12:true}) : '--';
+    const note = o.notes || o.note || '';
+    const shipMethodName = shippingMethodsCache[o.shipping_method] || (o.shipping_method === 'delivery' ? '🚗 توصيل' : o.shipping_method === 'pickup' ? '🏪 استلام من المتجر' : o.shipping_method || '');
+    const isDelivery = o.delivery_address || (o.shipping_method && o.shipping_method !== 'pickup');
+
+    // Calculate delay time for print
+    let delayTextPrint = '';
+    if (o.created_at) {
+        const orderCreated = new Date(o.created_at);
+        const now = new Date();
+        const diffMs = now - orderCreated;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMins / 60);
+        const remainingMins = diffMins % 60;
+        delayTextPrint = diffHours > 0 
+            ? `${diffHours} ساعة ${remainingMins} دقيقة` 
+            : `${diffMins} دقيقة`;
+    }
+
+    // Build items table
+    let itemsRows = '';
+    let totalQty = 0;
+    try {
+        const items = typeof o.cart_items === 'string' ? JSON.parse(o.cart_items) : (o.cart_items || []);
+        totalQty = items.reduce((s, i) => s + (parseInt(i.quantity || i.qty || 1)), 0);
+        itemsRows = items.map(i => {
+            const qty = i.quantity || i.qty || 1;
+            const unitPrice = (parseFloat(i.price || i.unit_price || 0)).toFixed(2);
+            const lineTotal = (parseFloat(unitPrice) * qty).toFixed(2);
+            const iname = i.name || i.product_name || i.item_name || 'منتج';
+
+            let addonsText = '';
+            const addons = Array.isArray(i.addons) ? i.addons : [];
+            if (addons.length) {
+                addonsText = '<div style="font-size:10px;color:#666;margin-top:2px;">' + 
+                    addons.map(a => {
+                        const aname = a.name || a.addon_name || a.title || String(a);
+                        const aprice = parseFloat(a.price || a.addon_price || 0);
+                        return `➕ ${aname}${aprice > 0 ? ' (+' + aprice.toFixed(2) + ' ر.س)' : ''}`;
+                    }).join(' · ') + 
+                    '</div>';
+            }
+
+            return `<tr>
+                <td style="padding:8px 6px;border-bottom:1px dashed #ddd;text-align:right;vertical-align:top;">
+                    <div style="font-weight:700;font-size:13px;">${iname}</div>
+                    ${addonsText}
+                    <div style="font-size:11px;color:#888;margin-top:2px;">الكمية: ${qty}</div>
+                </td>
+                <td style="padding:8px 6px;border-bottom:1px dashed #ddd;text-align:left;vertical-align:top;white-space:nowrap;">
+                    <div style="font-weight:700;font-size:13px;color:#1a9469;">${lineTotal} ر.س</div>
+                    <div style="font-size:10px;color:#888;">${unitPrice} × ${qty}</div>
+                </td>
+            </tr>`;
+        }).join('');
+    } catch(e) {
+        itemsRows = '<tr><td colspan="2" style="padding:8px;text-align:center;color:#999;">لا توجد تفاصيل</td></tr>';
+    }
+
+    const printContent = `
+    <!DOCTYPE html>
+    <html lang="ar" dir="rtl">
+    <head>
+        <meta charset="UTF-8">
+        <title>فاتورة ${num}</title>
+        <style>
+            @media print {
+                body { margin: 0; padding: 0; }
+                .no-print { display: none !important; }
+            }
+            * { box-sizing: border-box; margin: 0; padding: 0; }
+            body { 
+                font-family: 'Segoe UI', Tahoma, sans-serif; 
+                background: #f3f6f5; 
+                padding: 20px; 
+                direction: rtl;
+                color: #1a2a22;
+            }
+            .invoice-box {
+                max-width: 400px; 
+                margin: 0 auto; 
+                background: #fff; 
+                border-radius: 16px; 
+                padding: 24px; 
+                box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+                border: 1px solid #e4ecea;
+            }
+            .invoice-header {
+                text-align: center; 
+                padding-bottom: 16px; 
+                border-bottom: 2px solid #24b47e; 
+                margin-bottom: 16px;
+            }
+            .store-name { 
+                font-size: 20px; 
+                font-weight: 900; 
+                color: #1a2a22; 
+                margin-bottom: 4px; 
+            }
+            .invoice-title { 
+                font-size: 14px; 
+                color: #7a9188; 
+                font-weight: 600; 
+            }
+            .delay-badge-inline {
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                background: #fef2f2;
+                color: #991b1b;
+                font-size: 11px;
+                font-weight: 800;
+                padding: 4px 10px;
+                border-radius: 8px;
+                border: 1.5px solid #fca5a5;
+            }
+            .order-info {
+                background: #f0faf6; 
+                border-radius: 10px; 
+                padding: 12px; 
+                margin-bottom: 16px;
+            }
+            .info-row {
+                display: flex; 
+                justify-content: space-between; 
+                align-items: center;
+                margin-bottom: 6px; 
+                font-size: 12px;
+            }
+            .info-row:last-child { margin-bottom: 0; }
+            .info-label { color: #7a9188; font-weight: 600; }
+            .info-value { color: #1a2a22; font-weight: 700; }
+            .section-title {
+                font-size: 13px; 
+                font-weight: 800; 
+                color: #1a2a22; 
+                margin-bottom: 8px;
+                display: flex; 
+                align-items: center; 
+                gap: 5px;
+            }
+            .items-table {
+                width: 100%; 
+                border-collapse: collapse; 
+                margin-bottom: 16px;
+                font-size: 12px;
+            }
+            .items-table th {
+                background: #f0faf6; 
+                padding: 8px 6px; 
+                text-align: right; 
+                font-size: 11px; 
+                color: #7a9188; 
+                font-weight: 700;
+                border-bottom: 2px solid #24b47e;
+            }
+            .items-table th:last-child { text-align: left; }
+            .summary-box {
+                background: #f8faf9; 
+                border-radius: 10px; 
+                padding: 12px; 
+                margin-bottom: 16px;
+                border: 1px solid #e4ecea;
+            }
+            .sum-row {
+                display: flex; 
+                justify-content: space-between; 
+                align-items: center;
+                margin-bottom: 6px; 
+                font-size: 12px;
+            }
+            .sum-row:last-child { 
+                margin-bottom: 0; 
+                padding-top: 8px; 
+                border-top: 2px solid #24b47e; 
+                margin-top: 8px;
+            }
+            .sum-label { color: #7a9188; font-weight: 600; }
+            .sum-value { color: #1a2a22; font-weight: 700; }
+            .grand-total .sum-label { font-size: 14px; font-weight: 800; color: #1a2a22; }
+            .grand-total .sum-value { font-size: 16px; font-weight: 900; color: #24b47e; }
+            .note-box {
+                background: #fffbeb; 
+                border: 1px solid #fde68a; 
+                border-radius: 10px;
+                padding: 10px 12px; 
+                font-size: 12px; 
+                color: #92400e; 
+                line-height: 1.6;
+                margin-bottom: 16px;
+            }
+            .footer {
+                text-align: center; 
+                font-size: 11px; 
+                color: #7a9188; 
+                padding-top: 12px; 
+                border-top: 1px solid #e4ecea;
+            }
+            .print-btn-bar {
+                text-align: center; 
+                margin-bottom: 20px;
+            }
+            .print-btn-bar button {
+                background: #24b47e; 
+                color: #fff; 
+                border: none; 
+                padding: 12px 32px; 
+                border-radius: 12px;
+                font-size: 14px; 
+                font-weight: 700; 
+                cursor: pointer; 
+                font-family: inherit;
+                display: inline-flex; 
+                align-items: center; 
+                gap: 6px;
+            }
+            .print-btn-bar button:hover { background: #1a9469; }
+        </style>
+    </head>
+    <body>
+        <div class="print-btn-bar no-print">
+            <button onclick="window.print()">🖨️ طباعة الفاتورة</button>
+        </div>
+        <div class="invoice-box">
+            <div class="invoice-header">
+                <div class="store-name">${storeName}</div>
+                <div class="invoice-title">فاتورة طلب ${num}</div>
+            </div>
+
+            <div class="order-info">
+                <div class="info-row" style="justify-content:center;margin-bottom:8px;">
+                    <div style="text-align:center;">
+                        <div style="font-size:11px;font-weight:700;color:#1a9469;background:#f0faf6;border-radius:8px;padding:4px 12px;display:inline-block;border:1px solid #a7f3d0;margin-bottom:4px;">🕐 ${createdFull}</div>
+                        
+                    </div>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">👤 العميل</span>
+                    <span class="info-value">${name}</span>
+                </div>
+                ${phone ? `
+                <div class="info-row">
+                    <span class="info-label">📱 الجوال</span>
+                    <span class="info-value" dir="ltr">${phone}</span>
+                </div>` : ''}
+                ${isDelivery && o.delivery_address ? `
+                <div class="info-row">
+                    <span class="info-label">📍 العنوان</span>
+                    <span class="info-value" style="text-align:left;max-width:200px;">${o.delivery_address}</span>
+                </div>` : ''}
+                ${o.shipping_city ? `
+                <div class="info-row">
+                    <span class="info-label">🏙️ المدينة</span>
+                    <span class="info-value">${o.shipping_city}</span>
+                </div>` : ''}
+                <div class="info-row">
+                    <span class="info-label">🚚 طريقة التوصيل</span>
+                    <span class="info-value">${shipMethodName}</span>
+                </div>
+            </div>
+
+            <!-- ملاحظات العميل قبل عناصر الطلب -->
+            ${note ? `
+            <div class="section-title">ملاحظات العميل</div>
+            <div class="note-box">
+                ${note}
+            </div>
+            ` : ''}
+
+            <div class="section-title">عناصر الطلب</div>
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th>الصنف</th>
+                        <th>السعر</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${itemsRows}
+                </tbody>
+            </table>
+
+            <div class="summary-box">
+                <div class="sum-row">
+                    <span class="sum-label">العدد الإجمالي</span>
+                    <span class="sum-value">${totalQty} قطعة</span>
+                </div>
+                <div class="sum-row">
+                    <span class="sum-label">المجموع الفرعي</span>
+                    <span class="sum-value">${orderVal} ر.س</span>
+                </div>
+                ${parseFloat(shipCost) > 0 ? `
+                <div class="sum-row">
+                    <span class="sum-label">رسوم التوصيل</span>
+                    <span class="sum-value">${shipCost} ر.س</span>
+                </div>` : ''}
+                <div class="sum-row grand-total">
+                    <span class="sum-label">الإجمالي النهائي</span>
+                    <span class="sum-value">${totalVal} ر.س</span>
+                </div>
+            </div>
+
+            <div class="footer">
+                شكراً لثقتكم بنا<br>
+                ${storeName}
+            </div>
+        </div>
+    </body>
+    </html>`;
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+}
+
 function goBack(){ sessionStorage.setItem('back_from_manage','true'); window.location.href='store_settings.html'; }
 
 /* ================================================
@@ -1157,6 +1567,32 @@ function notifyNew(count){
     if('Notification'in window&&Notification.permission==='granted')
         new Notification('🔔 طلب جديد!',{body:`${count} طلب بانتظار التأكيد`,icon:'',tag:'new-order'});
 }
+
+/* ================================================
+   DELAY TIMER UPDATE (every minute)
+================================================ */
+setInterval(() => {
+    // Update drawer header time-info if drawer is open
+    if (drawerOrder && drawerOrder.created_at) {
+        const orderCreated = new Date(drawerOrder.created_at);
+        const now = new Date();
+        const diffMs = now - orderCreated;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMins / 60);
+        const remainingMins = diffMins % 60;
+        const sinceText = diffHours > 0 
+            ? `منذ ${diffHours}س ${remainingMins}د` 
+            : `منذ ${diffMins}د`;
+        const timeInfoEl = document.getElementById('drawer-time-info');
+        if (timeInfoEl) {
+            const timeStr = orderCreated.toLocaleTimeString('ar-SA', {hour:'2-digit', minute:'2-digit', hour12:true});
+            timeInfoEl.innerHTML = `
+                <div style="font-size:9px;font-weight:600;color:#7a9188;white-space:nowrap;line-height:1.2;text-align:center;">🕐 ${timeStr}</div>
+                <div style="font-size:9px;font-weight:800;color:#dc2626;white-space:nowrap;background:#fef2f2;padding:1px 5px;border-radius:5px;border:1px solid #fca5a5;line-height:1.2;text-align:center;">⏱️ ${sinceText}</div>
+            `;
+        }
+    }
+}, 60000);
 
 /* ================================================
    START
