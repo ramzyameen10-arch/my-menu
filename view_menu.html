@@ -1899,8 +1899,8 @@
             const notes = document.getElementById('order-notes').value.trim();
 
             // بناء عنوان التوصيل
-            let deliveryAddress = notes;
-            if (customerLat && customerLng && !locationSkipped) {
+            let deliveryAddress = "";
+            if (selectedDeliveryType === 'delivery' && customerLat && customerLng && !locationSkipped) {
                 deliveryAddress = `https://maps.google.com/maps?q=${customerLat.toFixed(6)},${customerLng.toFixed(6)}`;
             }
 
@@ -1976,7 +1976,7 @@
         msg += `📱 *الهاتف:* ${customerPhone}\n`;
 
         // موقع العميل
-        if (customerLat && customerLng && !locationSkipped) {
+        if (selectedDeliveryType === 'delivery' && customerLat && customerLng && !locationSkipped) {
             msg += `📍 *الموقع:* https://maps.google.com/maps?q=${customerLat.toFixed(6)},${customerLng.toFixed(6)}\n`;
         }
 
