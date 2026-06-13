@@ -510,6 +510,7 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl
 <base target="_blank">
 <base target="_blank">
 <base target="_blank">
+<base target="_blank">
 </head>
 <body>
 
@@ -558,7 +559,7 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl
 <div class="filter-wrap">
     <div class="filter-inner">
         <button class="fp on" data-f="all"       onclick="setFilter('all')">الكل       <span class="fcnt" id="c-all">0</span></button>
-        <button class="fp"    data-f="pending"   onclick="setFilter('pending')">🕐 جديد    <span class="fcnt" id="c-pending">0</span></button>
+        <button class="fp"    data-f="pending"   onclick="setFilter('pending')">جديد    <span class="fcnt" id="c-pending">0</span></button>
         <button class="fp"    data-f="confirmed" onclick="setFilter('confirmed')">✅ مؤكد   <span class="fcnt" id="c-confirmed">0</span></button>
         <button class="fp"    data-f="preparing" onclick="setFilter('preparing')">👨‍🍳 يُحضَّر <span class="fcnt" id="c-preparing">0</span></button>
         <button class="fp"    data-f="ready"     onclick="setFilter('ready')">🔔 جاهز     <span class="fcnt" id="c-ready">0</span></button>
@@ -617,7 +618,7 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl
         <div class="ss-grip"><div class="grip-bar"></div></div>
         <div class="ss-title">تغيير حالة الطلب</div>
         <div class="ss-opts">
-            <button class="ss-opt" onclick="selSt('pending')">  <div class="ss-dot" style="background:#f59e0b"></div>🕐 جديد / قيد الانتظار</button>
+            <button class="ss-opt" onclick="selSt('pending')">  <div class="ss-dot" style="background:#f59e0b"></div>جديد / قيد الانتظار</button>
             <button class="ss-opt" onclick="selSt('confirmed')"><div class="ss-dot" style="background:#3b82f6"></div>✅ تم التأكيد</button>
             <button class="ss-opt" onclick="selSt('preparing')"><div class="ss-dot" style="background:#eab308"></div>👨‍🍳 قيد التحضير</button>
             <button class="ss-opt" onclick="selSt('ready')">    <div class="ss-dot" style="background:#10b981"></div>🔔 جاهز</button>
@@ -657,7 +658,7 @@ async function init(){
             .eq('id',storeId).eq('user_id',profile.id).single();
         if(!store){ window.location.replace('index.html'); return; }
         document.getElementById('store-name').textContent=store.store_name;
-        if(store.logo_url){ document.getElementById('store-logo-img').src=store.logo_url; }
+        if(store.logo_url){ document.getElementById('store-logo-img').src=store.logo_url; window.storeLogoUrl=store.logo_url; }
 
         // اطلب إذن الإشعارات فور فتح الصفحة
         if('Notification' in window){
@@ -820,7 +821,24 @@ function renderList(){
 function buildRow(o){
     const st=stMap[o.status]||stMap.pending;
     const num=o.order_number?`#${o.order_number}`:`#${String(o.id).slice(-6).toUpperCase()}`;
-    const time=o.created_at?new Date(o.created_at).toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit',hour12:true}):'--';
+
+    // Date, time, and delay calculation
+    const orderDate = o.created_at ? new Date(o.created_at) : null;
+    const dateStr = orderDate ? orderDate.toLocaleDateString('ar-SA', {day:'numeric', month:'short'}) : '--';
+    const timeStr = orderDate ? orderDate.toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit',hour12:true}) : '--';
+
+    const now = new Date();
+    let delayText = '';
+    if (orderDate) {
+        const diffMs = now - orderDate;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMins / 60);
+        const remainingMins = diffMins % 60;
+        delayText = diffHours > 0 
+            ? `منذ ${diffHours}س ${remainingMins}د` 
+            : `منذ ${diffMins}د`;
+    }
+
     const name=o.customer_name||'عميل';
     const total=(parseFloat(o.total_value)||0).toFixed(2);
     const isDelivery=o.delivery_address||(o.shipping_method&&o.shipping_method!=='pickup');
@@ -844,6 +862,13 @@ function buildRow(o){
             <div class="row-bot">
                 <span class="row-items-preview">${preview}</span>
                 <span class="row-type ${isDelivery?'type-delivery':'type-pickup'}">${isDelivery?'🚗 توصيل':'🏪 استلام'}</span>
+            </div>
+            <!-- Date, Time, Delay Row -->
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;padding-top:6px;border-top:1px dashed #e4ecea;gap:6px;flex-wrap:wrap;">
+                <span style="font-size:12px;font-weight:700;color:var(--text);background:#f0faf6;padding:2px 8px;border-radius:6px;display:inline-flex;align-items:center;gap:4px;">
+                    📅 ${dateStr} &nbsp; ${timeStr}
+                </span>
+                ${delayText ? `<span style="font-size:12px;font-weight:800;color:#dc2626;background:#fef2f2;padding:2px 8px;border-radius:6px;border:1px solid #fca5a5;display:inline-flex;align-items:center;gap:3px;">⏱️ ${delayText}</span>` : ''}
             </div>
         </div>
         <div class="row-arrow">‹</div>
@@ -884,11 +909,14 @@ function fillDrawer(o){
     const num=o.order_number?`#${o.order_number}`:`#${String(o.id).slice(-6).toUpperCase()}`;
     document.getElementById('d-num').innerHTML=`${num} <span class="status-pill ${st.cls}" style="margin-right:6px;">${st.lbl}</span>`;
 
-    // Update time-info in drawer header (small, next to print button)
+    // Update time-info in drawer header (larger font, next to print button)
     const orderCreated2 = o.created_at ? new Date(o.created_at) : null;
     let timeInfoHtml = '';
     if (orderCreated2) {
-        const timeStr = orderCreated2.toLocaleTimeString('ar-SA', {hour:'2-digit', minute:'2-digit', hour12:true});
+        const dateTimeStr = orderCreated2.toLocaleString('ar-SA', {
+            day:'numeric', month:'short', year:'numeric',
+            hour:'2-digit', minute:'2-digit', hour12:true
+        });
         const now2 = new Date();
         const diffMs2 = now2 - orderCreated2;
         const diffMins2 = Math.floor(diffMs2 / 60000);
@@ -898,8 +926,8 @@ function fillDrawer(o){
             ? `منذ ${diffHours2}س ${remainingMins2}د` 
             : `منذ ${diffMins2}د`;
         timeInfoHtml = `
-            <div style="font-size:9px;font-weight:600;color:#7a9188;white-space:nowrap;line-height:1.2;text-align:center;">🕐 ${timeStr}</div>
-            <div style="font-size:9px;font-weight:800;color:#dc2626;white-space:nowrap;background:#fef2f2;padding:1px 5px;border-radius:5px;border:1px solid #fca5a5;line-height:1.2;text-align:center;">⏱️ ${sinceText}</div>
+            <div style="font-size:13px;font-weight:700;color:#1a2a22;white-space:nowrap;line-height:1.3;text-align:center;">📅 ${dateTimeStr}</div>
+            <div style="font-size:13px;font-weight:800;color:#dc2626;white-space:nowrap;background:#fef2f2;padding:3px 8px;border-radius:6px;border:1.5px solid #fca5a5;line-height:1.3;text-align:center;margin-top:2px;">⏱️ ${sinceText}</div>
         `;
     }
     document.getElementById('drawer-time-info').innerHTML = timeInfoHtml;
@@ -962,10 +990,10 @@ function fillDrawer(o){
         const delayText = diffHours > 0 
             ? `${diffHours} ساعة ${remainingMins} دقيقة` 
             : `${diffMins} دقيقة`;
-        delayHtml = `<div class="delay-timer" id="delay-timer-${o.id}">
-            <span class="timer-ico">⏱️</span>
-            <span>منذ</span>
-            <span class="timer-val" data-created="${o.created_at}">${delayText}</span>
+        delayHtml = `<div class="delay-timer" id="delay-timer-${o.id}" style="font-size:15px;padding:10px 16px;">
+            <span class="timer-ico" style="font-size:18px;">⏱️</span>
+            <span style="font-size:15px;">منذ</span>
+            <span class="timer-val" data-created="${o.created_at}" style="font-size:17px;padding:3px 10px;">${delayText}</span>
         </div>`;
     }
 
@@ -1173,20 +1201,22 @@ function shareOrderToWhatsApp(order) {
 
 
 /* ====== طباعة الفاتورة ====== */
+/* ====== طباعة الفاتورة (تنسيق طابعة حرارية 80mm) ====== */
 function printOrder(){
     if(!drawerOrder) return;
     const o = drawerOrder;
     const storeName = document.getElementById('store-name').textContent || 'المتجر';
-    const num = o.order_number ? `#${o.order_number}` : `#${String(o.id).slice(-6).toUpperCase()}`;
+    const num = o.order_number ? `رقم الطلب: ${o.order_number}` : `رقم الطلب: ${String(o.id).slice(-6).toUpperCase()}`;
     const name = o.customer_name || 'عميل';
     const phone = o.customer_phone || '';
     const orderVal = (parseFloat(o.order_value) || 0).toFixed(2);
     const shipCost = (parseFloat(o.shipping_cost) || 0).toFixed(2);
     const totalVal = (parseFloat(o.total_value) || 0).toFixed(2);
-    const createdFull = o.created_at ? new Date(o.created_at).toLocaleString('ar-SA', {hour:'2-digit', minute:'2-digit', day:'numeric', month:'short', year:'numeric', hour12:true}) : '--';
+    const createdFull = o.created_at ? new Date(o.created_at).toLocaleString('en-GB', {hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric', hour12:true}).replace(/\//g, '-') : '--';
     const note = o.notes || o.note || '';
-    const shipMethodName = shippingMethodsCache[o.shipping_method] || (o.shipping_method === 'delivery' ? '🚗 توصيل' : o.shipping_method === 'pickup' ? '🏪 استلام من المتجر' : o.shipping_method || '');
+
     const isDelivery = o.delivery_address || (o.shipping_method && o.shipping_method !== 'pickup');
+    const shipMethodName = shippingMethodsCache[o.shipping_method] || (isDelivery ? 'توصيل' : 'استلام من المتجر');
 
     // Calculate delay time for print
     let delayTextPrint = '';
@@ -1198,11 +1228,11 @@ function printOrder(){
         const diffHours = Math.floor(diffMins / 60);
         const remainingMins = diffMins % 60;
         delayTextPrint = diffHours > 0 
-            ? `${diffHours} ساعة ${remainingMins} دقيقة` 
-            : `${diffMins} دقيقة`;
+            ? `${diffHours} س ${remainingMins} د` 
+            : `${diffMins} د`;
     }
 
-    // Build items table
+    // Build items rows for thermal printer
     let itemsRows = '';
     let totalQty = 0;
     try {
@@ -1217,29 +1247,24 @@ function printOrder(){
             let addonsText = '';
             const addons = Array.isArray(i.addons) ? i.addons : [];
             if (addons.length) {
-                addonsText = '<div style="font-size:10px;color:#666;margin-top:2px;">' + 
-                    addons.map(a => {
-                        const aname = a.name || a.addon_name || a.title || String(a);
-                        const aprice = parseFloat(a.price || a.addon_price || 0);
-                        return `➕ ${aname}${aprice > 0 ? ' (+' + aprice.toFixed(2) + ' ر.س)' : ''}`;
-                    }).join(' · ') + 
-                    '</div>';
+                addonsText = addons.map(a => {
+                    const aname = a.name || a.addon_name || a.title || String(a);
+                    const aprice = parseFloat(a.price || a.addon_price || 0);
+                    return `+ ${aname}${aprice > 0 ? ' ' + aprice.toFixed(2) : ''}`;
+                }).join(' | ');
             }
 
             return `<tr>
-                <td style="padding:8px 6px;border-bottom:1px dashed #ddd;text-align:right;vertical-align:top;">
-                    <div style="font-weight:700;font-size:13px;">${iname}</div>
-                    ${addonsText}
-                    <div style="font-size:11px;color:#888;margin-top:2px;">الكمية: ${qty}</div>
+                <td style="padding:5px 0;border-bottom:1px dashed #666;vertical-align:top;background:none;">
+                    <div style="font-weight:800;font-size:14px;background:none;">${iname}</div>
+                    ${addonsText ? `<div style="font-size:14px;color:#000;margin-top:2px;font-weight:700;background:none;">${addonsText}</div>` : ''}
                 </td>
-                <td style="padding:8px 6px;border-bottom:1px dashed #ddd;text-align:left;vertical-align:top;white-space:nowrap;">
-                    <div style="font-weight:700;font-size:13px;color:#1a9469;">${lineTotal} ر.س</div>
-                    <div style="font-size:10px;color:#888;">${unitPrice} × ${qty}</div>
-                </td>
+                <td style="padding:5px 0;border-bottom:1px dashed #666;text-align:center;vertical-align:top;font-size:13px;font-weight:700;white-space:nowrap;">×${qty}</td>
+                <td style="padding:5px 0;border-bottom:1px dashed #666;text-align:left;vertical-align:top;font-size:13px;font-weight:800;white-space:nowrap;">${lineTotal}</td>
             </tr>`;
         }).join('');
     } catch(e) {
-        itemsRows = '<tr><td colspan="2" style="padding:8px;text-align:center;color:#999;">لا توجد تفاصيل</td></tr>';
+        itemsRows = '<tr><td colspan="3" style="padding:8px;text-align:center;color:#666;font-size:13px;font-weight:700;">لا توجد تفاصيل</td></tr>';
     }
 
     const printContent = `
@@ -1247,217 +1272,212 @@ function printOrder(){
     <html lang="ar" dir="rtl">
     <head>
         <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>فاتورة ${num}</title>
         <style>
+            @page {
+                size: 80mm auto;
+                margin: 0;
+            }
             @media print {
                 body { margin: 0; padding: 0; }
                 .no-print { display: none !important; }
+                * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             }
-            * { box-sizing: border-box; margin: 0; padding: 0; }
+            * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
             body { 
-                font-family: 'Segoe UI', Tahoma, sans-serif; 
-                background: #f3f6f5; 
-                padding: 20px; 
-                direction: rtl;
-                color: #1a2a22;
-            }
-            .invoice-box {
-                max-width: 400px; 
-                margin: 0 auto; 
+                font-family: Arial, sans-serif; 
                 background: #fff; 
-                border-radius: 16px; 
-                padding: 24px; 
-                box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-                border: 1px solid #e4ecea;
+                padding: 4mm; 
+                direction: rtl;
+                color: #000;
+                width: 72mm;
+                margin: 0 auto;
+                font-size: 12px;
+                line-height: 1.5;
+                -webkit-font-smoothing: antialiased;
+                -moz-osx-font-smoothing: grayscale;
             }
-            .invoice-header {
-                text-align: center; 
-                padding-bottom: 16px; 
-                border-bottom: 2px solid #24b47e; 
-                margin-bottom: 16px;
+            .receipt {
+                width: 100%;
             }
+            .center { text-align: center; }
             .store-name { 
                 font-size: 20px; 
                 font-weight: 900; 
-                color: #1a2a22; 
-                margin-bottom: 4px; 
+                margin-bottom: 3px;
+                letter-spacing: 0.5px;
             }
-            .invoice-title { 
-                font-size: 14px; 
-                color: #7a9188; 
-                font-weight: 600; 
-            }
-            .delay-badge-inline {
-                display: inline-flex;
-                align-items: center;
-                gap: 4px;
-                background: #fef2f2;
-                color: #991b1b;
-                font-size: 11px;
+            .receipt-title { 
+                font-size: 15px; 
+                color: #333; 
                 font-weight: 800;
-                padding: 4px 10px;
-                border-radius: 8px;
-                border: 1.5px solid #fca5a5;
+                margin-bottom: 8px;
             }
-            .order-info {
-                background: #f0faf6; 
-                border-radius: 10px; 
-                padding: 12px; 
-                margin-bottom: 16px;
+            .divider {
+                border: none;
+                border-top: 1px dashed #000;
+                margin: 8px 0;
+            }
+            .divider-thick {
+                border: none;
+                border-top: 2px solid #000;
+                margin: 6px 0;
             }
             .info-row {
-                display: flex; 
-                justify-content: space-between; 
+                display: flex;
+                justify-content: space-between;
                 align-items: center;
-                margin-bottom: 6px; 
-                font-size: 12px;
+                margin-bottom: 3px;
+                font-size: 13px;
             }
-            .info-row:last-child { margin-bottom: 0; }
-            .info-label { color: #7a9188; font-weight: 600; }
-            .info-value { color: #1a2a22; font-weight: 700; }
-            .section-title {
-                font-size: 13px; 
+            .info-label { 
+                color: #222; 
+                font-weight: 800;
+                font-size: 13px;
+            }
+            .info-value { 
                 font-weight: 800; 
-                color: #1a2a22; 
-                margin-bottom: 8px;
-                display: flex; 
-                align-items: center; 
-                gap: 5px;
+                font-size: 13px;
             }
             .items-table {
-                width: 100%; 
-                border-collapse: collapse; 
-                margin-bottom: 16px;
-                font-size: 12px;
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 13px;
+                margin: 6px 0;
             }
             .items-table th {
-                background: #f0faf6; 
-                padding: 8px 6px; 
-                text-align: right; 
-                font-size: 11px; 
-                color: #7a9188; 
-                font-weight: 700;
-                border-bottom: 2px solid #24b47e;
+                border-bottom: 1.5px solid #000;
+                padding: 4px 0;
+                font-size: 12px;
+                font-weight: 900;
+                text-align: right;
             }
-            .items-table th:last-child { text-align: left; }
-            .summary-box {
-                background: #f8faf9; 
-                border-radius: 10px; 
-                padding: 12px; 
-                margin-bottom: 16px;
-                border: 1px solid #e4ecea;
+            .items-table th:nth-child(2) { text-align: center; }
+            .items-table th:nth-child(3) { text-align: left; }
+            .items-table td {
+                font-size: 13px;
+                padding: 5px 0;
             }
             .sum-row {
-                display: flex; 
-                justify-content: space-between; 
+                display: flex;
+                justify-content: space-between;
                 align-items: center;
-                margin-bottom: 6px; 
-                font-size: 12px;
+                margin-bottom: 3px;
+                font-size: 13px;
             }
-            .sum-row:last-child { 
-                margin-bottom: 0; 
-                padding-top: 8px; 
-                border-top: 2px solid #24b47e; 
-                margin-top: 8px;
+            .grand-total {
+                font-size: 15px;
+                font-weight: 900;
+                border-top: 2px solid #000;
+                padding-top: 6px;
+                margin-top: 6px;
             }
-            .sum-label { color: #7a9188; font-weight: 600; }
-            .sum-value { color: #1a2a22; font-weight: 700; }
-            .grand-total .sum-label { font-size: 14px; font-weight: 800; color: #1a2a22; }
-            .grand-total .sum-value { font-size: 16px; font-weight: 900; color: #24b47e; }
             .note-box {
-                background: #fffbeb; 
-                border: 1px solid #fde68a; 
-                border-radius: 10px;
-                padding: 10px 12px; 
-                font-size: 12px; 
-                color: #92400e; 
-                line-height: 1.6;
-                margin-bottom: 16px;
+                border: 1.5px dashed #666;
+                border-radius: 4px;
+                padding: 8px;
+                font-size: 13px;
+                margin: 8px 0;
+                background: #fafafa;
             }
             .footer {
-                text-align: center; 
-                font-size: 11px; 
-                color: #7a9188; 
-                padding-top: 12px; 
-                border-top: 1px solid #e4ecea;
+                text-align: center;
+                font-size: 12px;
+                color: #000;
+                margin-top: 10px;
+                padding-top: 8px;
+                border-top: 1px dashed #666;
+                font-weight: 700;
+                background: none;
             }
             .print-btn-bar {
-                text-align: center; 
-                margin-bottom: 20px;
+                text-align: center;
+                margin-bottom: 14px;
             }
             .print-btn-bar button {
-                background: #24b47e; 
-                color: #fff; 
-                border: none; 
-                padding: 12px 32px; 
-                border-radius: 12px;
-                font-size: 14px; 
-                font-weight: 700; 
-                cursor: pointer; 
-                font-family: inherit;
-                display: inline-flex; 
-                align-items: center; 
-                gap: 6px;
+                background: #24b47e;
+                color: #fff;
+                border: none;
+                padding: 12px 32px;
+                border-radius: 8px;
+                font-size: 14px;
+                font-weight: 800;
+                cursor: pointer;
+                font-family: Arial, sans-serif;
             }
-            .print-btn-bar button:hover { background: #1a9469; }
+            .status-badge {
+                display: inline-block;
+                background: none;
+                color: #000;
+                font-size: 14px;
+                font-weight: 800;
+                padding: 2px 0;
+                border-radius: 0;
+                border: none;
+            }
         </style>
     </head>
     <body>
         <div class="print-btn-bar no-print">
-            <button onclick="window.print()">🖨️ طباعة الفاتورة</button>
+            <button onclick="window.print()">طباعة الفاتورة</button>
         </div>
-        <div class="invoice-box">
-            <div class="invoice-header">
+
+        <div class="receipt">
+            <!-- Header -->
+            <div class="center">
+                ${window.storeLogoUrl ? `<img src="${window.storeLogoUrl}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;margin-bottom:6px;border:1.5px solid #ddd;" alt="شعار المتجر">` : ''}
                 <div class="store-name">${storeName}</div>
-                <div class="invoice-title">فاتورة طلب ${num}</div>
+                <div class="receipt-title" style="font-size:14px;font-weight:900;color:#000;margin-top:4px;">${num}</div>
+                <div class="status-badge">${createdFull}</div>
             </div>
 
-            <div class="order-info">
-                <div class="info-row" style="justify-content:center;margin-bottom:8px;">
-                    <div style="text-align:center;">
-                        <div style="font-size:11px;font-weight:700;color:#1a9469;background:#f0faf6;border-radius:8px;padding:4px 12px;display:inline-block;border:1px solid #a7f3d0;margin-bottom:4px;">🕐 ${createdFull}</div>
-                        
-                    </div>
-                </div>
+            <hr class="divider">
+
+            <!-- Customer Info -->
+            <div>
                 <div class="info-row">
-                    <span class="info-label">👤 العميل</span>
+                    <span class="info-label">العميل:</span>
                     <span class="info-value">${name}</span>
                 </div>
                 ${phone ? `
                 <div class="info-row">
-                    <span class="info-label">📱 الجوال</span>
+                    <span class="info-label">الجوال:</span>
                     <span class="info-value" dir="ltr">${phone}</span>
                 </div>` : ''}
                 ${isDelivery && o.delivery_address ? `
-                <div class="info-row">
-                    <span class="info-label">📍 العنوان</span>
-                    <span class="info-value" style="text-align:left;max-width:200px;">${o.delivery_address}</span>
+                <div class="info-row" style="align-items:flex-start;">
+                    <span class="info-label">العنوان:</span>
+                    <span class="info-value" style="text-align:left;max-width:100%;font-size:11px;word-break:break-all;direction:ltr;display:block;">${o.delivery_address}</span>
                 </div>` : ''}
                 ${o.shipping_city ? `
                 <div class="info-row">
-                    <span class="info-label">🏙️ المدينة</span>
+                    <span class="info-label">المدينة:</span>
                     <span class="info-value">${o.shipping_city}</span>
                 </div>` : ''}
                 <div class="info-row">
-                    <span class="info-label">🚚 طريقة التوصيل</span>
+                    <span class="info-label">طريقة التوصيل:</span>
                     <span class="info-value">${shipMethodName}</span>
                 </div>
             </div>
 
-            <!-- ملاحظات العميل قبل عناصر الطلب -->
+            <hr class="divider">
+
+            <!-- Notes -->
             ${note ? `
-            <div class="section-title">ملاحظات العميل</div>
             <div class="note-box">
-                ${note}
+                <strong>ملاحظات:</strong> ${note}
             </div>
+            <hr class="divider">
             ` : ''}
 
-            <div class="section-title">عناصر الطلب</div>
+            <!-- Items -->
             <table class="items-table">
                 <thead>
                     <tr>
-                        <th>الصنف</th>
-                        <th>السعر</th>
+                        <th style="width:55%;">الصنف</th>
+                        <th style="width:15%;">الكمية</th>
+                        <th style="width:30%;">السعر</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -1465,29 +1485,34 @@ function printOrder(){
                 </tbody>
             </table>
 
-            <div class="summary-box">
+            <hr class="divider-thick">
+
+            <!-- Summary -->
+            <div>
                 <div class="sum-row">
-                    <span class="sum-label">العدد الإجمالي</span>
-                    <span class="sum-value">${totalQty} قطعة</span>
+                    <span class="info-label">العدد الإجمالي:</span>
+                    <span class="info-value">${totalQty} قطعة</span>
                 </div>
                 <div class="sum-row">
-                    <span class="sum-label">المجموع الفرعي</span>
-                    <span class="sum-value">${orderVal} ر.س</span>
+                    <span class="info-label">المجموع الفرعي:</span>
+                    <span class="info-value">${orderVal} ر.س</span>
                 </div>
                 ${parseFloat(shipCost) > 0 ? `
                 <div class="sum-row">
-                    <span class="sum-label">رسوم التوصيل</span>
-                    <span class="sum-value">${shipCost} ر.س</span>
+                    <span class="info-label">رسوم التوصيل:</span>
+                    <span class="info-value">${shipCost} ر.س</span>
                 </div>` : ''}
                 <div class="sum-row grand-total">
-                    <span class="sum-label">الإجمالي النهائي</span>
-                    <span class="sum-value">${totalVal} ر.س</span>
+                    <span>الإجمالي النهائي:</span>
+                    <span>${totalVal} ر.س</span>
                 </div>
             </div>
 
+            <hr class="divider">
+
+            <!-- Footer -->
             <div class="footer">
-                شكراً لثقتكم بنا<br>
-                ${storeName}
+                شكراً لثقتكم بنا
             </div>
         </div>
     </body>
@@ -1585,10 +1610,13 @@ setInterval(() => {
             : `منذ ${diffMins}د`;
         const timeInfoEl = document.getElementById('drawer-time-info');
         if (timeInfoEl) {
-            const timeStr = orderCreated.toLocaleTimeString('ar-SA', {hour:'2-digit', minute:'2-digit', hour12:true});
+            const dateTimeStr = orderCreated.toLocaleString('ar-SA', {
+                day:'numeric', month:'short', year:'numeric',
+                hour:'2-digit', minute:'2-digit', hour12:true
+            });
             timeInfoEl.innerHTML = `
-                <div style="font-size:9px;font-weight:600;color:#7a9188;white-space:nowrap;line-height:1.2;text-align:center;">🕐 ${timeStr}</div>
-                <div style="font-size:9px;font-weight:800;color:#dc2626;white-space:nowrap;background:#fef2f2;padding:1px 5px;border-radius:5px;border:1px solid #fca5a5;line-height:1.2;text-align:center;">⏱️ ${sinceText}</div>
+                <div style="font-size:13px;font-weight:700;color:#1a2a22;white-space:nowrap;line-height:1.3;text-align:center;">📅 ${dateTimeStr}</div>
+                <div style="font-size:13px;font-weight:800;color:#dc2626;white-space:nowrap;background:#fef2f2;padding:3px 8px;border-radius:6px;border:1.5px solid #fca5a5;line-height:1.3;text-align:center;margin-top:2px;">⏱️ ${sinceText}</div>
             `;
         }
     }
