@@ -775,17 +775,20 @@
     let customerModalPushed = false;
     let addonsModalPushed = false;
     let scrollY = 0;
+    let sidebarOpen = false;
 
     // ===== Sidebar =====
     function openSidebar() {
         document.getElementById('sidebar-panel').classList.add('open');
         document.getElementById('sidebar-overlay').classList.add('open');
         document.body.style.overflow = 'hidden';
+        sidebarOpen = true;
     }
     function closeSidebar() {
         document.getElementById('sidebar-panel').classList.remove('open');
         document.getElementById('sidebar-overlay').classList.remove('open');
         document.body.style.overflow = '';
+        sidebarOpen = false;
     }
 
     // ===== Body Scroll Lock =====
@@ -848,8 +851,16 @@
         const addonsOverlay = document.getElementById('addons-overlay');
         const customerModal = document.getElementById('customer-modal-overlay');
         const cartModal = document.getElementById('modal-overlay');
+        const sidebarPanel = document.getElementById('sidebar-panel');
 
-        // الأولوية 1: إذا كان نموذج الإضافات مفتوح → أغلقه وعد للصفحة الرئيسية
+        // الأولوية 1: إذا كانت القائمة الجانبية مفتوحة → أغلقها
+        if (sidebarPanel && sidebarPanel.classList.contains('open')) {
+            closeSidebar();
+            e.preventDefault();
+            return;
+        }
+
+        // الأولوية 2: إذا كان نموذج الإضافات مفتوح → أغلقه وعد للصفحة الرئيسية
         if (addonsOverlay && addonsOverlay.style.display === 'flex') {
             addonsOverlay.style.display = 'none';
             addonsModalPushed = false;
@@ -857,7 +868,7 @@
             return;
         }
 
-        // الأولوية 2: إذا كان نموذج العميل مفتوح → أغلقه وعد للسلة
+        // الأولوية 3: إذا كان نموذج العميل مفتوح → أغلقه وعد للسلة
         if (customerModal && customerModal.style.display === 'flex') {
             customerModal.style.display = 'none';
             if (customerMap) { customerMap.remove(); customerMap = null; }
@@ -869,13 +880,35 @@
             return;
         }
 
-        // الأولوية 3: إذا كانت السلة مفتوحة → أغلقها
+        // الأولوية 4: إذا كانت السلة مفتوحة → أغلقها
         if (cartModal && cartModal.style.display === 'flex') {
             cartModal.style.display = 'none';
             unlockBodyScroll();
             cartModalPushed = false;
             e.preventDefault();
             return;
+        }
+    });
+
+    // ===== تأكيد مغادرة الصفحة =====
+    window.addEventListener('beforeunload', function(e) {
+        // إذا كانت هناك أصناف في السلة أو نموذج مفتوح، نحذر المستخدم
+        const hasItems = Object.keys(cart).some(pid => cart[pid] > 0) || cartItems.length > 0;
+        const addonsOverlay = document.getElementById('addons-overlay');
+        const customerModal = document.getElementById('customer-modal-overlay');
+        const cartModal = document.getElementById('modal-overlay');
+        const sidebarPanel = document.getElementById('sidebar-panel');
+
+        const anyModalOpen = (addonsOverlay && addonsOverlay.style.display === 'flex') ||
+                             (customerModal && customerModal.style.display === 'flex') ||
+                             (cartModal && cartModal.style.display === 'flex') ||
+                             (sidebarPanel && sidebarPanel.classList.contains('open'));
+
+        if (hasItems || anyModalOpen) {
+            const message = 'هل تريد مغادرة الصفحة؟ قد تفقد بيانات طلبك.';
+            e.preventDefault();
+            e.returnValue = message;
+            return message;
         }
     });
 
