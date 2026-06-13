@@ -821,12 +821,21 @@ function renderList(){
 function buildRow(o){
     const st=stMap[o.status]||stMap.pending;
     const num=o.order_number?`#${o.order_number}`:`#${String(o.id).slice(-6).toUpperCase()}`;
-
     // Date, time, and delay calculation
     const orderDate = o.created_at ? new Date(o.created_at) : null;
-    const dateStr = orderDate ? orderDate.toLocaleDateString('ar-SA', {day:'numeric', month:'short'}) : '--';
-    const timeStr = orderDate ? orderDate.toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit',hour12:true}) : '--';
-
+    
+    // تاريخ بأرقام إنجليزية: يوم-شهر-سنة
+    const dateStr = orderDate 
+        ? `${String(orderDate.getDate()).padStart(2,'0')}-${String(orderDate.getMonth()+1).padStart(2,'0')}-${orderDate.getFullYear()}` 
+        : '--';
+    
+    // وقت بصباحاً/مساءً (أرقام إنجليزية)
+    let timeStr = '--';
+    if (orderDate) {
+        let t = orderDate.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit', hour12:true});
+        timeStr = t.replace('am', 'صباحاً').replace('pm', 'مساءً');
+    }
+	
     const now = new Date();
     let delayText = '';
     if (orderDate) {
@@ -908,15 +917,19 @@ function fillDrawer(o){
     const st=stMap[o.status]||stMap.pending;
     const num=o.order_number?`#${o.order_number}`:`#${String(o.id).slice(-6).toUpperCase()}`;
     document.getElementById('d-num').innerHTML=`${num} <span class="status-pill ${st.cls}" style="margin-right:6px;">${st.lbl}</span>`;
-
     // Update time-info in drawer header (larger font, next to print button)
     const orderCreated2 = o.created_at ? new Date(o.created_at) : null;
     let timeInfoHtml = '';
     if (orderCreated2) {
-        const dateTimeStr = orderCreated2.toLocaleString('ar-SA', {
-            day:'numeric', month:'short', year:'numeric',
-            hour:'2-digit', minute:'2-digit', hour12:true
-        });
+        // تاريخ بأرقام إنجليزية: يوم-شهر-سنة
+        const dateStr2 = `${String(orderCreated2.getDate()).padStart(2,'0')}-${String(orderCreated2.getMonth()+1).padStart(2,'0')}-${orderCreated2.getFullYear()}`;
+        
+        // وقت بصباحاً/مساءً (أرقام إنجليزية)
+        let timeStr2 = orderCreated2.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit', hour12:true});
+        timeStr2 = timeStr2.replace('am', 'صباحاً').replace('pm', 'مساءً');
+        
+        const dateTimeStr = `${dateStr2} ${timeStr2}`;
+        
         const now2 = new Date();
         const diffMs2 = now2 - orderCreated2;
         const diffMins2 = Math.floor(diffMs2 / 60000);
@@ -1212,7 +1225,18 @@ function printOrder(){
     const orderVal = (parseFloat(o.order_value) || 0).toFixed(2);
     const shipCost = (parseFloat(o.shipping_cost) || 0).toFixed(2);
     const totalVal = (parseFloat(o.total_value) || 0).toFixed(2);
-    const createdFull = o.created_at ? new Date(o.created_at).toLocaleString('en-GB', {hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric', hour12:true}).replace(/\//g, '-') : '--';
+    
+	
+	let createdFull = '--';
+if (o.created_at) {
+    const d = new Date(o.created_at);
+    const dateStr = `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`;
+    let timeStr = d.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit', hour12:true});
+    timeStr = timeStr.replace('am', 'صباحاً').replace('pm', 'مساءً');
+    createdFull = `${dateStr} ${timeStr}`;
+}
+
+
     const note = o.notes || o.note || '';
 
     const isDelivery = o.delivery_address || (o.shipping_method && o.shipping_method !== 'pickup');
