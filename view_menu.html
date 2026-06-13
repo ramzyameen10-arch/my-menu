@@ -861,6 +861,7 @@
     let addonsModalPushed = false;
     let scrollY = 0;
     let sidebarOpen = false;
+    let ignoreNextPopstate = false; // ← علامة لتجاهل حدث popstate القادم
 
     // ===== Sidebar =====
     function openSidebar() {
@@ -984,6 +985,11 @@
         }
 
         // الأولوية 5: الصفحة الرئيسية + أصناف في السلة → عرض رسالة تأكيد مخصصة
+        if (ignoreNextPopstate) {
+            ignoreNextPopstate = false;
+            e.preventDefault();
+            return;
+        }
         const hasItems = Object.keys(cart).some(pid => cart[pid] > 0) || cartItems.length > 0;
         if (hasItems) {
             e.preventDefault();
@@ -1598,6 +1604,7 @@
 
     function confirmAddToCart() {
         if (!currentProduct) return;
+        ignoreNextPopstate = true; // ← تجاهل حدث popstate الناتج عن إغلاق نموذج الإضافات
         popAddonsHistory();
         const selectedAddons = Array.from(currentSelectedAddons).sort().map(id => allAddonProducts[id]).filter(Boolean);
         const hasAddons = addonLinks[currentProduct.id] && addonLinks[currentProduct.id].length > 0;
@@ -2112,10 +2119,12 @@ if (selectedDeliveryType === 'delivery' && customerLat && customerLng && !locati
             // ===== تنبيه نجاح الإرسال =====
             // showSuccessToast(orderNum);
 
-            // تفريغ السلة بعد 2.5 ثانية
-            setTimeout(() => {
-                resetCartAfterOrder();
-            }, 2500);
+            // تفريغ السلة فوراً بعد إرسال الطلب (قبل فتح الواتساب)
+            // لتجنب ظهور رسالة تأكيد المغادرة عند العودة من الواتساب
+            resetCartAfterOrder();
+
+            // تجاهل أي حدث popstate قادم من العودة من الواتساب
+            ignoreNextPopstate = true;
 
         } catch (err) {
             console.error(err);
@@ -2284,27 +2293,31 @@ if (selectedDeliveryType === 'delivery' && customerLat && customerLng && !locati
     }
 
     function confirmExit() {
-        // Clear cart before leaving
-        Object.keys(cart).forEach(id => { cart[id] = 0; });
-        cartItems = [];
-        // Hide the dialog first
-        hideExitConfirm();
-        // Try to close the window or navigate away
-        // On mobile/PWA, we try multiple strategies:
+        // 1. تفريغ السلة باستخدام نفس منطق clearCart() الموجود أصلاً
+        Object.keys(cart).forEach(id => { cart[id] = 0; const el = document.getElementById('qty-' + id); if (el) el.innerText = 0; });
+        cartItems.forEach(item => { const el = document.getElementById('qty-' + item.product.id); if (el) el.innerText = 0; });
+        cart = {}; cartItems = [];
+        selectedDeliveryType = 'pickup'; selectedShippingMethod = null; selectedCity = null; shippingCost = 0;
+        updateTotals();
+        document.getElementById('modal-overlay').style.display = 'none';
+        unlockBodyScroll();
 
-        // Strategy 1: Try to go back in history (if there's history)
+        // 2. إخفاء نافذة التأكيد
+        hideExitConfirm();
+
+        // 3. محاولة المغادرة
+        // الاستراتيجية 1: إذا كان هناك تاريخ سابق، ارجع لأول صفحة
         if (history.length > 1) {
             window.removeEventListener('popstate', handlePopState);
             history.go(-(history.length - 1));
             return;
         }
 
-        // Strategy 2: For PWA/mobile apps, show a message that user can close manually
-        // Or redirect to a blank page
+        // الاستراتيجية 2: إذا لم يكن هناك تاريخ (PWA/تطبيق مباشر)
         document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;text-align:center;padding:20px;"><div style="font-size:4em;margin-bottom:20px;">👋</div><div style="font-size:1.3em;font-weight:bold;color:#333;margin-bottom:10px;">شكراً لزيارتك!</div><div style="font-size:1em;color:#666;">يمكنك الآن إغلاق التطبيق</div></div>';
         document.title = 'شكراً لزيارتك!';
 
-        // Strategy 3: Try to close the window (works for some browsers)
+        // الاستراتيجية 3: محاولة إغلاق النافذة
         setTimeout(() => {
             window.open('', '_self').close();
         }, 500);
