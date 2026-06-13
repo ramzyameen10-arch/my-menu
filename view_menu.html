@@ -466,6 +466,7 @@
 <base target="_blank">
 <base target="_blank">
 <base target="_blank">
+<base target="_blank">
 </head>
 <body>
 
@@ -558,7 +559,7 @@
 </div>
 
 <!-- ADDONS MODAL -->
-<div id="addons-overlay" class="addons-overlay" onclick="if(event.target===this)this.style.display='none'">
+<div id="addons-overlay" class="addons-overlay" onclick="if(event.target===this){this.style.display='none';popAddonsHistory();}">
     <div class="addons-modal">
         <img id="addons-hero-img" class="addons-hero-img" src="" alt="">
         <div class="addons-modal-body-inner">
@@ -568,7 +569,7 @@
                     <div class="addons-meta" id="addons-modal-meta"></div>
                     <div class="addons-price-hero" id="addons-modal-price"></div>
                 </div>
-                <button onclick="document.getElementById('addons-overlay').style.display='none'" style="border:none;background:none;font-size:1.8em;cursor:pointer;color:#999;margin-top:-4px;">&times;</button>
+                <button onclick="document.getElementById('addons-overlay').style.display='none';popAddonsHistory();" style="border:none;background:none;font-size:1.8em;cursor:pointer;color:#999;margin-top:-4px;">&times;</button>
             </div>
             <div id="addons-modal-body"></div>
             <div class="addons-footer">
@@ -772,6 +773,7 @@
     // ===== متغيرات التحكم في الرجوع =====
     let cartModalPushed = false;
     let customerModalPushed = false;
+    let addonsModalPushed = false;
     let scrollY = 0;
 
     // ===== Sidebar =====
@@ -814,6 +816,13 @@
         }
     }
 
+    function pushAddonsHistory() {
+        if (!addonsModalPushed) {
+            history.pushState({ addonsOpen: true }, '', window.location.href);
+            addonsModalPushed = true;
+        }
+    }
+
     function popCartHistory() {
         if (cartModalPushed) {
             history.back();
@@ -828,11 +837,27 @@
         }
     }
 
+    function popAddonsHistory() {
+        if (addonsModalPushed) {
+            history.back();
+            addonsModalPushed = false;
+        }
+    }
+
     window.addEventListener('popstate', function(e) {
+        const addonsOverlay = document.getElementById('addons-overlay');
         const customerModal = document.getElementById('customer-modal-overlay');
         const cartModal = document.getElementById('modal-overlay');
 
-        // الأولوية: إذا كان نموذج العميل مفتوح → أغلقه وعد للسلة
+        // الأولوية 1: إذا كان نموذج الإضافات مفتوح → أغلقه وعد للصفحة الرئيسية
+        if (addonsOverlay && addonsOverlay.style.display === 'flex') {
+            addonsOverlay.style.display = 'none';
+            addonsModalPushed = false;
+            e.preventDefault();
+            return;
+        }
+
+        // الأولوية 2: إذا كان نموذج العميل مفتوح → أغلقه وعد للسلة
         if (customerModal && customerModal.style.display === 'flex') {
             customerModal.style.display = 'none';
             if (customerMap) { customerMap.remove(); customerMap = null; }
@@ -844,7 +869,7 @@
             return;
         }
 
-        // ثانياً: إذا كانت السلة مفتوحة → أغلقها
+        // الأولوية 3: إذا كانت السلة مفتوحة → أغلقها
         if (cartModal && cartModal.style.display === 'flex') {
             cartModal.style.display = 'none';
             unlockBodyScroll();
@@ -1397,6 +1422,7 @@
         const product = productsList.find(p => p.id === productId);
         if (!product) return;
         currentProduct = product; editingItemUid = editUid; addonQty = 1;
+        pushAddonsHistory();
         document.getElementById('addon-qty-display').innerText = '1';
         if (editUid !== null) {
             const item = cartItems.find(i => i.uid === editUid);
@@ -1437,6 +1463,7 @@
 
     function confirmAddToCart() {
         if (!currentProduct) return;
+        popAddonsHistory();
         const selectedAddons = Array.from(currentSelectedAddons).sort().map(id => allAddonProducts[id]).filter(Boolean);
         const hasAddons = addonLinks[currentProduct.id] && addonLinks[currentProduct.id].length > 0;
         const key = currentProduct.id + '|' + selectedAddons.map(a => a.id).join(',');
