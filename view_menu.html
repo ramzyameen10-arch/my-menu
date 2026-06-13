@@ -2287,9 +2287,27 @@ if (selectedDeliveryType === 'delivery' && customerLat && customerLng && !locati
         // Clear cart before leaving
         Object.keys(cart).forEach(id => { cart[id] = 0; });
         cartItems = [];
-        // Allow the browser to go back/close
-        window.removeEventListener('popstate', handlePopState);
-        history.back();
+        // Hide the dialog first
+        hideExitConfirm();
+        // Try to close the window or navigate away
+        // On mobile/PWA, we try multiple strategies:
+
+        // Strategy 1: Try to go back in history (if there's history)
+        if (history.length > 1) {
+            window.removeEventListener('popstate', handlePopState);
+            history.go(-(history.length - 1));
+            return;
+        }
+
+        // Strategy 2: For PWA/mobile apps, show a message that user can close manually
+        // Or redirect to a blank page
+        document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;text-align:center;padding:20px;"><div style="font-size:4em;margin-bottom:20px;">👋</div><div style="font-size:1.3em;font-weight:bold;color:#333;margin-bottom:10px;">شكراً لزيارتك!</div><div style="font-size:1em;color:#666;">يمكنك الآن إغلاق التطبيق</div></div>';
+        document.title = 'شكراً لزيارتك!';
+
+        // Strategy 3: Try to close the window (works for some browsers)
+        setTimeout(() => {
+            window.open('', '_self').close();
+        }, 500);
     }
 
 
