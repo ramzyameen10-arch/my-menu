@@ -545,7 +545,91 @@
             transform: scale(0.97);
         }
 
+    /* ===== تأكيد تفريغ السلة - رسالة مخصصة ===== */
+        .clear-cart-confirm-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.55);
+            z-index: 10001;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+        .clear-cart-confirm-overlay.show {
+            display: flex;
+            opacity: 1;
+        }
+        .clear-cart-confirm-box {
+            background: white;
+            border-radius: 24px;
+            padding: 28px 24px 22px;
+            width: 88%;
+            max-width: 340px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+            transform: scale(0.85);
+            transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+            direction: rtl;
+        }
+        .clear-cart-confirm-overlay.show .clear-cart-confirm-box {
+            transform: scale(1);
+        }
+        .clear-cart-confirm-icon {
+            font-size: 3.2em;
+            margin-bottom: 10px;
+            line-height: 1;
+        }
+        .clear-cart-confirm-title {
+            font-size: 1.15em;
+            font-weight: 800;
+            color: #dc2626;
+            margin-bottom: 8px;
+        }
+        .clear-cart-confirm-text {
+            font-size: 0.95em;
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        .clear-cart-confirm-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        .clear-cart-confirm-btn {
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: 14px;
+            font-size: 0.95em;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .clear-cart-confirm-btn.cancel {
+            background: var(--main-color);
+            color: white;
+        }
+        .clear-cart-confirm-btn.cancel:active {
+            opacity: 0.85;
+            transform: scale(0.97);
+        }
+        .clear-cart-confirm-btn.confirm {
+            background: #fee2e2;
+            color: #dc2626;
+            border: 1.5px solid #fecaca;
+        }
+        .clear-cart-confirm-btn.confirm:active {
+            background: #fecaca;
+            transform: scale(0.97);
+        }
+
     </style>
+<base target="_blank">
 <base target="_blank">
 <base target="_blank">
 <base target="_blank">
@@ -1736,15 +1820,44 @@
     }
 
     function clearCart() {
-        if (confirm("هل تريد تفريغ السلة؟")) {
-            Object.keys(cart).forEach(id => { cart[id] = 0; const el = document.getElementById('qty-' + id); if (el) el.innerText = 0; });
-            cartItems.forEach(item => { const el = document.getElementById('qty-' + item.product.id); if (el) el.innerText = 0; });
-            cart = {}; cartItems = [];
-            selectedDeliveryType = 'pickup'; selectedShippingMethod = null; selectedCity = null; shippingCost = 0;
-            updateTotals();
-            document.getElementById('modal-overlay').style.display = 'none';
-            unlockBodyScroll();
-        }
+        showClearCartConfirm();
+    }
+
+    let clearCartConfirmShown = false;
+
+    function showClearCartConfirm() {
+        if (clearCartConfirmShown) return;
+        clearCartConfirmShown = true;
+        const overlay = document.getElementById('clear-cart-confirm-overlay');
+        overlay.style.display = 'flex';
+        void overlay.offsetWidth;
+        overlay.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function hideClearCartConfirm() {
+        const overlay = document.getElementById('clear-cart-confirm-overlay');
+        overlay.classList.remove('show');
+        setTimeout(() => {
+            overlay.style.display = 'none';
+            clearCartConfirmShown = false;
+            document.body.style.overflow = '';
+        }, 250);
+    }
+
+    function cancelClearCart() {
+        hideClearCartConfirm();
+    }
+
+    function confirmClearCart() {
+        hideClearCartConfirm();
+        Object.keys(cart).forEach(id => { cart[id] = 0; const el = document.getElementById('qty-' + id); if (el) el.innerText = 0; });
+        cartItems.forEach(item => { const el = document.getElementById('qty-' + item.product.id); if (el) el.innerText = 0; });
+        cart = {}; cartItems = [];
+        selectedDeliveryType = 'pickup'; selectedShippingMethod = null; selectedCity = null; shippingCost = 0;
+        updateTotals();
+        document.getElementById('modal-overlay').style.display = 'none';
+        unlockBodyScroll();
     }
 	
 	function resetCartAfterOrder() {
@@ -2345,6 +2458,19 @@ if (selectedDeliveryType === 'delivery' && customerLat && customerLng && !locati
         <div class="exit-confirm-buttons">
             <button class="exit-confirm-btn stay" onclick="cancelExit()">🔙 رجوع</button>
             <button class="exit-confirm-btn leave" onclick="confirmExit()">🚪 مغادرة</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== رسالة تأكيد تفريغ السلة ===== -->
+<div class="clear-cart-confirm-overlay" id="clear-cart-confirm-overlay">
+    <div class="clear-cart-confirm-box">
+        <div class="clear-cart-confirm-icon">🛒</div>
+        <div class="clear-cart-confirm-title">تنبيه!</div>
+        <div class="clear-cart-confirm-text">سيتم تفريغ السلة !<br>هل تريد الاستمرار</div>
+        <div class="clear-cart-confirm-buttons">
+            <button class="clear-cart-confirm-btn cancel" onclick="cancelClearCart()">🔙 تراجع</button>
+            <button class="clear-cart-confirm-btn confirm" onclick="confirmClearCart()">🗑️ تفريغ</button>
         </div>
     </div>
 </div>
