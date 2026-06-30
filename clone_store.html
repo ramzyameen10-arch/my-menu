@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>نسخ منتجات | لوحة التاجر</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root {
+    --primary: #24b47e;
+    --primary-dark: #1a9c6a;
+    --primary-light: #e8faf3;
+    --success: #10b981;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --dark: #1e293b;
+    --gray: #64748b;
+    --gray-light: #f1f5f9;
+    --white: #ffffff;
+    --shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+    --radius: 16px;
+    --radius-sm: 10px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    font-family: 'Segoe UI', 'Tahoma', sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+    direction: rtl;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.page-wrapper {
+    width: 100%;
+    max-width: 520px;
+    padding: 20px;
+}
+
+.back-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(255,255,255,0.25);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.4);
+    color: white;
+    padding: 10px 18px;
+    border-radius: 50px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    z-index: 10;
+}
+.back-btn:hover {
+    background: rgba(255,255,255,0.3);
+    transform: translateY(-2px);
+}
+
+.card {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+    position: relative;
+}
+
+.card-header {
+    background: linear-gradient(135deg, #24b47e 0%, #1a9c6a 100%);
+    padding: 40px 30px 60px;
+    text-align: center;
+    color: white;
+    position: relative;
+}
+
+/* Removed */
+
+.header-icon {
+    width: 70px;
+    height: 70px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 15px;
+    font-size: 28px;
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255,255,255,0.3);
+}
+
+.card-header h2 {
+    margin: 0 0 8px 0;
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.card-header p {
+    margin: 0;
+    opacity: 0.9;
+    font-size: 14px;
+}
+
+.card-body {
+    padding: 30px;
+    padding-top: 10px;
+}
+
+/* Main Action Buttons */
+.action-buttons {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.action-btn {
+    flex: 1;
+    padding: 14px 8px;
+    border: 2px solid #e2e8f0;
+    border-radius: var(--radius-sm);
+    background: var(--white);
+    color: var(--dark);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    text-align: center;
+}
+
+.action-btn:hover {
+    border-color: var(--primary);
+    background: var(--primary-light);
+    color: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+}
+
+.action-btn.active {
+    border-color: var(--primary);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+}
+
+.action-btn i {
+    font-size: 18px;
+}
+
+/* Content Area */
+.content-area {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.content-area.visible {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Form Groups */
+.form-group {
+    margin-bottom: 20px;
+    text-align: right;
+}
+
+.form-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--dark);
+    margin-bottom: 8px;
+}
+
+.form-input {
+    width: 100%;
+    padding: 14px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: var(--radius-sm);
+    font-size: 15px;
+    transition: all 0.3s ease;
+    background: var(--white);
+    font-family: inherit;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+/* Search Box */
+.search-wrapper {
+    position: relative;
+}
+
+.search-wrapper .form-input {
+    padding-right: 45px;
+}
+
+.search-icon {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-size: 16px;
+}
+
+/* Template List */
+.template-list {
+    max-height: 220px;
+    overflow-y: auto;
+    border: 2px solid #e2e8f0;
+    border-radius: var(--radius-sm);
+    padding: 8px;
+    margin-bottom: 5px;
+}
+
+.template-item {
+    padding: 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 6px;
+    border: 2px solid transparent;
+}
+
+.template-item:hover {
+    background: #f8fafc;
+}
+
+.template-item.selected {
+    background: var(--primary-light);
+    border-color: var(--primary);
+}
+
+.template-item:last-child {
+    margin-bottom: 0;
+}
+
+.template-icon {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: white;
+    flex-shrink: 0;
+}
+
+.template-info {
+    flex: 1;
+    text-align: right;
+}
+
+.template-name {
+    font-weight: 700;
+    color: var(--dark);
+    font-size: 14px;
+    margin-bottom: 3px;
+}
+
+.template-desc {
+    font-size: 12px;
+    color: var(--gray);
+}
+
+/* Store URL Input */
+.url-input-group {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+.url-input-group .form-input {
+    flex: 1;
+}
+
+.extract-btn {
+    padding: 14px 20px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.extract-btn:hover {
+    background: var(--primary-dark);
+}
+
+.extracted-badge {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    background: var(--primary-light);
+    color: var(--primary-dark);
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-top: 10px;
+}
+
+.extracted-badge.visible {
+    display: flex;
+}
+
+/* Product Search Results */
+.search-results {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 2px solid #e2e8f0;
+    border-radius: var(--radius-sm);
+    padding: 8px;
+    display: none;
+    margin-top: 10px;
+}
+
+.search-results.visible {
+    display: block;
+}
+
+.product-item {
+    padding: 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 6px;
+    border: 2px solid transparent;
+}
+
+.product-item:hover {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+}
+
+.product-item.selected {
+    background: var(--primary-light);
+    border-color: var(--primary);
+}
+
+.product-item:last-child {
+    margin-bottom: 0;
+}
+
+.product-img {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    object-fit: cover;
+    border: 1px solid #e2e8f0;
+    flex-shrink: 0;
+}
+
+.product-info {
+    flex: 1;
+    text-align: right;
+}
+
+.product-name {
+    font-weight: 700;
+    color: var(--dark);
+    font-size: 14px;
+    margin-bottom: 3px;
+}
+
+.product-price {
+    color: var(--primary);
+    font-weight: 700;
+    font-size: 13px;
+}
+
+.product-store {
+    font-size: 11px;
+    color: var(--primary);
+    font-weight: 600;
+    margin-top: 2px;
+}
+
+.product-barcode {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 2px;
+}
+
+.no-results {
+    text-align: center;
+    padding: 30px 20px;
+    color: var(--gray);
+}
+
+.no-results i {
+    font-size: 32px;
+    margin-bottom: 10px;
+    display: block;
+}
+
+/* Selected Product Card */
+.selected-card {
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    border: 2px solid var(--success);
+    border-radius: var(--radius-sm);
+    padding: 18px;
+    margin-bottom: 20px;
+    display: none;
+    text-align: right;
+}
+
+.selected-card.visible {
+    display: block;
+}
+
+.selected-card .title {
+    font-weight: 700;
+    color: var(--success);
+    font-size: 14px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.selected-card .detail {
+    font-size: 13px;
+    color: var(--dark);
+    margin-bottom: 4px;
+    padding-right: 22px;
+}
+
+/* Buttons */
+.btn-primary {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+}
+
+.btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-secondary {
+    width: 100%;
+    padding: 14px;
+    background: transparent;
+    color: var(--gray);
+    border: 2px solid #e2e8f0;
+    border-radius: var(--radius-sm);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-secondary:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: var(--primary-light);
+}
+
+/* Spinner */
+.spinner-wrapper {
+    display: none;
+    text-align: center;
+    padding: 20px;
+}
+
+.spinner-wrapper.visible {
+    display: block;
+}
+
+.spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid #e2e8f0;
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 10px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Result */
+.result {
+    margin-top: 20px;
+    padding: 16px;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 600;
+    display: none;
+    text-align: center;
+    line-height: 1.8;
+}
+
+.result.visible {
+    display: block;
+}
+
+.result.success {
+    background: #f0fdf4;
+    color: var(--success);
+    border: 1px solid #86efac;
+}
+
+.result.error {
+    background: #fef2f2;
+    color: var(--danger);
+    border: 1px solid #fca5a5;
+}
+
+/* Loading */
+.loading-text {
+    text-align: center;
+    padding: 30px;
+    color: var(--gray);
+}
+
+.loading-text i {
+    font-size: 24px;
+    margin-bottom: 10px;
+    display: block;
+    animation: spin 1s linear infinite;
+}
+
+/* Description Text */
+.section-desc {
+    background: #e8faf3;
+    border: 1px solid #86efac;
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    color: #166534;
+    text-align: right;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.section-desc i {
+    font-size: 16px;
+    color: #24b47e;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .page-wrapper {
+        padding: 10px;
+    }
+    .card-body {
+        padding: 20px;
+    }
+    .store-header {
+        padding: 15px 15px 20px;
+    }
+    .store-logo {
+        width: 50px;
+        height: 50px;
+    }
+    .store-name {
+        font-size: 16px;
+    }
+}
+/* ✅ NEW: Store Header */
+.store-header {
+    background: linear-gradient(135deg, #24b47e 0%, #1a9c6a 100%);
+    padding: 20px 25px 25px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+/* Removed white curve pseudo-element */
+
+.back-btn-header {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    background: rgba(255,255,255,0.2);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    z-index: 10;
+}
+
+.back-btn-header:hover {
+    background: rgba(255,255,255,0.35);
+    transform: scale(1.05);
+}
+
+.store-logo {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid rgba(255,255,255,0.4);
+    background: rgba(255,255,255,0.15);
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.store-info {
+    flex: 1;
+    text-align: right;
+    color: white;
+}
+
+.store-name {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0 0 4px 0;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.store-subtitle {
+    font-size: 13px;
+    opacity: 0.9;
+    margin: 0;
+}
+
+/* Remove old card-header styles */
+.card-header { display: none; }
+
+/* Remove old back-btn styles */
+.back-btn { display: none; }
+
+</style>
+<base target="_blank">
+<base target="_blank">
+<base target="_blank">
+</head>
+<body>
+
+<div class="page-wrapper">
+    <div class="card">
+        <div class="store-header" id="store-header">
+            <a href="manage_products.html" class="back-btn-header" id="back-link">
+                <i class="fas fa-arrow-right"></i>
+            </a>
+            <img src="" class="store-logo" id="store-logo" alt="شعار المتجر" onerror="this.src='https://via.placeholder.com/60?text=Logo'">
+            <div class="store-info">
+                <h2 class="store-name" id="store-name">جاري التحميل...</h2>
+                <p class="store-subtitle">نسخ منتجات إلى المتجر</p>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <!-- ✅ 3 Main Action Buttons (Horizontal) -->
+            <div class="action-buttons">
+                <button class="action-btn active" id="btn-product" onclick="showSection('product')">
+                    <i class="fas fa-search"></i>
+                    <span>🔍 نسخ منتج</span>
+                </button>
+                <button class="action-btn" id="btn-templates" onclick="showSection('templates')">
+                    <i class="fas fa-layer-group"></i>
+                    <span>📋 نسخ قالب</span>
+                </button>
+                <button class="action-btn" id="btn-store" onclick="showSection('store')">
+                    <i class="fas fa-store"></i>
+                    <span>🏪 نسخ متجر</span>
+                </button>
+            </div>
+
+            <!-- Description -->
+            <div class="section-desc" id="section-desc">
+                <i class="fas fa-info-circle"></i>
+                <span id="desc-text">ابحث عن منتج من أي متجر وانسخه إلى متجرك</span>
+            </div>
+
+            <!-- ✅ Section 1: Templates -->
+            <div class="content-area" id="section-templates">
+                <div class="form-group">
+                    <label class="form-label">اختر قالب المتجر</label>
+                    <div class="template-list" id="template-list">
+                        <div class="loading-text">
+                            <i class="fas fa-circle-notch"></i>
+                            جاري تحميل القوالب...
+                        </div>
+                    </div>
+                    <input type="hidden" id="selected-template-id">
+                </div>
+                <button class="btn-primary" onclick="cloneFromTemplate()">
+                    <i class="fas fa-rocket"></i> نسخ القالب
+                </button>
+            </div>
+
+            <!-- ✅ Section 2: Copy from Store -->
+            <div class="content-area" id="section-store">
+                <div class="form-group">
+                    <label class="form-label">رابط المتجر المصدر</label>
+                    <div class="url-input-group">
+                        <input type="text" class="form-input" id="store-url" 
+                               placeholder="https://example.com/view_menu.html?s=store-name">
+                        <button class="extract-btn" onclick="extractStore()">
+                            <i class="fas fa-check"></i> تحقق
+                        </button>
+                    </div>
+                    <div class="extracted-badge" id="store-extracted-badge">
+                        <i class="fas fa-check-circle"></i>
+                        <span id="store-extracted-text"></span>
+                    </div>
+                </div>
+                <button class="btn-primary" id="btn-clone-store" onclick="cloneFromStore()" disabled>
+                    <i class="fas fa-rocket"></i> نسخ جميع المنتجات
+                </button>
+            </div>
+
+            <!-- ✅ Section 3: Single Product Search -->
+            <div class="content-area visible" id="section-product">
+                <div class="form-group">
+                    <label class="form-label">البحث عن منتج (في جميع المتاجر)</label>
+                    <div class="search-wrapper">
+                        <input type="text" class="form-input" id="product-search" 
+                               placeholder="اكتب اسم المنتج أو الباركود..." 
+                               oninput="searchProduct()">
+                        <i class="fas fa-search search-icon"></i>
+                    </div>
+                    <div class="search-results" id="search-results"></div>
+                </div>
+
+                <!-- Selected Product -->
+                <div class="selected-card" id="selected-product-card">
+                    <div class="title">
+                        <i class="fas fa-check-circle"></i> المنتج المختار
+                    </div>
+                    <div class="detail" id="sp-name"></div>
+                    <div class="detail" id="sp-price"></div>
+                    <div class="detail" id="sp-store"></div>
+                    <div class="detail" id="sp-barcode"></div>
+                </div>
+
+                <button class="btn-primary" id="btn-clone-product" onclick="cloneSingleProduct()" disabled>
+                    <i class="fas fa-rocket"></i> نسخ المنتج
+                </button>
+            </div>
+
+            <!-- Back Button -->
+            <button class="btn-secondary" onclick="goBack()">
+                <i class="fas fa-arrow-right"></i> رجوع للمنتجات
+            </button>
+
+            <!-- Spinner -->
+            <div class="spinner-wrapper" id="spinner-wrapper">
+                <div class="spinner"></div>
+                <p style="color: var(--gray); font-size: 14px; font-weight: 600;">جاري النسخ...</p>
+            </div>
+
+            <!-- Result -->
+            <div class="result" id="result"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ==================== CONFIG ====================
+const userPhone = localStorage.getItem('user_phone');
+const storeId = new URLSearchParams(window.location.search).get('store_id');
+
+if (!userPhone) {
+    window.location.href = 'index.html';
+}
+
+if (!storeId) {
+    alert('معرف المتجر غير موجود في الرابط');
+    window.location.href = 'index.html';
+}
+
+if (storeId) {
+    document.getElementById('back-link').href = 'manage_products.html?store_id=' + storeId;
+}
+
+const SB_URL = 'https://wnvyqvwuzmxzzhilgidh.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indudnlxdnd1em14enpoaWxnaWRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MTg1MDEsImV4cCI6MjA5MTQ5NDUwMX0.AyD4CYqA0cz9mC-bcOt16uUpueL_cAWT26Q92l574r0';
+const _supabase = supabase.createClient(SB_URL, SB_KEY);
+
+// ==================== STATE ====================
+let currentSection = null;
+let extractedStoreId = null;
+let selectedProduct = null;
+let searchTimeout = null;
+
+// ==================== LOAD STORE INFO ====================
+async function loadStoreInfo() {
+    if (!storeId) return;
+    try {
+        const { data: store, error } = await _supabase
+            .from('store_settings')
+            .select('store_name, logo_url')
+            .eq('id', parseInt(storeId))
+            .single();
+
+        if (error) throw error;
+
+        if (store) {
+            const nameEl = document.getElementById('store-name');
+            const logoEl = document.getElementById('store-logo');
+            if (nameEl) nameEl.textContent = store.store_name || 'متجري';
+            if (logoEl && store.logo_url) logoEl.src = store.logo_url;
+        }
+    } catch (err) {
+        console.error('فشل تحميل بيانات المتجر:', err);
+        const nameEl = document.getElementById('store-name');
+        if (nameEl) nameEl.textContent = 'متجري';
+    }
+}
+
+// ==================== SECTION SWITCHING ====================
+function showSection(section) {
+    // Hide all sections
+    document.querySelectorAll('.content-area').forEach(s => s.classList.remove('visible'));
+    document.querySelectorAll('.action-btn').forEach(b => b.classList.remove('active'));
+
+    // Show selected section
+    document.getElementById('section-' + section).classList.add('visible');
+    document.getElementById('btn-' + section).classList.add('active');
+    currentSection = section;
+
+    // Update description text
+    const descText = document.getElementById('desc-text');
+    if (descText) {
+        switch(section) {
+            case 'product':
+                descText.textContent = 'ابحث عن منتج من أي متجر وانسخه إلى متجرك';
+                // Focus on search input
+                setTimeout(() => {
+                    const searchInput = document.getElementById('product-search');
+                    if (searchInput) searchInput.focus();
+                }, 100);
+                break;
+            case 'templates':
+                descText.textContent = 'اختر قالب متجر جاهز وانسخ جميع منتجاته إلى متجرك';
+                break;
+            case 'store':
+                descText.textContent = 'انسخ جميع منتجات وتصنيفات متجر آخر في المنصة إلى متجرك';
+                break;
+        }
+    }
+
+    hideResult();
+
+    // Load data if needed
+    if (section === 'templates') {
+        loadTemplates();
+    }
+}
+
+// ==================== TEMPLATES ====================
+async function loadTemplates() {
+    const list = document.getElementById('template-list');
+    list.innerHTML = `
+        <div class="loading-text">
+            <i class="fas fa-circle-notch"></i>
+            جاري تحميل القوالب...
+        </div>
+    `;
+
+    try {
+        const { data: templates, error } = await _supabase
+            .from('store_settings')
+            .select('id, store_name, store_activity')
+            .eq('is_system_template', true);
+
+        if (error) throw error;
+
+        if (!templates?.length) {
+            list.innerHTML = `
+                <div class="no-results">
+                    <i class="fas fa-folder-open"></i>
+                    لا توجد قوالب متاحة
+                </div>
+            `;
+            return;
+        }
+
+        list.innerHTML = templates.map(t => `
+            <div class="template-item" onclick="selectTemplate(${t.id}, this)" data-id="${t.id}">
+                <div class="template-icon">
+                    <i class="fas fa-layer-group"></i>
+                </div>
+                <div class="template-info">
+                    <div class="template-name">${t.store_name}</div>
+                    <div class="template-desc">${t.store_activity || 'قالب نظامي'}</div>
+                </div>
+            </div>
+        `).join('');
+
+    } catch (err) {
+        list.innerHTML = `
+            <div class="no-results" style="color: var(--danger)">
+                <i class="fas fa-exclamation-circle"></i>
+                فشل تحميل القوالب
+            </div>
+        `;
+    }
+}
+
+function selectTemplate(id, element) {
+    document.querySelectorAll('.template-item').forEach(i => i.classList.remove('selected'));
+    element.classList.add('selected');
+    document.getElementById('selected-template-id').value = id;
+    hideResult();
+}
+
+async function cloneFromTemplate() {
+    const templateId = document.getElementById('selected-template-id').value;
+    if (!templateId) {
+        showResult('❌ يرجى اختيار قالب أولاً', false);
+        return;
+    }
+    await doClone(parseInt(templateId), 'template');
+}
+
+// ==================== STORE URL ====================
+function extractStoreSlug(url) {
+    if (!url) return null;
+    try {
+        const match = url.match(/[?&]s=([^&]+)/);
+        if (match && match[1]) {
+            return decodeURIComponent(match[1].trim());
+        }
+        return null;
+    } catch (e) {
+        return null;
+    }
+}
+
+async function resolveStoreIdFromSlug(slug) {
+    if (!slug) return null;
+    try {
+        const { data, error } = await _supabase
+            .from('store_settings')
+            .select('id, store_name')
+            .eq('store_slug', slug)
+            .single();
+
+        if (error || !data) return null;
+        return { id: data.id, name: data.store_name };
+    } catch (e) {
+        return null;
+    }
+}
+
+async function extractStore() {
+    const url = document.getElementById('store-url').value.trim();
+    const badge = document.getElementById('store-extracted-badge');
+    const badgeText = document.getElementById('store-extracted-text');
+    const cloneBtn = document.getElementById('btn-clone-store');
+
+    const slug = extractStoreSlug(url);
+    if (!slug) {
+        badge.classList.remove('visible');
+        extractedStoreId = null;
+        cloneBtn.disabled = true;
+        showResult('❌ الرابط غير صحيح. يجب أن ينتهي بـ view_menu.html?s=...', false);
+        return;
+    }
+
+    const storeInfo = await resolveStoreIdFromSlug(slug);
+    if (storeInfo) {
+        extractedStoreId = storeInfo.id;
+        badgeText.textContent = 'متجر:  ' + storeInfo.name;
+        badge.classList.add('visible');
+        cloneBtn.disabled = false;
+        hideResult();
+    } else {
+        extractedStoreId = null;
+        badge.classList.remove('visible');
+        cloneBtn.disabled = true;
+        showResult('❌ لم يتم العثور على المتجر', false);
+    }
+}
+
+async function cloneFromStore() {
+    if (!extractedStoreId) {
+        showResult('❌ يرجى التحقق من الرابط أولاً', false);
+        return;
+    }
+    await doClone(extractedStoreId, 'store');
+}
+
+// ==================== SINGLE PRODUCT SEARCH ====================
+async function searchProduct() {
+    const query = document.getElementById('product-search').value.trim().toLowerCase();
+    const resultsDiv = document.getElementById('search-results');
+
+    clearTimeout(searchTimeout);
+
+    if (query.length < 2) {
+        resultsDiv.classList.remove('visible');
+        return;
+    }
+
+    searchTimeout = setTimeout(async () => {
+        resultsDiv.classList.add('visible');
+        resultsDiv.innerHTML = `
+            <div class="loading-text">
+                <i class="fas fa-circle-notch"></i>
+                جاري البحث...
+            </div>
+        `;
+
+        try {
+            // Search in ALL stores
+            const { data: products, error } = await _supabase
+                .from('products')
+                .select('id, product_name, price, sale_price, barcode, description, store_id')
+                .or(`product_name.ilike.%${query}%,barcode.ilike.%${query}%`)
+                .limit(30);
+
+            if (error) throw error;
+
+            if (!products?.length) {
+                resultsDiv.innerHTML = `
+                    <div class="no-results">
+                        <i class="fas fa-search"></i>
+                        لا توجد نتائج مطابقة
+                    </div>
+                `;
+                return;
+            }
+
+            // Fetch images
+            const productIds = products.map(p => p.id);
+            const { data: images } = await _supabase
+                .from('product_images')
+                .select('product_id, image_url')
+                .in('product_id', productIds);
+
+            const imageMap = {};
+            if (images) {
+                images.forEach(img => {
+                    imageMap[img.product_id] = img.image_url;
+                });
+            }
+
+            // Fetch store names
+            const storeIds = [...new Set(products.map(p => p.store_id))];
+            const { data: stores } = await _supabase
+                .from('store_settings')
+                .select('id, store_name')
+                .in('id', storeIds);
+
+            const storeMap = {};
+            if (stores) {
+                stores.forEach(s => {
+                    storeMap[s.id] = s.store_name;
+                });
+            }
+
+            const fallback = 'https://via.placeholder.com/50?text=+';
+            resultsDiv.innerHTML = products.map(p => {
+                const displayPrice = (p.sale_price > 0 ? p.sale_price : p.price).toFixed(2);
+                const img = imageMap[p.id] || fallback;
+                const storeName = storeMap[p.store_id] || 'متجر غير معروف';
+                const safeName = p.product_name.replace(/'/g, "\'");
+                const safeBarcode = (p.barcode || '').replace(/'/g, "\'");
+                const safeImg = img.replace(/'/g, "\'");
+                const safeStore = storeName.replace(/'/g, "\'");
+                return `
+                    <div class="product-item" onclick="selectProduct(${p.id}, '${safeName}', ${p.price}, ${p.sale_price || 0}, '${safeBarcode}', '${safeImg}', ${p.store_id}, '${safeStore}')" id="prod-item-${p.id}">
+                        <img src="${img}" class="product-img" onerror="this.src='${fallback}'">
+                        <div class="product-info">
+                            <div class="product-name">${p.product_name}</div>
+                            <div class="product-price">${displayPrice} ر.س</div>
+                            <div class="product-store"><i class="fas fa-store"></i> ${storeName}</div>
+                            ${p.barcode ? `<div class="product-barcode"><i class="fas fa-barcode"></i> ${p.barcode}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+        } catch (err) {
+            resultsDiv.innerHTML = `
+                <div class="no-results" style="color: var(--danger)">
+                    <i class="fas fa-exclamation-circle"></i>
+                    ${err.message}
+                </div>
+            `;
+        }
+    }, 300);
+}
+
+function selectProduct(id, name, price, salePrice, barcode, imageUrl, sourceStoreId, storeName) {
+    selectedProduct = { id, name, price, salePrice, barcode, imageUrl, sourceStoreId };
+
+    document.querySelectorAll('.product-item').forEach(i => i.classList.remove('selected'));
+    const item = document.getElementById('prod-item-' + id);
+    if (item) item.classList.add('selected');
+
+    document.getElementById('sp-name').textContent = '📦 ' + name;
+    document.getElementById('sp-price').textContent = '💰 السعر: ' + (salePrice > 0 ? salePrice : price).toFixed(2) + ' ر.س';
+    document.getElementById('sp-store').textContent = '🏪 المتجر: ' + storeName;
+    document.getElementById('sp-barcode').textContent = barcode ? '📎 الباركود: ' + barcode : '';
+    document.getElementById('selected-product-card').classList.add('visible');
+    document.getElementById('btn-clone-product').disabled = false;
+
+    hideResult();
+}
+
+async function cloneSingleProduct() {
+    if (!selectedProduct) {
+        showResult('❌ يرجى اختيار منتج أولاً', false);
+        return;
+    }
+    await doClone(selectedProduct.sourceStoreId, 'single', selectedProduct.id);
+}
+
+// ==================== CLONE ACTION ====================
+async function doClone(sourceId, type, productId = null) {
+    if (parseInt(sourceId) === parseInt(storeId)) {
+        showResult('❌ لا يمكن نسخ المتجر إلى نفسه', false);
+        return;
+    }
+
+    const btn = document.querySelector('.content-area.visible .btn-primary');
+    const spinner = document.getElementById('spinner-wrapper');
+
+    if (btn) {
+        btn.disabled = true;
+    }
+    spinner.classList.add('visible');
+    hideResult();
+
+    try {
+        const { data: profile, error: profError } = await _supabase
+            .from('profiles')
+            .select('id')
+            .eq('phone_number', userPhone)
+            .single();
+
+        if (profError || !profile) {
+            throw new Error('لم يتم العثور على المستخدم');
+        }
+
+        let response, data;
+
+        response = await fetch(SB_URL + '/functions/v1/clone-store', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + SB_KEY
+            },
+            body: JSON.stringify({
+                source_store_id: parseInt(sourceId),
+                target_store_id: parseInt(storeId),
+                user_id: profile.id,
+                copy_type: 'independent',
+                product_id: productId ? parseInt(productId) : null
+            })
+        });
+
+        data = await response.json();
+
+        if (response.ok) {
+            if (type === 'single') {
+                showResult('✅ تم نسخ المنتج بنجاح!\n📦 ' + data.product_name, true);
+            } else {
+                showResult(
+                    '✅ ' + data.message + '\n' +
+                    '📦 منتجات: ' + data.copied.products + ' | ' +
+                    '🖼️ صور: ' + data.copied.images + ' | ' +
+                    '📁 تصنيفات: ' + data.categories_created,
+                    true
+                );
+            }
+        } else {
+            throw new Error(data.error || 'فشل النسخ');
+        }
+
+    } catch (err) {
+        showResult('❌ ' + err.message, false);
+    } finally {
+        spinner.classList.remove('visible');
+        if (btn) {
+            btn.disabled = false;
+        }
+    }
+}
+
+function goBack() {
+    window.location.href = 'manage_products.html?store_id=' + storeId;
+}
+
+function hideResult() {
+    document.getElementById('result').classList.remove('visible', 'success', 'error');
+}
+
+function showResult(message, isSuccess) {
+    const result = document.getElementById('result');
+    result.textContent = message;
+    result.className = 'result visible ' + (isSuccess ? 'success' : 'error');
+}
+
+// ==================== INIT ====================
+document.addEventListener('DOMContentLoaded', () => {
+    loadStoreInfo();
+
+    // Auto-focus search input on page load
+    setTimeout(() => {
+        const searchInput = document.getElementById('product-search');
+        if (searchInput) {
+            searchInput.focus();
+        }
+    }, 300);
+});
+</script>
+
+</body>
+</html>

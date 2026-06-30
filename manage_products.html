@@ -84,6 +84,26 @@ thead { display: none !important; }}
 .card-actions {display: flex;gap: 8px;}
 .btn-opt {padding: 7px 12px;border-radius: 8px;font-size: 12px;border: none;color: white;font-weight: bold;cursor: pointer;}
 .drag-zone {color: #ddd;font-size: 18px;cursor: grab;flex-shrink: 0;}
+/* ===== Clone Store Button ===== */
+.btn-clone-store {
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto;
+  padding: 10px 25px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 14px;
+  transition: 0.3s;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+.btn-clone-store:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
 @media (max-width: 400px) {.product-name { font-size: 13px; }.p-card-img { width: 50px !important; height: 50px !important; min-width: 50px !important; }}
 @media print {body > *:not(#qr-modal) { display: none !important; }
 #qr-modal { position: static !important; background: white !important; }}
@@ -239,7 +259,6 @@ thead { display: none !important; }}
 </style>
 <base target="_blank">
 <base target="_blank">
-<base target="_blank">
 </head>
 <body>
 <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
@@ -254,6 +273,13 @@ thead { display: none !important; }}
     </div>
 <button class="btn-main" style="background-color:#6c5ce7; width:100%; margin-bottom: 5px;" onclick="toggleSidebar(); openMenuScanner();">+ منيو (AI)</button>
 <button class="btn-main" style="width:100%; margin-bottom: 5px;" onclick="toggleSidebar(); toggleForm();">+ منتج</button>
+
+<button class="btn-main" style="background:#39bdc8;width:100%; margin-bottom: 5px;"
+onclick="goToCloneStore()">
++ منتج من متجر أخر
+</button>
+
+
 <div class="sidebar-icon-buttons">
 <button class="btn-icon" onclick="openStoreLink(event)" title="فتح المتجر">
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -342,6 +368,9 @@ onclick="sessionStorage.setItem('back_from_manage', 'true'); toggleSidebar(); wi
 </select>
 <button class="btn-reset" title="مسح الفلاتر" style="display:flex;align-items:center;justify-content:center;width:40px;height:40px;padding:0;margin-right:5px" onclick="resetFilters()"><span style="font-size:18px">مسح</span></button>
 </div>
+
+<!-- Clone Store Button - Always visible -->
+
 <div id="prod-list" class="products-container">
 </div>
 </div>
@@ -448,7 +477,7 @@ async function loadProducts(){
     // ✅ جلب المنتجات
     const { data: products } = await _supabase
         .from('products')
-        .select('*,categories(category_name),clone_mode')
+        .select('*,categories(category_name)')
         .eq('store_id', storeId)
         .order('product_order', { ascending: true });
 
@@ -494,7 +523,15 @@ onclick="openMenuScanner();">
 onclick="toggleForm()">
 + منتج
 </button>
+
+<button class="btn-main" style="background:#39bdc8;padding:14px;border-radius:10px;font-size:15px;"
+onclick="goToCloneStore()">
++ منتج من متجر أخر
+</button>
+
 </div>
+
+
 </div>`;return}
 const fallback="https://via.placeholder.com/150?text=No+Image";const catValue=document.getElementById('filter-cat').value;const searchValue=document.getElementById('search-name').value;const canDrag=(catValue!==""&&searchValue==="");if(sortableInstance)sortableInstance.option("disabled",!canDrag);data.forEach(p=>{const hasSale=p.sale_price>0&&p.sale_price!==null;const displayPrice=(hasSale?p.sale_price:p.price).toFixed(2);const isAvail=p.is_available!==false;const productImg=(p.image_url&&p.image_url!=="")?p.image_url:(storeLogoUrl||fallback);list.innerHTML+=`
 <div class="product-card" id="row-${p.id}">
@@ -546,9 +583,6 @@ document.getElementById('table-file-input').onchange=async function(e){
     if(!file||!activeTableId)return;
     showLoader(true);
 
-    const oldProduct = allProducts.find(p => p.id == activeTableId);
-    const isLinked = oldProduct && oldProduct.clone_mode === 'linked';
-
     // ✅ جلب الصورة القديمة من product_images
     const { data: oldImage } = await _supabase
         .from('product_images')
@@ -556,9 +590,8 @@ document.getElementById('table-file-input').onchange=async function(e){
         .eq('product_id', activeTableId)
         .maybeSingle();
 
-    // ✅ حذف من Storage فقط إذا لم يكن مرتبطاً
-    if (!isLinked && oldImage?.image_url) {
-        await deleteProductImage(oldImage.image_url);
+    // ✅ حذف من جدول فقط - الصورة تبقى في Storage
+    if (oldImage?.image_url) {
         await _supabase.from('product_images').delete().eq('id', oldImage.id);
     }
 
@@ -585,18 +618,9 @@ document.getElementById('table-file-input').onchange=async function(e){
         image_url: url
     });
 
-    // ✅ الفصل: يصبح detached
-    await _supabase.from('products').update({ clone_mode: 'detached' }).eq('id', activeTableId);
-
-    // ✅ Cascade: إذا كان أصلياً، حدّث المستنسخين
-    if (oldProduct?.clone_mode === 'original') {
-        await cascadeUpdateImage(activeTableId, url);
-    }
-
     const idx = allProducts.findIndex(p => p.id == activeTableId);
     if (idx !== -1) {
         allProducts[idx].image_url = url;
-        allProducts[idx].clone_mode = 'detached';
     }
     filterData();
     showLoader(false);
@@ -677,22 +701,10 @@ async function handleSave(){
     const id=document.getElementById('edit-id').value,
           file=document.getElementById('p-file').files[0];
     let url=currentImgUrl;
-    let newCloneMode = null;
-    let wasOriginal = false;
-    let imageInserted = false; // ✅ NEW: تتبع إذا تم إدراج الصورة
+    let imageInserted = false;
 
     if(file){
         const editIdVal = document.getElementById('edit-id').value;
-        let isLinked = false;
-        if (editIdVal) {
-            const existingProd = allProducts.find(p => p.id == editIdVal);
-            if (existingProd && existingProd.clone_mode === 'linked') {
-                isLinked = true;
-            }
-            if (existingProd && existingProd.clone_mode === 'original') {
-                wasOriginal = true;
-            }
-        }
 
         // ✅ جلب الصورة القديمة من product_images
         const { data: oldImage } = await _supabase
@@ -701,9 +713,8 @@ async function handleSave(){
             .eq('product_id', editIdVal || 0)
             .maybeSingle();
 
-        // ✅ حذف من Storage فقط إذا لم يكن مرتبطاً
-        if (!isLinked && oldImage?.image_url) {
-            await deleteProductImage(oldImage.image_url);
+        // ✅ حذف من جدول فقط - الصورة تبقى في Storage
+        if (editIdVal && oldImage?.image_url) {
             await _supabase.from('product_images').delete().eq('id', oldImage.id);
         }
 
@@ -732,9 +743,6 @@ async function handleSave(){
             });
             imageInserted = true;
         }
-
-        // ✅ الفصل: يصبح detached
-        newCloneMode = 'detached';
     }
 
     const{data:prof}=await _supabase.from('profiles').select('id').eq('phone_number',userPhone).single();
@@ -752,23 +760,11 @@ async function handleSave(){
         product_type:productType
     };
 
-    // ✅ إضافة clone_mode فقط إذا تم رفع صورة جديدة
-    if (newCloneMode !== null) {
-        payload.clone_mode = newCloneMode;
-    }
-
     let savedProductId = null;
     if(id && id !== ''){
         await _supabase.from('products').update(payload).eq('id', id);
         savedProductId = parseInt(id);
-
-        // ✅ Cascade: إذا كان أصلياً ورفع صورة جديدة، حدّث المستنسخين
-        if (wasOriginal && file) {
-            await cascadeUpdateImage(savedProductId, url);
-        }
     } else {
-        // ✅ للمنتجات الجديدة: تعيين كأصلية افتراضياً
-        payload.clone_mode = 'original';
         const { data: newProd } = await _supabase.from('products').insert([payload]).select('id').single();
         if (newProd && newProd.id) {
             savedProductId = parseInt(newProd.id);
@@ -796,70 +792,21 @@ async function deleteProd(id){
         showLoader(true);
         const product = allProducts.find(p => p.id == id);
 
-        // ✅ حذف الصورة من Storage و product_images فقط إذا لم يكن مرتبطاً
-        if (product && product.clone_mode !== 'linked') {
-            const { data: img } = await _supabase
-                .from('product_images')
-                .select('image_url')
-                .eq('product_id', id)
-                .maybeSingle();
+        // ✅ حذف من جدول فقط - الصورة تبقى في Storage
+        const { data: img } = await _supabase
+            .from('product_images')
+            .select('image_url')
+            .eq('product_id', id)
+            .maybeSingle();
 
-            if (img?.image_url) {
-                await deleteProductImage(img.image_url);
-                await _supabase.from('product_images').delete().eq('product_id', id);
-            }
+        if (img?.image_url) {
+            await _supabase.from('product_images').delete().eq('product_id', id);
         }
 
         await _supabase.from('products').delete().eq('id',id);
         await loadProducts();
     }
 }
-
-// ============================================================
-// ✅ NEW: Cascade Update — تحديث المستنسخين المرتبطين
-// تُستدعى عند تغيير صورة منتج أصلي (clone_mode = 'original')
-// ============================================================
-async function cascadeUpdateImage(originalProductId, newImageUrl) {
-    showLoader(true);
-
-    // ✅ جلب المستنسخين المرتبطين
-    const { data: linkedProducts } = await _supabase
-        .from('products')
-        .select('id, store_id')
-        .eq('source_product_id', originalProductId)
-        .eq('clone_mode', 'linked');
-
-    if (!linkedProducts || linkedProducts.length === 0) {
-        showLoader(false);
-        return;
-    }
-
-    // ✅ تحديث صورهم في product_images
-    for (const prod of linkedProducts) {
-        // حذف الصورة القديمة من Storage
-        const { data: oldImg } = await _supabase
-            .from('product_images')
-            .select('id, image_url')
-            .eq('product_id', prod.id)
-            .maybeSingle();
-
-        if (oldImg?.image_url) {
-            await deleteProductImage(oldImg.image_url);
-            await _supabase.from('product_images').delete().eq('id', oldImg.id);
-        }
-
-        // إدراج الصورة الجديدة
-        await _supabase.from('product_images').insert({
-            product_id: prod.id,
-            store_id: prod.store_id,
-            image_url: newImageUrl
-        });
-    }
-
-    console.log('✅ تم تحديث', linkedProducts.length, 'مستنسخ مرتبط');
-    showLoader(false);
-}
-
 
 function resetFilters(){document.getElementById('search-name').value="";document.getElementById('filter-cat').value="";document.getElementById('filter-status').value="";document.getElementById('sort-main').value="";filterData()}
 function logout(){localStorage.clear();window.location.href='index.html'}
@@ -885,6 +832,27 @@ function printQR(){const qrImg=document.querySelector('#qr-code-container img');
 body { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; margin:0; font-family:sans-serif; }
 img { width:250px; height:250px; }
 p { color:#333; font-size:16px; margin-top:15px; }
+
+/* ===== Clone Store Button ===== */
+.btn-clone-store {
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto;
+  padding: 10px 25px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 14px;
+  transition: 0.3s;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+.btn-clone-store:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
 </style></head>
 <body>
 <img src="${qrImg.src}">
@@ -1135,6 +1103,13 @@ async function loadExistingProductAddons(productId) {
         selectedAddonIds = [];
     }
 }
+
+
+// ✅ Navigate to clone_store.html
+function goToCloneStore() {
+    window.location.href = `clone_store.html?store_id=${storeId}`;
+}
+
 </script>
 </body>
 </html>
