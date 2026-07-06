@@ -691,13 +691,13 @@ async function compressProductImage(file, maxWidth = 400, quality = 0.75) {
         reader.readAsDataURL(file);
     });
 }
-
 async function handleSave(){
     const name=document.getElementById('p-name').value,
           price=document.getElementById('p-price').value,
           catId=document.getElementById('p-cat').value;
     if(!name||!price||!catId){alert("يرجى إكمال الحقول المطلوبة.");return}
     showLoader(true);
+    
     const id=document.getElementById('edit-id').value,
           file=document.getElementById('p-file').files[0];
     let url=currentImgUrl;
@@ -765,7 +765,35 @@ async function handleSave(){
         await _supabase.from('products').update(payload).eq('id', id);
         savedProductId = parseInt(id);
     } else {
-        const { data: newProd } = await _supabase.from('products').insert([payload]).select('id').single();
+        // ✅ إدراج جديد مع التقاط خطأ الحد الأقصى
+        const { data: newProd, error: insertError } = await _supabase.from('products').insert([payload]).select('id').single();
+        
+        // ✅ التقاط خطأ الحد الأقصى للمنتجات (P0001)
+        if (insertError) {
+            showLoader(false);
+            
+            // فحص إذا كان الخطأ من نوع P0001 (تجاوز الحد الأقصى)
+            const errorMsg = insertError.message || '';
+            const errorCode = insertError.code || '';
+            const errorDetails = insertError.details || '';
+            
+            // PostgREST يُرجع الخطأ في message أو details
+            if (errorCode === 'P0001' || 
+                errorMsg.includes('P0001') || 
+                errorMsg.includes('max_limit') ||
+                errorMsg.includes('الحد الأقصى') ||
+                errorDetails.includes('P0001') ||
+                errorDetails.includes('الحد الأقصى')) {
+                
+                alert('⚠️ ' + errorMsg);
+                return;
+            } else {
+                // خطأ آخر
+                alert('❌ حدث خطأ: ' + errorMsg);
+                return;
+            }
+        }
+        
         if (newProd && newProd.id) {
             savedProductId = parseInt(newProd.id);
             // ✅ إدراج صورة المنتج الجديد في product_images - فقط إذا لم تُدرج مسبقاً
