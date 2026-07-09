@@ -29,6 +29,19 @@
 		.edit-icon { color: var(--edit); }
 		.delete-icon { color: var(--danger); }
 		.share-icon { color: #666; }
+	.plans-icon { color: #f39c12; }
+	.plans-icon:hover { color: #e67e22; }
+	.sub-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px; margin-bottom: 6px; direction: rtl; }
+	.sub-badge.active { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+	.sub-badge.expired { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+	.sub-badge.free { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+	.sub-badge.paid { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
+		.sub-label {
+			font-size: 11px;
+			color: #666;
+			font-weight: 600;
+			margin-left: 6px;
+		}
 		.store-info { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; margin-top: 10px; }
 		.store-logo-img { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 1px solid #eee; background: #f9f9f9; }
 		.store-details strong { color: #333; font-size: 1.2em; display: block; margin-bottom: 5px; }
@@ -149,7 +162,42 @@
 			.current-time-clock { font-size: 1.3em; }
 			.timezone-half select { font-size: 11px; }
 		}
-	</style>
+	
+		.subscription-section {
+			display: flex;
+			flex-direction: row;
+			align-items: center;
+			justify-content: center;
+			gap: 6px;
+			padding: 10px 12px;
+			margin: 10px 0;
+			background: #f8fafc;
+			border: 1.5px dashed #c8dad8;
+			border-radius: 14px;
+			flex-wrap: wrap;
+		}
+		.btn-subscribe {
+			width: 100%;
+			padding: 10px;
+			background: linear-gradient(135deg, #14b8a6, #0d9488);
+			color: white;
+			border: none;
+			border-radius: 10px;
+			cursor: pointer;
+			font-size: 12px;
+			font-weight: bold;
+			transition: all 0.2s;
+		}
+		.btn-subscribe:hover {
+			background: linear-gradient(135deg, #0d9488, #0f766e);
+			transform: translateY(-1px);
+			box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3);
+		}
+</style>
+<base target="_blank">
+<base target="_blank">
+<base target="_blank">
+<base target="_blank">
 <base target="_blank">
 </head>
 <body>
@@ -748,7 +796,7 @@
 	async function loadStores() {
 		try {
 			const { data: profile } = await _supabase.from('profiles').select('id').eq('phone_number', userPhone).single();
-			const { data: stores }  = await _supabase.from('store_settings').select('*').eq('user_id', profile.id).order('id', { ascending: true });
+			const { data: stores }  = await _supabase.from('store_settings').select('*, subscription_plan, subscription_status, expiry_date').eq('user_id', profile.id).order('id', { ascending: true });
 
 			const isBackFromManage = sessionStorage.getItem('back_from_manage');
 			if (stores && stores.length === 1 && isBackFromManage !== 'true') {
@@ -771,6 +819,7 @@
 					return `
 					<div class="store-item">
 						<div class="card-actions-right">
+							
 							<button class="icon-btn share-icon" onclick="shareStore('${s.store_name}', '${fullUrl}')" title="مشاركة">
 								<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
 							</button>
@@ -806,6 +855,10 @@
 									</div>` : ''}
 								</div>
 							</div>
+						</div>
+						<div class="subscription-section">
+							${getSubscriptionBadge(s)}
+							<button class="btn-subscribe" onclick="window.location.href='subscription_plans.html?store_id=${s.id}'">⚡ الخطط والاشتراكات</button>
 						</div>
 						<div class="actions-group">
 							<button class="btn-action btn-product" onclick="window.location.href='manage_products.html?store_id=${s.id}'">المنتجات</button>
@@ -936,7 +989,58 @@
 		} catch(e) {}
 	}
 
-	async function handleSaveStore() {
+	// ============================================
+// ✅ NEW: ضغط صورة الشعار قبل الرفع
+// - الصيغة: WebP
+// - الأبعاد: 400×400px كحد أقصى
+// - الجودة: 75%
+// - الحجم المستهدف: 30-80 KB
+// - الحد الأقصى: 150 KB
+// ============================================
+async function compressProductImage(file, maxWidth = 400, quality = 0.75) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let w = img.width, h = img.height;
+
+                // تقليل الأبعاد إذا كانت أكبر من 400px
+                if (w > maxWidth) {
+                    h = Math.round((h * maxWidth) / w);
+                    w = maxWidth;
+                }
+
+                canvas.width = w;
+                canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, w, h);
+
+                // تحويل إلى WebP بجودة 75%
+                canvas.toBlob((blob) => {
+                    if (blob) {
+                        // إنشاء File جديد باسم ثابت .webp
+                        const compressedFile = new File([blob], 'logo.webp', {
+                            type: 'image/webp',
+                            lastModified: Date.now()
+                        });
+                        console.log('📉 تم ضغط الشعار:', file.size, '→', compressedFile.size, 'bytes');
+                        resolve(compressedFile);
+                    } else {
+                        reject(new Error('فشل إنشاء Blob من Canvas'));
+                    }
+                }, 'image/webp', quality);
+            };
+            img.onerror = () => reject(new Error('فشل تحميل الصورة'));
+            img.src = e.target.result;
+        };
+        reader.onerror = () => reject(new Error('فشل قراءة الملف'));
+        reader.readAsDataURL(file);
+    });
+}
+
+async function handleSaveStore() {
 		const name    = document.getElementById('store_name').value.trim();
 		const slug    = document.getElementById('store_slug').value.trim();
 		const storeId = document.getElementById('edit_store_id').value;
@@ -972,8 +1076,20 @@
 			let logoUrl = document.getElementById('logo_url').value;
 			if (pendingLogoFile) {
 				if (logoUrl) await deleteStoreLogo(logoUrl);
-				const fName = `${Date.now()}.${pendingLogoFile.name.split('.').pop()}`;
-				const { error } = await _supabase.storage.from('logos').upload(fName, pendingLogoFile);
+				
+				// ✅ NEW: ضغط الشعار قبل الرفع (WebP, 400px, 75%)
+				let uploadFile = pendingLogoFile;
+				if (pendingLogoFile.size > 80 * 1024 || !pendingLogoFile.type.includes('webp')) {
+					try {
+						uploadFile = await compressProductImage(pendingLogoFile, 400, 0.75);
+					} catch (err) {
+						console.warn('⚠️ فشل ضغط الشعار، رفع الأصلية:', err);
+						uploadFile = pendingLogoFile;
+					}
+				}
+				
+				const fName = `${Date.now()}.webp`;
+				const { error } = await _supabase.storage.from('logos').upload(fName, uploadFile);
 				if (error) { alert('فشل رفع الشعار: ' + error.message); return; }
 				logoUrl = _supabase.storage.from('logos').getPublicUrl(fName).data.publicUrl;
 				pendingLogoFile = null;
@@ -1029,6 +1145,24 @@
 		document.getElementById('qr-modal').style.display = 'flex';
 	}
 	function closeQR() { document.getElementById('qr-modal').style.display = 'none'; }
+
+	function getSubscriptionBadge(s) {
+		const plan = s.subscription_plan || 'free';
+		const status = s.subscription_status || 'active';
+		const expiry = s.expiry_date ? new Date(s.expiry_date) : null;
+		const now = new Date();
+		const isExpired = expiry && expiry < now;
+
+		let badgeHtml = '';
+		if (isExpired) {
+			badgeHtml = `<div class="sub-badge expired">🔴 منتهي</div>`;
+		} else if (plan === 'free') {
+			badgeHtml = `<div class="sub-badge free">🟡 مجاني</div>`;
+		} else {
+			badgeHtml = `<div class="sub-badge active">🟢 ${plan}</div>`;
+		}
+		return `<span class="sub-label">نوع الاشتراك:</span>${badgeHtml}`;
+	}
 
 	function goToOrders(storeId) {
 		if (!userPhone) { alert('يجب تسجيل الدخول أولاً للوصول إلى الطلبات'); window.location.href = 'index.html'; return; }

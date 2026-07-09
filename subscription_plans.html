@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>خطط الاشتراك | نظام المنيو</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--primary:#24b47e;--primary-dark:#1a9c6a;--dark:#2f3542;--bg:#f4f7f6;--muted:#95a5a6}
+*{box-sizing:border-box}
+body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl;margin:0;padding:0}
+.container{max-width:900px;margin:auto;padding:15px}
+
+/* ===== الهيدر ===== */
+.top-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:25px;background:white;padding:12px 18px;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,0.05)}
+.header-left{display:flex;align-items:center;gap:10px}
+.header-right{display:flex;align-items:center;gap:12px}
+.back-btn,.store-btn{background:none;border:1px solid #eee;color:var(--dark);padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:bold}
+.back-btn:hover,.store-btn:hover{background:var(--bg)}
+.store-name-header{font-weight:bold;color:var(--dark);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px}
+.store-logo-header{width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid var(--primary);flex-shrink:0;background:#eee}
+
+/* ===== العنوان ===== */
+.hero{text-align:center;margin-bottom:25px}
+.hero h1{color:var(--dark);font-size:1.8em;margin:0 0 8px 0}
+.hero p{color:#888;font-size:14px;margin:0}
+
+/* ===== مبدل الفترة ===== */
+.period-toggle{display:flex;justify-content:center;margin-bottom:35px}
+.toggle-wrap{background:white;border-radius:12px;padding:6px;display:flex;gap:6px;box-shadow:0 2px 10px rgba(0,0,0,0.05)}
+.toggle-btn{border:none;background:transparent;padding:10px 22px;border-radius:8px;font-weight:bold;font-size:14px;cursor:pointer;color:var(--dark);position:relative}
+.toggle-btn.active{background:var(--dark);color:white}
+.save-badge{position:absolute;top:-10px;left:-8px;background:var(--primary);color:white;font-size:10px;padding:2px 6px;border-radius:6px;font-weight:bold}
+
+/* ===== بطاقات الخطط ===== */
+.plans-grid{display:flex;gap:20px;flex-wrap:wrap;justify-content:center;align-items:stretch}
+.plan-card{background:white;border-radius:18px;padding:28px 24px;width:340px;box-shadow:0 4px 20px rgba(0,0,0,0.06);position:relative;display:flex;flex-direction:column}
+.plan-card.featured{border:2px solid var(--primary)}
+.badge-popular{position:absolute;top:-13px;right:50%;transform:translateX(50%);background:var(--primary);color:white;font-size:12px;padding:4px 14px;border-radius:20px;font-weight:bold;white-space:nowrap}
+.plan-title{font-size:1.3em;font-weight:bold;color:var(--dark);margin:10px 0 4px 0;text-align:center}
+.plan-sub{color:var(--primary);font-size:13px;text-align:center;margin-bottom:18px}
+.plan-sub.muted{color:#aaa}
+.price-row{text-align:center;margin-bottom:6px}
+.old-price{color:#bbb;text-decoration:line-through;font-size:14px}
+.price{font-size:2.2em;font-weight:bold;color:var(--dark)}
+.price-unit{font-size:14px;color:#999;font-weight:normal}
+.price-period{text-align:center;color:#999;font-size:12px;margin-bottom:10px}
+.discount-badge{display:block;width:fit-content;margin:0 auto 20px auto;background:#e8f8f2;color:var(--primary);font-size:12px;font-weight:bold;padding:4px 12px;border-radius:20px}
+.features{list-style:none;padding:0;margin:0 0 24px 0;flex:1}
+.features li{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f4f4f4;font-size:14px;color:var(--dark)}
+.features li:last-child{border-bottom:none}
+.check{color:var(--primary);font-weight:bold}
+.cross{color:#e74c3c;font-weight:bold}
+.cta-btn{border:none;padding:14px;border-radius:10px;font-weight:bold;font-size:15px;cursor:pointer;width:100%}
+.cta-btn.primary{background:var(--primary);color:white}
+.cta-btn.primary:hover{background:var(--primary-dark)}
+.cta-btn.secondary{background:white;color:var(--dark);border:1px solid #ddd}
+.cta-btn.secondary:hover{background:var(--bg)}
+
+@media(min-width:601px){
+    .top-header,.hero,.period-toggle{max-width:700px;margin-left:auto;margin-right:auto}
+    .top-header{margin-bottom:25px}
+}
+
+@media(max-width:600px){
+    .plans-grid{flex-wrap:nowrap;gap:10px;align-items:stretch}
+    .plan-card{width:50%;padding:16px 10px;border-radius:14px}
+    .store-name-header{max-width:100px}
+    .badge-popular{font-size:10px;padding:3px 8px;top:-11px}
+    .plan-title{font-size:1.05em;margin:8px 0 2px 0}
+    .plan-sub{font-size:11px;margin-bottom:12px}
+    .old-price{font-size:11px}
+    .price{font-size:1.5em}
+    .price-period{font-size:11px;margin-bottom:6px}
+    .discount-badge{font-size:10px;padding:3px 8px;margin-bottom:14px}
+    .features{margin-bottom:16px}
+    .features li{padding:7px 0;font-size:11.5px;flex-direction:column;align-items:flex-start;gap:2px;border-bottom:1px dashed #f0f0f0}
+    .features li span:last-child{align-self:flex-end}
+    .cta-btn{padding:11px;font-size:13px}
+}
+
+@media(max-width:380px){
+    .plan-card{padding:12px 8px}
+    .price{font-size:1.3em}
+    .features li{font-size:10.5px}
+}
+
+/* ===== حالة الاشتراك الحالي ===== */
+.sub-status-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 14px 18px;
+    border-radius: 14px;
+    margin-bottom: 20px;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+}
+.sub-status-banner.active {
+    background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+    border: 1.5px solid #86efac;
+}
+.sub-status-banner.expired {
+    background: linear-gradient(135deg, #fef2f2, #fee2e2);
+    border: 1.5px solid #fca5a5;
+}
+.sub-status-banner.free {
+    background: linear-gradient(135deg, #fffbeb, #fef3c7);
+    border: 1.5px solid #fcd34d;
+}
+.sub-status-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.sub-status-text {
+    font-size: 13px;
+    font-weight: 600;
+}
+.sub-status-banner.active .sub-status-text { color: #166534; }
+.sub-status-banner.expired .sub-status-text { color: #991b1b; }
+.sub-status-banner.free .sub-status-text { color: #92400e; }
+.sub-status-countdown {
+    font-size: 12px;
+    font-weight: 700;
+    background: white;
+    padding: 3px 10px;
+    border-radius: 20px;
+}
+.sub-status-banner.active .sub-status-countdown { color: #166534; border: 1px solid #86efac; }
+.sub-status-banner.expired .sub-status-countdown { color: #991b1b; border: 1px solid #fca5a5; }
+.sub-status-banner.free .sub-status-countdown { color: #92400e; border: 1px solid #fcd34d; }
+
+/* ===== بادج الاشتراك (مشابه لصفحة المتاجر) ===== */
+.sub-badge { 
+    display: inline-flex; 
+    align-items: center; 
+    gap: 4px; 
+    font-size: 11px; 
+    font-weight: 700; 
+    padding: 4px 10px; 
+    border-radius: 20px; 
+    direction: rtl; 
+    background: white;
+}
+.sub-badge.active { color: #166534; border: 1px solid #86efac; }
+.sub-badge.expired { color: #991b1b; border: 1px solid #fca5a5; }
+.sub-badge.free { color: #92400e; border: 1px solid #fcd34d; }
+</style>
+<base target="_blank">
+</head>
+<body>
+
+<div class="container">
+    <!-- الهيدر -->
+    <div class="top-header">
+        <div class="header-right">
+            <img id="store-logo-header" class="store-logo-header" src="" alt="شعار المتجر" style="display:none">
+            <span class="store-name-header" id="store-name-header">جاري التحميل...</span>
+        </div>
+        <div class="header-left">
+            <button class="back-btn" onclick="history.back()">→ رجوع</button>
+        </div>
+    </div>
+    <!-- حالة الاشتراك الحالي -->
+    <div id="sub-status-banner" class="sub-status-banner" style="display:none;">
+        <div class="sub-status-left">
+            <span id="sub-status-badge"></span>
+            <span class="sub-status-text" id="sub-status-text"></span>
+        </div>
+        <span class="sub-status-countdown" id="sub-status-countdown"></span>
+    </div>
+
+
+    <!-- العنوان -->
+    <div class="hero">
+        <h1>اختر خطتك</h1>
+        <p>خطة مرنة تناسب احتياجات متجرك — ابدأ مجاناً وانتقل للبرو متى شئت</p>
+    </div>
+
+    <!-- مبدل الفترة -->
+    <div class="period-toggle">
+        <div class="toggle-wrap">
+            <button class="toggle-btn" id="btn-3months" onclick="setPeriod('3months')">
+                كل 3 أشهر
+                <span class="save-badge">وفر</span>
+            </button>
+            <button class="toggle-btn active" id="btn-monthly" onclick="setPeriod('monthly')">شهري</button>
+        </div>
+    </div>
+
+    <!-- البطاقات -->
+    <div class="plans-grid">
+        <!-- خطة برو -->
+        <div class="plan-card featured">
+            <span class="badge-popular">الأكثر شيوعاً</span>
+            <div class="plan-title">برو</div>
+            <div class="plan-sub">للنمو والتوسع بلا حدود</div>
+            <div class="price-row">
+                <span class="old-price" id="pro-old-price">59 ر.س/شهر</span>
+            </div>
+            <div class="price-row">
+                <span class="price" id="pro-price">39 ر.س</span>
+            </div>
+            <div class="price-period" id="pro-period">/الشهر</div>
+            <span class="discount-badge" id="pro-discount">وفر 34%</span>
+            <ul class="features">
+                <li><span>منتج كحد أقصى</span><span class="check">1,000 ✓</span></li>
+                <li><span>طلب/شهر</span><span class="check">10,000 ✓</span></li>
+                <li><span>ر.س قيمة طلبات/شهر</span><span class="check">100,000 ✓</span></li>
+                <li><span>دعم فني مميز</span><span class="check">✓</span></li>
+                <li><span>تقارير متقدمة</span><span class="check">✓</span></li>
+                <li><span>تصدير البيانات</span><span class="check">✓</span></li>
+            </ul>
+            <button class="cta-btn primary" onclick="subscribeNow('pro')">اشترك الآن</button>
+        </div>
+
+        <!-- خطة مجاني -->
+        <div class="plan-card">
+            <div class="plan-title">مجاني</div>
+            <div class="plan-sub muted">للبدء السريع وتجربة المنصة</div>
+            <div class="price-row" style="margin-top:34px">
+                <span class="price">0 ر.س</span>
+            </div>
+            <div class="price-period" style="margin-bottom:20px">مجاني للأبد</div>
+            <ul class="features">
+                <li><span>منتج كحد أقصى</span><span class="check">100 ✓</span></li>
+                <li><span>طلب/شهر</span><span class="check">30 ✓</span></li>
+                <li><span>ر.س قيمة طلبات/شهر</span><span class="check">1,000 ✓</span></li>
+                <li><span>دعم فني مميز</span><span class="cross">✕</span></li>
+                <li><span>تقارير متقدمة</span><span class="cross">✕</span></li>
+                <li><span>تصدير البيانات</span><span class="cross">✕</span></li>
+            </ul>
+            <button class="cta-btn secondary" onclick="startFree()">البدء المجاني</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ===== نفس آلية الاتصال بـ Supabase المستخدمة في صفحات المتجر الأخرى =====
+const SB_URL='https://wnvyqvwuzmxzzhilgidh.supabase.co',
+      SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indudnlxdnd1em14enpoaWxnaWRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MTg1MDEsImV4cCI6MjA5MTQ5NDUwMX0.AyD4CYqA0cz9mC-bcOt16uUpueL_cAWT26Q92l574r0',
+      _supabase=supabase.createClient(SB_URL,SB_KEY);
+
+// رقم المتجر يُؤخذ من رابط الصفحة الأساس، تماماً كما في صفحة التصنيفات
+const urlParams=new URLSearchParams(window.location.search),
+      currentStoreId=urlParams.get('store_id');
+
+let storeSlug='';
+
+
+function renderSubscriptionStatus(data){
+    const plan = data.subscription_plan || 'free';
+    const status = data.subscription_status || 'active';
+    const expiry = data.expiry_date ? new Date(data.expiry_date) : null;
+    const now = new Date();
+    const isExpired = expiry && expiry < now;
+
+    const banner = document.getElementById('sub-status-banner');
+    const badge = document.getElementById('sub-status-badge');
+    const text = document.getElementById('sub-status-text');
+    const countdown = document.getElementById('sub-status-countdown');
+
+    banner.style.display = 'flex';
+    banner.className = 'sub-status-banner';
+
+    if (isExpired) {
+        banner.classList.add('expired');
+        badge.innerHTML = '<span class="sub-badge expired">🔴 منتهي</span>';
+        text.innerText = 'انتهى في: ' + expiry.toLocaleDateString('ar-SA', {year:'numeric', month:'long', day:'numeric'});
+        countdown.innerText = '⚠️ جدد الآن';
+    } else if (plan === 'free') {
+        banner.classList.add('free');
+        badge.innerHTML = '<span class="sub-badge free">🟡 مجاني</span>';
+        text.innerText = 'الخطة المجانية — لا تاريخ انتهاء';
+        countdown.innerText = '⭐ ارتقِ للبرو';
+    } else {
+        banner.classList.add('active');
+        badge.innerHTML = `<span class="sub-badge active">🟢 ${plan}</span>`;
+        text.innerText = 'ينتهي في: ' + expiry.toLocaleDateString('ar-SA', {year:'numeric', month:'long', day:'numeric'});
+
+        // Calculate days remaining
+        const diffTime = expiry - now;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        if (diffDays <= 7) {
+            countdown.innerText = `⏰ ${diffDays} يوم متبقي — جدد الآن`;
+            countdown.style.color = '#e74c3c';
+        } else {
+            countdown.innerText = `⏰ ${diffDays} يوم متبقي`;
+        }
+    }
+}
+
+async function loadStoreData(){
+    const nameEl=document.getElementById('store-name-header');
+    const logoEl=document.getElementById('store-logo-header');
+
+    if(!currentStoreId){
+        nameEl.innerText='متجري';
+        return;
+    }
+
+    try{
+        const{data,error}=await _supabase
+            .from('store_settings')
+            .select('store_name,logo_url,store_slug,subscription_plan,subscription_status,expiry_date')
+            .eq('id',currentStoreId)
+            .single();
+
+        if(error) throw error;
+
+        if(data){
+            storeSlug=data.store_slug||'';
+            nameEl.innerText=data.store_name||'متجري';
+            if(data.logo_url){
+                logoEl.src=data.logo_url;
+                logoEl.style.display='block';
+            }
+            renderSubscriptionStatus(data);
+        }
+    }catch(err){
+        console.error(err);
+        nameEl.innerText='متجري';
+    }
+}
+
+function goToStore(){
+    if(storeSlug){
+        window.open(`view_menu.html?s=${storeSlug}`,'_blank');
+    }else if(currentStoreId){
+        window.location.href=`categories.html?store_id=${currentStoreId}`;
+    }else{
+        alert('لا يمكن العثور على المتجر.');
+    }
+}
+
+function setPeriod(period){
+    document.getElementById('btn-monthly').classList.toggle('active',period==='monthly');
+    document.getElementById('btn-3months').classList.toggle('active',period==='3months');
+
+    if(period==='3months'){
+        document.getElementById('pro-old-price').innerText='177 ر.س/3 أشهر';
+        document.getElementById('pro-price').innerText='99 ر.س';
+        document.getElementById('pro-period').innerText='/3 أشهر';
+        document.getElementById('pro-discount').innerText='وفر 44%';
+    }else{
+        document.getElementById('pro-old-price').innerText='59 ر.س/شهر';
+        document.getElementById('pro-price').innerText='39 ر.س';
+        document.getElementById('pro-period').innerText='/الشهر';
+        document.getElementById('pro-discount').innerText='وفر 34%';
+    }
+}
+
+function subscribeNow(plan){
+    if(!currentStoreId){alert('لا يمكن تحديد المتجر.');return}
+    // هنا يمكن ربط بوابة الدفع أو تحديث جدول الاشتراكات في Supabase
+    window.location.href=`checkout.html?store_id=${currentStoreId}&plan=${plan}`;
+}
+
+function startFree(){
+    if(!currentStoreId){alert('لا يمكن تحديد المتجر.');return}
+    window.location.href=`categories.html?store_id=${currentStoreId}`;
+}
+
+loadStoreData();
+</script>
+
+</body>
+</html>
