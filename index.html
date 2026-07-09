@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>تجربة بوابة الدفع Paddle</title>
-    <script src="paddle.js"></script>
+    <!-- استدعاء السكربت الرسمي مباشرة عبر الـ CDN المعرّف -->
+    <script src="https://cdn.paddle.com/paddle/v3/paddle.js"></script>
 </head>
 <body>
 
@@ -16,42 +17,28 @@
     </div>
 
     <script>
-        // دالة الفحص لضمان استقرار السكربت في المتصفح قبل التهيئة
-        function initPaddleSecure() {
-            if (typeof Paddle !== 'undefined') {
-                
-                // ضبط بيئة العمل التجريبية والتوكن الخاص بك
-                Paddle.Environment.set("sandbox");
-                Paddle.Setup({ 
-                    token: 'test_2cc3d344a1d0e4e6d616fd1cafd' 
-                });
+        // ضبط بيئة الاختبار والتوكن التابع لحسابك
+        Paddle.Environment.set("sandbox");
+        Paddle.Setup({ 
+            token: 'test_2cc3d344a1d0e4e6d616fd1cafd' 
+        });
 
-                // تفعيل حدث الضغط على زر الشراء
-                document.getElementById('checkout-btn').addEventListener('click', function() {
-                    Paddle.Checkout.open({
-                        items: [
-                            {
-                                priceId: 'pri_01kx2wv065vft9k5yn3r0xh3a4', 
-                                quantity: 1
-                            }
-                        ],
-                        settings: {
-                            displayMode: 'overlay',
-                            theme: 'light',
-                            locale: 'en'
-                        }
-                    });
-                });
-
-                console.log("تم تفعيل Paddle بنجاح والزر جاهز للاستخدام!");
-            } else {
-                // المحاولة مجدداً بعد 100 ملي ثانية في حال تأخر الاستجابة
-                setTimeout(initPaddleSecure, 100);
-            }
-        }
-
-        // بدء الفحص الذاتي
-        initPaddleSecure();
+        // ربط حدث الضغط على الزر لاستدعاء نافذة الدفع
+        document.getElementById('checkout-btn').addEventListener('click', function() {
+            Paddle.Checkout.open({
+                items: [
+                    {
+                        priceId: 'pri_01kx2wv065vft9k5yn3r0xh3a4', 
+                        quantity: 1
+                    }
+                ],
+                settings: {
+                    displayMode: 'overlay',
+                    theme: 'light',
+                    locale: 'en'
+                }
+            });
+        });
     </script>
 
 </body>
