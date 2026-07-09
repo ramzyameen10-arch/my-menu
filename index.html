@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>تجربة بوابة الدفع Paddle</title>
-    <script src="https://cdn.paddle.com/paddle/v3/paddle.js"></script>
+    <script src="paddle.js"></script>
 </head>
 <body>
+
     <div style="text-align: center; margin-top: 100px;">
         <h2>الاشتراك في الخطة الاحترافية (Pro Monthly)</h2>
         <p>السعر: 10 دولار شهرياً</p>
@@ -13,28 +14,39 @@
             اشترك الآن
         </button>
     </div>
-    <script>
-        // في v3: التهيئة تتم بدالة واحدة فقط Paddle.Initialize
-        Paddle.Initialize({
-            environment: 'sandbox',   // هذا السطر يحدد بيئة sandbox، لا حاجة لـ Environment.set
-            token: 'test_2cc3d344a1d0e4e6d616fd1cafd'
-        });
 
-        document.getElementById('checkout-btn').addEventListener('click', function () {
-            Paddle.Checkout.open({
-                items: [
-                    {
-                        priceId: 'pri_01kx2wv065vft9k5yn3r0xh3a4',
-                        quantity: 1
-                    }
-                ],
-                settings: {
-                    displayMode: 'overlay',
-                    theme: 'light',
-                    locale: 'en'
-                }
-            });
-        });
+    <script>
+        // دالة فحص ذكية للتأكد من تخطي أي حظر شبكة متبقي
+        function initializeCheckout() {
+            if (typeof Paddle !== 'undefined') {
+                Paddle.Environment.set("sandbox");
+                Paddle.Setup({ 
+                    token: 'test_2cc3d344a1d0e4e6d616fd1cafd' 
+                });
+
+                document.getElementById('checkout-btn').addEventListener('click', function() {
+                    Paddle.Checkout.open({
+                        items: [
+                            {
+                                priceId: 'pri_01kx2wv065vft9k5yn3r0xh3a4', 
+                                quantity: 1
+                            }
+                        ],
+                        settings: {
+                            displayMode: 'overlay',
+                            theme: 'light',
+                            locale: 'en'
+                        }
+                    });
+                });
+                console.log("تم تحميل بوابة الدفع بنجاح محلياً!");
+            } else {
+                setTimeout(initializeCheckout, 200);
+            }
+        }
+        
+        initializeCheckout();
     </script>
+
 </body>
 </html>
