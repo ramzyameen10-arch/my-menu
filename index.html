@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>تجربة بوابة الدفع Paddle</title>
+    <script src="https://cdn.paddle.com/paddle/v3/paddle.js"></script>
 </head>
 <body>
 
@@ -15,45 +16,32 @@
     </div>
 
     <script>
-        // 1. سكربت جلب وتحميل مكتبة Paddle v3 بشكل آمن ومستقل عن المتصفح
-        !function(w,d,s,u,p){w[p]=w[p]||function(){(w[p].q=w[p].q||[]).push(arguments)},w[p].l=+new Date;var e=d.createElement(s);e.async=1,e.src=u;var n=d.getElementsByTagName(s)[0];n.parentNode.insertBefore(e,n)}(window,document,"script","https://cdn.paddle.com/paddle/v3/paddle.js","Paddle");
+        // تهيئة بيئة العمل والتوافق المباشر
+        Paddle.Environment.set("sandbox");
+        
+        Paddle.Setup({ 
+            token: 'test_2cc3d344a1d0e4e6d616fd1cafd' // التوكن الخاص بك
+        });
 
-        // 2. دالة الفحص الذاتي لانتظار تحميل المكتبة قبل التهيئة
-        function checkAndInitPaddle() {
-            if (typeof Paddle !== 'undefined' && typeof Paddle.Initialize === 'function') {
-                
-                // تهيئة الحساب التجريبي بشكل رسمي وصحيح
-                Paddle.Initialize({ 
-                    environment: 'sandbox', 
-                    token: 'test_2cc3d344a1d0e4e6d616fd1cafd' 
-                });
-
-                // ربط حدث الضغط على الزر بفتح نافذة الـ Checkout
-                document.getElementById('checkout-btn').addEventListener('click', function() {
-                    Paddle.Checkout.open({
-                        items: [
-                            {
-                                priceId: 'pri_01kx2wv065vft9k5yn3r0xh3a4', 
-                                quantity: 1
-                            }
-                        ],
-                        settings: {
-                            displayMode: 'overlay',
-                            theme: 'light',
-                            locale: 'en'
-                        }
-                    });
-                });
-                
-                console.log("تمت تهيئة Paddle بنجاح والزر ينبض بالحياة الآن!");
-            } else {
-                // إعادة المحاولة بعد 100 ملي ثانية إذا لم تنتهِ المكتبة من التحميل
-                setTimeout(checkAndInitPaddle, 100);
-            }
-        }
-
-        // بدء تشغيل الفحص بمجرد تحميل الصفحة الأساسية
-        window.addEventListener('load', checkAndInitPaddle);
+        // تشغيل حدث الضغط على الزر مباشرة
+        document.getElementById('checkout-btn').addEventListener('click', function() {
+            // تنبيه بسيط للتأكد من استجابة الزر في المتصفح
+            console.log("تم الضغط على الزر بنجاح، جاري استدعاء نافذة Paddle...");
+            
+            Paddle.Checkout.open({
+                items: [
+                    {
+                        priceId: 'pri_01kx2wv065vft9k5yn3r0xh3a4', // معرّف السعر الخاص بك
+                        quantity: 1
+                    }
+                ],
+                settings: {
+                    displayMode: 'overlay',
+                    theme: 'light',
+                    locale: 'en'
+                }
+            });
+        });
     </script>
 
 </body>
