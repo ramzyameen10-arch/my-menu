@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>تجربة بوابة الدفع Paddle</title>
+    <script src="paddle.js"></script>
 </head>
 <body>
 
@@ -15,20 +16,17 @@
     </div>
 
     <script>
-        // 1. استدعاء السكربت الموصى به برمجياً من Paddle لضمان التنزيل الآمن
-        !function(w,d,s,u,p){w[p]=w[p]||function(){(w[p].q=w[p].q||[]).push(arguments)},w[p].l=+new Date;var e=d.createElement(s);e.async=1,e.src=u;var n=d.getElementsByTagName(s)[0];n.parentNode.insertBefore(e,n)}(window,document,"script","https://cdn.paddle.com/paddle/v3/paddle.js","Paddle");
-
-        // 2. دالة الفحص لضمان تحميل المكتبة قبل بدء أي إعدادات لمنع خطأ undefined
-        function startPaddleIntegration() {
-            if (typeof Paddle !== 'undefined' && typeof Paddle.Initialize === 'function') {
+        // دالة الفحص لضمان استقرار السكربت في المتصفح قبل التهيئة
+        function initPaddleSecure() {
+            if (typeof Paddle !== 'undefined') {
                 
-                // تهيئة الحساب التجريبي بشكل متوافق وآمن
-                Paddle.Initialize({ 
-                    environment: 'sandbox', 
+                // ضبط بيئة العمل التجريبية والتوكن الخاص بك
+                Paddle.Environment.set("sandbox");
+                Paddle.Setup({ 
                     token: 'test_2cc3d344a1d0e4e6d616fd1cafd' 
                 });
 
-                // ربط الزر بفتح نافذة الخروج الآمن
+                // تفعيل حدث الضغط على زر الشراء
                 document.getElementById('checkout-btn').addEventListener('click', function() {
                     Paddle.Checkout.open({
                         items: [
@@ -45,15 +43,15 @@
                     });
                 });
 
-                console.log("تمت التهيئة بنجاح، والزر الآن جاهز للعمل!");
+                console.log("تم تفعيل Paddle بنجاح والزر جاهز للاستخدام!");
             } else {
-                // إذا لم تجهز المكتبة بعد، انتظر 100 مللي ثانية وحاول مجدداً
-                setTimeout(startPaddleIntegration, 100);
+                // المحاولة مجدداً بعد 100 ملي ثانية في حال تأخر الاستجابة
+                setTimeout(initPaddleSecure, 100);
             }
         }
 
-        // تشغيل دالة الفحص بمجرد فتح الصفحة
-        startPaddleIntegration();
+        // بدء الفحص الذاتي
+        initPaddleSecure();
     </script>
 
 </body>
