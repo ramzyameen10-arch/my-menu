@@ -16,9 +16,9 @@
     </div>
 
     <script>
-        // تفعيل الحساب التجريبي بمجرد تحميل السكربت
-        Paddle.Environment.set("sandbox");
-        Paddle.Setup({ 
+        // تهيئة المكتبة بالطريقة الرسمية الصحيحة لمنع حظر CORB
+        Paddle.Initialize({ 
+            environment: 'sandbox', 
             token: 'test_2cc3d344a1d0e4e6d616fd1cafd' 
         });
 
