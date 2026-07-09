@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <title>تجربة بوابة الدفع Paddle</title>
-    <!-- 1. استدعاء مكتبة Paddle.js الرسمية -->
     <script src="https://cdn.paddle.com/paddle/v3/paddle.js"></script>
 </head>
 <body>
@@ -11,34 +10,43 @@
     <div style="text-align: center; margin-top: 100px;">
         <h2>الاشتراك في الخطة الاحترافية (Pro Monthly)</h2>
         <p>السعر: 10 دولار شهرياً (سيظهر بالريال تلقائياً للعميل)</p>
-        <!-- زر الشراء -->
         <button id="checkout-btn" style="padding: 12px 24px; font-size: 16px; cursor: pointer; background-color: #2b6cb0; color: white; border: none; border-radius: 5px;">
             اشترك الآن
         </button>
     </div>
 
     <script>
-        // 2. تهيئة مكتبة Paddle وإعدادها لتعمل في بيئة الـ Sandbox
-        Paddle.Initialize({ 
-            environment: 'sandbox', // تفعيل بيئة الاختبار
-            token: 'test_2cc3d344a1d0e4e6d616fd1cafd' // التوكن الخاص بك
-        });
+        // الانتظار حتى يتم تحميل نافذة المتصفح وجميع السكربتات بالكامل
+        window.addEventListener('load', function() {
+            if (typeof Paddle !== 'undefined') {
+                
+                // تهيئة الحساب التجريبي
+                Paddle.Initialize({ 
+                    environment: 'sandbox', 
+                    token: 'test_2cc3d344a1d0e4e6d616fd1cafd' 
+                });
 
-        // 3. ربط حدث الضغط على الزر بفتح نافذة الدفع
-        document.getElementById('checkout-btn').addEventListener('click', function() {
-            Paddle.Checkout.open({
-                items: [
-                    {
-                        priceId: 'pri_01kx2wv065vft9k5yn3r0xh3a4', // معرف السعر الخاص بك
-                        quantity: 1
-                    }
-                ],
-                settings: {
-                    displayMode: 'overlay', // لفتح الدفع كنافذة منبثقة فوق موقعك
-                    theme: 'light',
-                    locale: 'en' // لغة نافذة الدفع
-                }
-            });
+                // ربط حدث الضغط على الزر بفتح نافذة الدفع
+                document.getElementById('checkout-btn').addEventListener('click', function() {
+                    Paddle.Checkout.open({
+                        items: [
+                            {
+                                priceId: 'pri_01kx2wv065vft9k5yn3r0xh3a4', 
+                                quantity: 1
+                            }
+                        ],
+                        settings: {
+                            displayMode: 'overlay', 
+                            theme: 'light',
+                            locale: 'en' 
+                        }
+                    });
+                });
+                
+                console.log("تمت تهيئة Paddle بنجاح وجاهزة للدفع!");
+            } else {
+                console.error("خطأ: لم يتم تحميل مكتبة Paddle.js، تأكد من اتصال الإنترنت.");
+            }
         });
     </script>
 
