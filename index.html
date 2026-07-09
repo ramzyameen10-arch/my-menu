@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <title>تجربة بوابة الدفع Paddle</title>
-    <script src="https://cdn.paddle.com/paddle/v3/paddle.js"></script>
 </head>
 <body>
 
@@ -16,22 +15,21 @@
     </div>
 
     <script>
-        // تهيئة بيئة العمل والتوافق المباشر
+        // 1. السكربت الرسمي المعتمد لتخطي حظر المتصفحات (CORB) وجلب المكتبة ديناميكياً
+        !function(w,d,s,u,p){w[p]=w[p]||function(){(w[p].q=w[p].q||[]).push(arguments)},w[p].l=+new Date;var e=d.createElement(s);e.async=1,e.src=u;var n=d.getElementsByTagName(s)[0];n.parentNode.insertBefore(e,n)}(window,document,"script","https://cdn.paddle.com/paddle/v3/paddle.js","Paddle");
+
+        // 2. تهيئة الإعدادات فور تحميل السكربت بنجاح
         Paddle.Environment.set("sandbox");
-        
         Paddle.Setup({ 
-            token: 'test_2cc3d344a1d0e4e6d616fd1cafd' // التوكن الخاص بك
+            token: 'test_2cc3d344a1d0e4e6d616fd1cafd' 
         });
 
-        // تشغيل حدث الضغط على الزر مباشرة
+        // 3. ربط الزر بفتح نافذة الدفع بشكل مباشر
         document.getElementById('checkout-btn').addEventListener('click', function() {
-            // تنبيه بسيط للتأكد من استجابة الزر في المتصفح
-            console.log("تم الضغط على الزر بنجاح، جاري استدعاء نافذة Paddle...");
-            
             Paddle.Checkout.open({
                 items: [
                     {
-                        priceId: 'pri_01kx2wv065vft9k5yn3r0xh3a4', // معرّف السعر الخاص بك
+                        priceId: 'pri_01kx2wv065vft9k5yn3r0xh3a4', 
                         quantity: 1
                     }
                 ],
