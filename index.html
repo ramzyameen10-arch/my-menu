@@ -15,31 +15,45 @@
     </div>
 
     <script>
-        // 1. السكربت الرسمي المعتمد لتخطي حظر المتصفحات (CORB) وجلب المكتبة ديناميكياً
+        // 1. استدعاء السكربت الموصى به برمجياً من Paddle لضمان التنزيل الآمن
         !function(w,d,s,u,p){w[p]=w[p]||function(){(w[p].q=w[p].q||[]).push(arguments)},w[p].l=+new Date;var e=d.createElement(s);e.async=1,e.src=u;var n=d.getElementsByTagName(s)[0];n.parentNode.insertBefore(e,n)}(window,document,"script","https://cdn.paddle.com/paddle/v3/paddle.js","Paddle");
 
-        // 2. تهيئة الإعدادات فور تحميل السكربت بنجاح
-        Paddle.Environment.set("sandbox");
-        Paddle.Setup({ 
-            token: 'test_2cc3d344a1d0e4e6d616fd1cafd' 
-        });
+        // 2. دالة الفحص لضمان تحميل المكتبة قبل بدء أي إعدادات لمنع خطأ undefined
+        function startPaddleIntegration() {
+            if (typeof Paddle !== 'undefined' && typeof Paddle.Initialize === 'function') {
+                
+                // تهيئة الحساب التجريبي بشكل متوافق وآمن
+                Paddle.Initialize({ 
+                    environment: 'sandbox', 
+                    token: 'test_2cc3d344a1d0e4e6d616fd1cafd' 
+                });
 
-        // 3. ربط الزر بفتح نافذة الدفع بشكل مباشر
-        document.getElementById('checkout-btn').addEventListener('click', function() {
-            Paddle.Checkout.open({
-                items: [
-                    {
-                        priceId: 'pri_01kx2wv065vft9k5yn3r0xh3a4', 
-                        quantity: 1
-                    }
-                ],
-                settings: {
-                    displayMode: 'overlay',
-                    theme: 'light',
-                    locale: 'en'
-                }
-            });
-        });
+                // ربط الزر بفتح نافذة الخروج الآمن
+                document.getElementById('checkout-btn').addEventListener('click', function() {
+                    Paddle.Checkout.open({
+                        items: [
+                            {
+                                priceId: 'pri_01kx2wv065vft9k5yn3r0xh3a4', 
+                                quantity: 1
+                            }
+                        ],
+                        settings: {
+                            displayMode: 'overlay',
+                            theme: 'light',
+                            locale: 'en'
+                        }
+                    });
+                });
+
+                console.log("تمت التهيئة بنجاح، والزر الآن جاهز للعمل!");
+            } else {
+                // إذا لم تجهز المكتبة بعد، انتظر 100 مللي ثانية وحاول مجدداً
+                setTimeout(startPaddleIntegration, 100);
+            }
+        }
+
+        // تشغيل دالة الفحص بمجرد فتح الصفحة
+        startPaddleIntegration();
     </script>
 
 </body>
