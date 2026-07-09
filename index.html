@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <title>تجربة بوابة الدفع Paddle</title>
-    <script src="paddle.js"></script>
+    
+    <!-- استدعاء الرابط الرسمي الصحيح لـ Paddle v3 -->
+    <script src="https://cdn.paddle.com/paddle/v3/main.js"></script>
 </head>
 <body>
 
@@ -16,36 +18,28 @@
     </div>
 
     <script>
-        // دالة فحص ذكية للتأكد من تخطي أي حظر شبكة متبقي
-        function initializeCheckout() {
-            if (typeof Paddle !== 'undefined') {
-                Paddle.Environment.set("sandbox");
-                Paddle.Setup({ 
-                    token: 'test_2cc3d344a1d0e4e6d616fd1cafd' 
-                });
+        // تهيئة الإعدادات بشكل مباشر ومستقر
+        Paddle.Environment.set("sandbox");
+        Paddle.Setup({ 
+            token: 'test_2cc3d344a1d0e4e6d616fd1cafd' 
+        });
 
-                document.getElementById('checkout-btn').addEventListener('click', function() {
-                    Paddle.Checkout.open({
-                        items: [
-                            {
-                                priceId: 'pri_01kx2wv065vft9k5yn3r0xh3a4', 
-                                quantity: 1
-                            }
-                        ],
-                        settings: {
-                            displayMode: 'overlay',
-                            theme: 'light',
-                            locale: 'en'
-                        }
-                    });
-                });
-                console.log("تم تحميل بوابة الدفع بنجاح محلياً!");
-            } else {
-                setTimeout(initializeCheckout, 200);
-            }
-        }
-        
-        initializeCheckout();
+        // ربط حدث الضغط على الزر بفتح نافذة الدفع
+        document.getElementById('checkout-btn').addEventListener('click', function() {
+            Paddle.Checkout.open({
+                items: [
+                    {
+                        priceId: 'pri_01kx2wv065vft9k5yn3r0xh3a4', 
+                        quantity: 1
+                    }
+                ],
+                settings: {
+                    displayMode: 'overlay',
+                    theme: 'light',
+                    locale: 'en'
+                }
+            });
+        });
     </script>
 
 </body>
