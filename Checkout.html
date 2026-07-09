@@ -3,30 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <title>تجربة بوابة الدفع Paddle</title>
-    <script src="https://cdn.paddle.com/paddle/v3/paddle.js"></script>
+    <script>
+        // دمج كود التحميل الذاتي لـ Paddle v3 لتجنب مشاكل الـ CDN الخارجية
+        !function(w,d,s,u,p){w[p]=w[p]||function(){(w[p].q=w[p].q||[]).push(arguments)},w[p].l=+new Date;var e=d.createElement(s);e.async=1,e.src=u;var n=d.getElementsByTagName(s)[0];n.parentNode.insertBefore(e,n)}(window,document,"script","https://cdn.paddle.com/paddle/v3/paddle.js","Paddle");
+    </script>
 </head>
 <body>
 
     <div style="text-align: center; margin-top: 100px;">
         <h2>الاشتراك في الخطة الاحترافية (Pro Monthly)</h2>
-        <p>السعر: 10 دولار شهرياً (سيظهر بالريال تلقائياً للعميل)</p>
+        <p>السعر: 10 دولار شهرياً</p>
         <button id="checkout-btn" style="padding: 12px 24px; font-size: 16px; cursor: pointer; background-color: #2b6cb0; color: white; border: none; border-radius: 5px;">
             اشترك الآن
         </button>
     </div>
 
     <script>
-        // الانتظار حتى يتم تحميل نافذة المتصفح وجميع السكربتات بالكامل
-        window.addEventListener('load', function() {
-            if (typeof Paddle !== 'undefined') {
+        // دالة مخصصة لانتظار جاهزية المتصفح والمكتبة
+        function initPaddleWithRetry() {
+            if (typeof Paddle !== 'undefined' && typeof Paddle.Initialize === 'function') {
                 
-                // تهيئة الحساب التجريبي
+                // تهيئة الحساب التجريبي باستخدام الـ Token الخاص بك
                 Paddle.Initialize({ 
                     environment: 'sandbox', 
                     token: 'test_2cc3d344a1d0e4e6d616fd1cafd' 
                 });
 
-                // ربط حدث الضغط على الزر بفتح نافذة الدفع
+                // ربط الزر بفتح نافذة الدفع
                 document.getElementById('checkout-btn').addEventListener('click', function() {
                     Paddle.Checkout.open({
                         items: [
@@ -43,11 +46,15 @@
                     });
                 });
                 
-                console.log("تمت تهيئة Paddle بنجاح وجاهزة للدفع!");
+                console.log("تمت تهيئة Paddle بنجاح والزر جاهز للاستخدام!");
             } else {
-                console.error("خطأ: لم يتم تحميل مكتبة Paddle.js، تأكد من اتصال الإنترنت.");
+                // إذا لم تجهز بعد، انتظر 200 ملي ثانية وحاول مجدداً
+                setTimeout(initPaddleWithRetry, 200);
             }
-        });
+        }
+
+        // بدء الفحص الذاتي عند تحميل الصفحة
+        window.addEventListener('load', initPaddleWithRetry);
     </script>
 
 </body>
