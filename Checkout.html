@@ -2,59 +2,57 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>تجربة بوابة الدفع Paddle</title>
+
+    <!--
+        الرابط الرسمي المعتمد من توثيق Paddle الرسمي (developer.paddle.com/paddlejs/include-paddlejs)
+        دائمًا حمّل Paddle.js مباشرة من cdn.paddle.com لضمان الحصول على آخر تحديثات الأمان والميزات تلقائيًا.
+        لا تقم بتنزيل هذا الملف ووضعه محليًا في مشروعك، فهذا يفقدك التحديثات الأمنية المستمرة من Paddle.
+    -->
+    <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
 </head>
 <body>
-
     <div style="text-align: center; margin-top: 100px;">
         <h2>الاشتراك في الخطة الاحترافية (Pro Monthly)</h2>
         <p>السعر: 10 دولار شهرياً</p>
         <button id="checkout-btn" style="padding: 12px 24px; font-size: 16px; cursor: pointer; background-color: #2b6cb0; color: white; border: none; border-radius: 5px;">
             اشترك الآن
         </button>
+        <p id="status-msg" style="margin-top: 15px; color: #718096; font-size: 14px;"></p>
     </div>
 
-    <script>
-        // 1. سكربت جلب وتحميل مكتبة Paddle v3 بشكل آمن ومستقل عن المتصفح
-        !function(w,d,s,u,p){w[p]=w[p]||function(){(w[p].q=w[p].q||[]).push(arguments)},w[p].l=+new Date;var e=d.createElement(s);e.async=1,e.src=u;var n=d.getElementsByTagName(s)[0];n.parentNode.insertBefore(e,n)}(window,document,"script","https://cdn.paddle.com/paddle/v3/paddle.js","Paddle");
+    <script type="text/javascript">
+        var statusEl = document.getElementById('status-msg');
 
-        // 2. دالة الفحص الذاتي لانتظار تحميل المكتبة قبل التهيئة
-        function checkAndInitPaddle() {
-            if (typeof Paddle !== 'undefined' && typeof Paddle.Initialize === 'function') {
-                
-                // تهيئة الحساب التجريبي بشكل رسمي وصحيح
-                Paddle.Initialize({ 
-                    environment: 'sandbox', 
-                    token: 'test_2cc3d344a1d0e4e6d616fd1cafd' 
-                });
+        // التحقق من وصول مكتبة Paddle فعلياً قبل أي إعداد
+        if (typeof Paddle === 'undefined') {
+            statusEl.textContent = 'تعذّر تحميل مكتبة الدفع. يرجى تحديث الصفحة أو المحاولة لاحقاً.';
+            statusEl.style.color = '#e53e3e';
+        } else {
+            // التهيئة حسب التوثيق الرسمي: Paddle.Initialize() هي الطريقة الوحيدة المعتمدة في v2 وv3 من واجهة الإعداد
+            Paddle.Environment.set('sandbox'); // بيئة تجريبية - احذف هذا السطر عند الانتقال للإنتاج الفعلي (live)
 
-                // ربط حدث الضغط على الزر بفتح نافذة الـ Checkout
-                document.getElementById('checkout-btn').addEventListener('click', function() {
-                    Paddle.Checkout.open({
-                        items: [
-                            {
-                                priceId: 'pri_01kx2wv065vft9k5yn3r0xh3a4', 
-                                quantity: 1
-                            }
-                        ],
-                        settings: {
-                            displayMode: 'overlay',
-                            theme: 'light',
-                            locale: 'en'
+            Paddle.Initialize({
+                token: 'test_2cc3d344a1d0e4e6d616fd1cafd' // استبدله بالتوكن الخاص بحسابك من Paddle Dashboard
+            });
+
+            document.getElementById('checkout-btn').addEventListener('click', function () {
+                Paddle.Checkout.open({
+                    items: [
+                        {
+                            priceId: 'pri_01kx2wv065vft9k5yn3r0xh3a4',
+                            quantity: 1
                         }
-                    });
+                    ],
+                    settings: {
+                        displayMode: 'overlay',
+                        theme: 'light',
+                        locale: 'en'
+                    }
                 });
-                
-                console.log("تمت تهيئة Paddle بنجاح والزر ينبض بالحياة الآن!");
-            } else {
-                // إعادة المحاولة بعد 100 ملي ثانية إذا لم تنتهِ المكتبة من التحميل
-                setTimeout(checkAndInitPaddle, 100);
-            }
+            });
         }
-
-        // بدء تشغيل الفحص بمجرد تحميل الصفحة الأساسية
-        window.addEventListener('load', checkAndInitPaddle);
     </script>
-
 </body>
 </html>
