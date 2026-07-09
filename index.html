@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>تجربة بوابة الدفع Paddle</title>
-    <!-- استدعاء السكربت الرسمي مباشرة عبر الـ CDN المعرّف -->
+    <!-- استدعاء المكتبة الرسمية عبر الـ CDN المعتمد -->
     <script src="https://cdn.paddle.com/paddle/v3/paddle.js"></script>
 </head>
 <body>
@@ -17,7 +17,7 @@
     </div>
 
     <script>
-        // ضبط بيئة الاختبار والتوكن التابع لحسابك
+        // تهيئة البيئة والتوكن الخاص بك بشكل مباشر لقراءة صلاحية الدومين الجديدة
         Paddle.Environment.set("sandbox");
         Paddle.Setup({ 
             token: 'test_2cc3d344a1d0e4e6d616fd1cafd' 
