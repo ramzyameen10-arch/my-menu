@@ -21,6 +21,7 @@
         #step-2 { display: none; }
     </style>
 <base target="_blank">
+<base target="_blank">
 </head>
 <body>
 
@@ -67,10 +68,25 @@
     document.getElementById('login-logo').src = myProfileImageUrl;
     document.getElementById('verify-logo').src = myProfileImageUrl;
 
-    // فحص تلقائي للجلسة النشطة (لو المستخدم مسجل دخول بالفعل، نوجهه للـ Dashboard فوراً)
+    // فحص تلقائي للجلسة النشطة
+    // إذا كان المستخدم مسجل دخول بالفعل → توجيه للـ Dashboard
+    // إذا كان هناك توكن في الهاش (من رابط Magic Link) → انتظر معالجته أولاً
     async function checkExistingSession() {
+        // Check if this is a magic link callback (has access_token in hash)
+        const isMagicLinkCallback = window.location.hash.includes('access_token') || 
+                                    window.location.hash.includes('refresh_token');
+
+        if (isMagicLinkCallback) {
+            // Wait for Supabase to process the magic link hash
+            await new Promise(r => setTimeout(r, 800));
+        }
+
         const { data: { session } } = await supabaseClient.auth.getSession();
         if (session) {
+            // Clean up the hash from URL to prevent issues on refresh
+            if (window.location.hash) {
+                history.replaceState(null, '', window.location.pathname + window.location.search);
+            }
             window.location.href = "dashboard.html";
         }
     }
