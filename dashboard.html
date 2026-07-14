@@ -886,27 +886,32 @@
 		if (!user) return;
 
 		currentUser = user;
-		// Get phone from user metadata (set during auth-session edge function)
-		userPhone = user.user_metadata?.phone || user.phone || '';
+		// Get phone from multiple sources (priority order)
+		userPhone = user.user_metadata?.phone || 
+		            user.phone || 
+		            localStorage.getItem('user_phone_display') || 
+		            localStorage.getItem('user_phone') || 
+		            '';
+
+		if (!userPhone) {
+			console.error('Could not determine user phone number');
+			alert('خطأ: لم يتم التعرف على رقم الهاتف. يرجى تسجيل الدخول مرة أخرى.');
+			await _supabase.auth.signOut();
+			localStorage.clear();
+			window.location.href = "index.html";
+			return;
+		}
 
 		// حفظ رقم الهاتف في localStorage للتوافق مع الدوال القديمة
-		if (userPhone) {
-			localStorage.setItem('user_phone', userPhone);
-		}
+		localStorage.setItem('user_phone', userPhone);
 
 		const hasProfile = await fetchUserInfo();
 		if (!hasProfile) return;
 		await loadStores();
 	}
 
-	// Listen for auth state changes (handles magic link callbacks robustly)
+	// Listen for auth state changes
 	_supabase.auth.onAuthStateChange((event, session) => {
-		if (event === 'SIGNED_IN' && session) {
-			// If we were waiting for auth, reload the page to init properly
-			if (!currentUser) {
-				window.location.reload();
-			}
-		}
 		if (event === 'SIGNED_OUT') {
 			localStorage.clear();
 			window.location.href = "index.html";
@@ -915,20 +920,43 @@
 
 	async function fetchUserInfo() {
 		try {
-			const { data } = await _supabase.from('profiles').select('username, profile_img_url').eq('phone_number', userPhone).single();
+			const { data, error } = await _supabase.from('profiles').select('username, profile_img_url').eq('phone_number', userPhone).single();
+			if (error) {
+				console.error('fetchUserInfo error:', error);
+				document.getElementById('welcome-msg-user').innerHTML = `مرحباً، <br>${userPhone}`;
+				return true;
+			}
 			if (data?.username) {
 				document.getElementById('welcome-msg-user').innerHTML = `مرحباً، <br>${data.username}`;
+			} else {
+				document.getElementById('welcome-msg-user').innerHTML = `مرحباً، <br>${userPhone}`;
 			}
 			if (data?.profile_img_url) {
 				document.getElementById('user-avatar').src = data.profile_img_url;
 			}
 			return true;
-		} catch(e) { return true; }
+		} catch(e) { 
+			console.error('fetchUserInfo exception:', e);
+			document.getElementById('welcome-msg-user').innerHTML = `مرحباً، <br>${userPhone}`;
+			return true; 
+		}
 	}
 
 	async function loadStores() {
 		try {
-			const { data: profile } = await _supabase.from('profiles').select('id').eq('phone_number', userPhone).single();
+			// First get the user's profile to get their UUID
+			const { data: profile, error: profileError } = await _supabase.from('profiles').select('id').eq('phone_number', userPhone).single();
+
+			if (profileError || !profile) {
+				console.error('Profile not found for phone:', userPhone, profileError);
+				// Show empty state - user can create their first store
+				document.getElementById('status-msg').style.display = 'none';
+				document.getElementById('new-user-welcome').style.display = 'block';
+				document.getElementById('toggle-btn').style.display = 'none';
+				toggleForm(); // Open form for new user
+				return;
+			}
+
 			const { data: stores }  = await _supabase.from('store_settings').select('*, subscription_plan, subscription_status, expiry_date').eq('user_id', profile.id).order('id', { ascending: true });
 
 			sessionStorage.removeItem('back_from_manage');
