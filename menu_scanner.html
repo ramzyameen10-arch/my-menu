@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>معالج القائمة الذكي | لوحة التاجر 📊</title>
+    <script>if(!localStorage.getItem('user_phone')) window.location.href='index.html';</script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --primary: #24b47e; --bg: #f4f7f6; --dark: #2f3542; --violet: #6c5ce7; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); direction: rtl; padding: 20px; margin: 0; }
+        .container { max-width: 950px; margin: auto; }
+        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); text-align: center; }
+        .header-box { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .btn-outline { background: transparent; border: 1px solid #ddd; color: #666; padding: 10px 20px; border-radius: 8px; cursor: pointer; text-decoration: none; font-weight: bold; }
+        .btn-up { background: var(--violet); color: white; padding: 15px; border: none; border-radius: 10px; width: 100%; cursor: pointer; font-size: 16px; font-weight: bold; transition: 0.3s; }
+        #loading { display: none; margin: 15px 0; color: var(--violet); font-weight: bold; }
+        .spinner { width: 30px; height: 30px; border: 4px solid #f3f3f3; border-top: 4px solid var(--violet); border-radius: 50%; animation: spin 1s linear infinite; margin: auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #rawOutput { background: #2d3436; color: #55efc4; padding: 15px; border-radius: 8px; margin-top: 20px; text-align: left; direction: ltr; white-space: pre-wrap; font-family: monospace; font-size: 12px; min-height: 50px; }
+        .status-tag { display: inline-block; padding: 5px 10px; border-radius: 5px; font-size: 12px; margin-bottom: 10px; }
+        .ready { background: #e8f5e9; color: #2e7d32; }
+        .waiting { background: #fff3e0; color: #ef6c00; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-box">
+        <h3 id="store-title">جاري التحقق...</h3>
+        <button onclick="history.back()" class="btn-outline">⬅ رجوع</button>
+    </div>
+
+    <div class="card">
+        <div id="connection-status" class="status-tag waiting">جاري فحص اتصال البيانات...</div>
+        <h2>📊 استخراج المنيو بالذكاء الاصطناعي</h2>
+        <p style="color: #666; font-size: 14px; margin-bottom: 20px;">ارفع صورة واضحة للمنيو، وسيتم إضافة الأصناف والأقسام لمتجرك تلقائياً.</p>
+        
+        <button id="main-upload-btn" class="btn-up" onclick="document.getElementById('fileIn').click()" disabled style="opacity: 0.5;">
+            يرجى الانتظار حتى اكتمال التحقق...
+        </button>
+        <input type="file" id="fileIn" style="display:none" accept="image/*">
+        
+        <div id="loading">
+            <div class="spinner"></div>
+            <p id="loading-text" style="margin-top:10px;">جاري معالجة البيانات...</p>
+        </div>
+
+        <div id="rawOutput">حالة العملية ستظهر هنا...</div>
+    </div>
+</div>
+
+<script>
+    const SB_URL = 'https://wnvyqvwuzmxzzhilgidh.supabase.co';
+    const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indudnlxdnd1em14enpoaWxnaWRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MTg1MDEsImV4cCI6MjA5MTQ5NDUwMX0.AyD4CYqA0cz9mC-bcOt16uUpueL_cAWT26Q92l574r0';
+    const _supabase = supabase.createClient(SB_URL, SB_KEY);
+
+    const storeId = new URLSearchParams(window.location.search).get('store_id');
+    const userPhone = localStorage.getItem('user_phone');
+    let realUserId = null;
+
+    // تهيئة الصفحة وجلب البيانات الضرورية
+    async function init() {
+        const statusTag = document.getElementById('connection-status');
+        const uploadBtn = document.getElementById('main-upload-btn');
+
+        if (!storeId || !userPhone) {
+            statusTag.innerText = "❌ خطأ: لم يتم العثور على بيانات المتجر أو الهاتف";
+            statusTag.className = "status-tag waiting";
+            return;
+        }
+
+        try {
+            // 1. جلب اسم المتجر للتأكد من وجوده
+            const { data: store } = await _supabase.from('store_settings').select('store_name').eq('id', storeId).single();
+            if (store) document.getElementById('store-title').innerText = "متجر: " + store.store_name;
+
+            // 2. جلب الـ ID الحقيقي للمستخدم (UUID) من جدول البروفايل
+            const { data: profile } = await _supabase.from('profiles').select('id').eq('phone_number', userPhone).single();
+            
+            if (profile) {
+                realUserId = profile.id;
+                statusTag.innerText = "✅ النظام جاهز للرفع";
+                statusTag.className = "status-tag ready";
+                uploadBtn.disabled = false;
+                uploadBtn.style.opacity = "1";
+                uploadBtn.innerText = "📸 اختيار صورة المنيو";
+            } else {
+                statusTag.innerText = "❌ لم يتم العثور على معرف المستخدم في قاعدة البيانات";
+            }
+        } catch (e) {
+            statusTag.innerText = "❌ خطأ في الاتصال بسوبابيز";
+            console.error(e);
+        }
+    }
+
+    // معالجة رفع الملف
+    document.getElementById('fileIn').onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file || !realUserId || !storeId) return;
+
+        const loading = document.getElementById('loading');
+        const output = document.getElementById('rawOutput');
+        
+        loading.style.display = 'block';
+        output.innerText = "جاري تحويل الصورة... يرجى عدم إغلاق الصفحة";
+
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = async () => {
+            const base64 = reader.result.split(',')[1];
+            output.innerText = "جاري إرسال البيانات للذكاء الاصطناعي... قد يستغرق ذلك ثواني";
+
+            try {
+                const res = await fetch(`${SB_URL}/functions/v1/analyze-image`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json', 
+                        'Authorization': `Bearer ${SB_KEY}` 
+                    },
+                    body: JSON.stringify({ 
+                        image: base64,
+                        store_id: parseInt(storeId),
+                        user_id: realUserId
+                    })
+                });
+
+                if (res.ok) {
+                    const responseData = await res.json();
+                    output.innerText = "✅ تم الاستخراج والحفظ بنجاح! جاري العودة لقائمة المنتجات...";
+                    output.style.color = "#2ecc71";
+                    
+                    // العودة التلقائية بعد 1.5 ثانية
+                    setTimeout(() => {
+                        history.back();
+                    }, 2500);
+                } else {
+                    const errorText = await res.text();
+                    output.innerText = "❌ حدث خطأ أثناء المعالجة: " + errorText;
+                    output.style.color = "#e74c3c";
+                    loading.style.display = 'none';
+                }
+            } catch (err) {
+                output.innerText = "❌ خطأ تقني في الاتصال: " + err.message;
+                output.style.color = "#e74c3c";
+                loading.style.display = 'none';
+            }
+        };
+    };
+
+    // تشغيل التهيئة عند تحميل الصفحة
+    init();
+</script>
+</body>
+</html>

@@ -408,6 +408,7 @@
             .status-sub { font-size: 10px; }
         }
     </style>
+<base target="_blank">
 </head>
 <body>
 
@@ -536,7 +537,8 @@
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
     const storeId = new URLSearchParams(window.location.search).get('store_id');
-    const userPhone = localStorage.getItem('user_phone');
+    let currentUser = null;
+    let userPhone = '';
 
     const DAY_ORDER = ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
     const DAY_NAMES = {
@@ -669,7 +671,7 @@
                 }
                 card.style.display = 'flex';
             }
-        } catch(e) {}
+        } catch(e) { console.error(e); }
     }
 
     function getNowInTimezone(tz) {
@@ -801,11 +803,155 @@
         clockInterval = setInterval(updateStatusBar, 30000);
     }
 
+    // ===== Toast Notifications =====
+    function showToast(message, type = 'info'){
+        const existing = document.getElementById('toast-notification');
+        if(existing) existing.remove();
+
+        const toast = document.createElement('div');
+        toast.id = 'toast-notification';
+
+        const bgColor = type === 'success' ? '#24b47e' : type === 'error' ? '#e74c3c' : '#2f3542';
+
+        toast.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: ${bgColor};
+            color: white;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: bold;
+            z-index: 99999;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            animation: toastSlideIn 0.3s ease;
+            direction: rtl;
+            text-align: center;
+            min-width: 280px;
+        `;
+        toast.innerText = message;
+
+        if(!document.getElementById('toast-animations')){
+            const style = document.createElement('style');
+            style.id = 'toast-animations';
+            style.innerHTML = `
+                @keyframes toastSlideIn {
+                    from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+                    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+                }
+                @keyframes toastSlideOut {
+                    from { opacity: 1; transform: translateX(-50%) translateY(0); }
+                    to { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.animation = 'toastSlideOut 0.3s ease forwards';
+            setTimeout(() => toast.remove(), 300);
+        }, 4000);
+    }
+
+    // ===== نظام المصادقة JWT Token =====
+    async function checkAuth() {
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+            window.location.href = "index.html";
+            return null;
+        }
+
+        try {
+            const response = await fetch(
+                'https://wnvyqvwuzmxzzhilgidh.supabase.co/functions/v1/verify-token',
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: token })
+                }
+            );
+
+            const result = await response.json();
+
+            if (!result.valid) {
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('user_phone');
+                localStorage.removeItem('user_phone_display');
+                localStorage.removeItem('is_logged_in');
+                window.location.href = "index.html";
+                return null;
+            }
+
+            return result.user;
+
+        } catch (err) {
+            console.error('Auth check failed:', err);
+            const phone = localStorage.getItem('user_phone');
+            if (!phone) {
+                window.location.href = "index.html";
+                return null;
+            }
+            return { phone: phone };
+        }
+    }
+
+    // ===== تهيئة المستخدم =====
+    async function initAuth(){
+        const user = await checkAuth();
+        if (!user) return false;
+
+        currentUser = user;
+        userPhone = user.phone || '';
+
+        if (userPhone) {
+            localStorage.setItem('user_phone', userPhone);
+        }
+        return true;
+    }
+
+    // ===== التحقق من ملكية المتجر =====
+    async function verifyStoreOwnership(storeId){
+        if(!storeId || !userPhone) return false;
+        try{
+            const {data: profile} = await _supabase.from('profiles').select('id').eq('phone_number', userPhone).single();
+            if(!profile) return false;
+            const {data: store, error} = await _supabase.from('store_settings').select('user_id').eq('id', storeId).single();
+            if(error || !store) return false;
+            return store.user_id === profile.id;
+        } catch(e){
+            console.error('Error verifying ownership:', e);
+            return false;
+        }
+    }
+
     async function init() {
-        if (!storeId || !userPhone) {
-            window.location.href = 'index.html';
+        // Verify login first
+        const isAuth = await initAuth();
+        if(!isAuth){
+            document.querySelector('.empty-state .icon').textContent = '⛔';
+            document.querySelector('.empty-state p').innerText = 'يرجى تسجيل الدخول أولا...';
+            document.querySelector('.empty-state p').style.color = '#e74c3c';
             return;
         }
+
+        if(!storeId){
+            showToast('❌ رقم المتجر غير موجود في الرابط.', 'error');
+            setTimeout(() => { window.location.href = 'manage_stores.html'; }, 2000);
+            return;
+        }
+
+        // Verify store ownership
+        const isOwner = await verifyStoreOwnership(storeId);
+        if(!isOwner){
+            showToast('❌ ليس لديك صلاحية الوصول لهذا المتجر.', 'error');
+            setTimeout(() => { window.location.href = 'manage_stores.html'; }, 2000);
+            return;
+        }
+
         initTimePickers();
         await loadStoreInfo();
         await loadSchedules();
@@ -1094,13 +1240,11 @@
     }
 
     function goBack() {
-        const params = new URLSearchParams(window.location.search);
-        const storeId = params.get('store_id');
-        if (storeId) {
-            window.location.href = `store_settings.html?mode=edit&store_id=${storeId}`;
-        } else {
-            window.history.back();
+        if(!storeId || !userPhone){
+            window.location.href = "index.html";
+            return;
         }
+        window.location.href = `store_settings.html?mode=edit&store_id=${storeId}`;
     }
 
     function showLoader(s) {

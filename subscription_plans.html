@@ -152,6 +152,10 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl
 .sub-badge.free { color: #92400e; border: 1px solid #fcd34d; }
 </style>
 <base target="_blank">
+    <!-- Paddle.js for inline checkout -->
+    <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
+<base target="_blank">
+<base target="_blank">
 </head>
 <body>
 
@@ -163,7 +167,8 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl
             <span class="store-name-header" id="store-name-header">جاري التحميل...</span>
         </div>
         <div class="header-left">
-            <button class="back-btn" onclick="history.back()">→ رجوع</button>
+            <button class="back-btn" onclick="window.location.href='store_settings.html'">→ رجوع</button>
+            <button class="back-btn" style="background:#e74c3c;color:white;border-color:#e74c3c;" onclick="logout()">خروج</button>
         </div>
     </div>
     <!-- حالة الاشتراك الحالي -->
@@ -235,7 +240,7 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl
                 <li><span>تقارير متقدمة</span><span class="cross">✕</span></li>
                 <li><span>تصدير البيانات</span><span class="cross">✕</span></li>
             </ul>
-            <button class="cta-btn secondary" onclick="startFree()">البدء المجاني</button>
+            <button class="cta-btn secondary" onclick="startFree()">تمديد شهر مجاناً</button>
         </div>
     </div>
 </div>
@@ -246,11 +251,99 @@ const SB_URL='https://wnvyqvwuzmxzzhilgidh.supabase.co',
       SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indudnlxdnd1em14enpoaWxnaWRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MTg1MDEsImV4cCI6MjA5MTQ5NDUwMX0.AyD4CYqA0cz9mC-bcOt16uUpueL_cAWT26Q92l574r0',
       _supabase=supabase.createClient(SB_URL,SB_KEY);
 
+// ✅ المتغيرات العالمية للمصادقة
+let currentUser = null;
+let userPhone = '';
+
+// ============================================================
+// ✅ نظام المصادقة الجديد (JWT Token)
+// ============================================================
+async function checkAuth() {
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+        window.location.href = "index.html";
+        return null;
+    }
+
+    try {
+        const response = await fetch(
+            'https://wnvyqvwuzmxzzhilgidh.supabase.co/functions/v1/verify-token',
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: token })
+            }
+        );
+
+        const result = await response.json();
+
+        if (!result.valid) {
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('user_phone');
+            localStorage.removeItem('user_phone_display');
+            localStorage.removeItem('is_logged_in');
+            window.location.href = "index.html";
+            return null;
+        }
+
+        return result.user;
+
+    } catch (err) {
+        console.error('Auth check failed:', err);
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user_phone');
+        localStorage.removeItem('user_phone_display');
+        localStorage.removeItem('is_logged_in');
+        window.location.href = "index.html";
+        return null;
+    }
+}
+
+// ============================================================
+// ✅ تسجيل الخروج
+// ============================================================
+function logout() {
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('user_phone');
+    localStorage.removeItem('user_phone_display');
+    localStorage.removeItem('is_logged_in');
+    window.location.href = "index.html";
+}
+
 // رقم المتجر يُؤخذ من رابط الصفحة الأساس، تماماً كما في صفحة التصنيفات
 const urlParams=new URLSearchParams(window.location.search),
       currentStoreId=urlParams.get('store_id');
 
 let storeSlug='';
+
+// ===== دالة التحقق من تسجيل الدخول (محدثة) =====
+async function initAuth(){
+    const user = await checkAuth();
+    if (!user) return false;
+
+    currentUser = user;
+    userPhone = user.phone || '';
+
+    if (userPhone) {
+        localStorage.setItem('user_phone', userPhone);
+    }
+    return true;
+}
+
+// ===== دالة التحقق من ملكية المتجر =====
+async function verifyStoreOwnership(storeId){
+    if(!storeId || !userPhone) return false;
+    try{
+        const {data: profile} = await _supabase.from('profiles').select('id').eq('phone_number', userPhone).single();
+        if(!profile) return false;
+        const {data: store, error} = await _supabase.from('store_settings').select('user_id').eq('id', storeId).single();
+        if(error || !store) return false;
+        return store.user_id === profile.id;
+    } catch(e){
+        console.error('Error verifying ownership:', e);
+        return false;
+    }
+}
 
 
 function renderSubscriptionStatus(data){
@@ -276,8 +369,22 @@ function renderSubscriptionStatus(data){
     } else if (plan === 'free') {
         banner.classList.add('free');
         badge.innerHTML = '<span class="sub-badge free">🟡 مجاني</span>';
-        text.innerText = 'الخطة المجانية — لا تاريخ انتهاء';
-        countdown.innerText = '⭐ ارتقِ للبرو';
+
+        // Always show expiry date even for free plan
+        if (expiry) {
+            const diffTime = expiry - now;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            text.innerText = 'ينتهي في: ' + expiry.toLocaleDateString('ar-SA', {year:'numeric', month:'long', day:'numeric'});
+            if (diffDays <= 7) {
+                countdown.innerText = `⏰ ${diffDays} يوم متبقي — جدد الآن`;
+                countdown.style.color = '#e74c3c';
+            } else {
+                countdown.innerText = `⏰ ${diffDays} يوم متبقي`;
+            }
+        } else {
+            text.innerText = 'الخطة المجانية — لا تاريخ انتهاء';
+            countdown.innerText = '⭐ ارتقِ للبرو';
+        }
     } else {
         banner.classList.add('active');
         badge.innerHTML = `<span class="sub-badge active">🟢 ${plan}</span>`;
@@ -296,6 +403,18 @@ function renderSubscriptionStatus(data){
 }
 
 async function loadStoreData(){
+    // Verify login first
+    const isAuth = await initAuth();
+    if(!isAuth) return;
+
+    // Verify store ownership
+    const isOwner = await verifyStoreOwnership(currentStoreId);
+    if(!isOwner){
+        showToast('❌ ليس لديك صلاحية الوصول لهذا المتجر.', 'error');
+        setTimeout(() => { window.location.href = 'manage_stores.html'; }, 2000);
+        return;
+    }
+
     const nameEl=document.getElementById('store-name-header');
     const logoEl=document.getElementById('store-logo-header');
 
@@ -356,14 +475,218 @@ function setPeriod(period){
 }
 
 function subscribeNow(plan){
+    if(!checkAuth()) return;
     if(!currentStoreId){alert('لا يمكن تحديد المتجر.');return}
-    // هنا يمكن ربط بوابة الدفع أو تحديث جدول الاشتراكات في Supabase
-    window.location.href=`checkout.html?store_id=${currentStoreId}&plan=${plan}`;
+
+    // Determine priceId based on plan and selected period
+    const period = document.getElementById('btn-3months').classList.contains('active') ? '3months' : 'monthly';
+
+    let priceId, paddlePlan;
+    if(plan === 'pro'){
+        if(period === '3months'){
+            priceId = 'pri_01kx2wv065vft9k5yn3r0xh3a4'; // Replace with your actual 3-month price ID
+            paddlePlan = 'pro_3months';
+        } else {
+            priceId = 'pri_01kx2wv065vft9k5yn3r0xh3a4'; // Replace with your actual monthly price ID
+            paddlePlan = 'pro_monthly';
+        }
+    } else {
+        alert('الخطة غير مدعومة حالياً.');
+        return;
+    }
+
+    // Verify Paddle is loaded
+    if(typeof Paddle === 'undefined'){
+        alert('تعذّر تحميل مكتبة الدفع. يرجى تحديث الصفحة أو المحاولة لاحقاً.');
+        return;
+    }
+
+    // Initialize Paddle if not already initialized
+    if(!window.paddleInitialized){
+        Paddle.Environment.set('sandbox'); // Remove this line when going live
+        Paddle.Initialize({
+            token: 'test_2cc3d344a1d0e4e6d616fd1cafd' // Replace with your live token
+        });
+        window.paddleInitialized = true;
+    }
+
+    // Open Paddle checkout overlay
+    Paddle.Checkout.open({
+        items: [{
+            priceId: priceId,
+            quantity: 1
+        }],
+        customer: {
+            // Optional: pre-fill customer data if available
+            // email: 'customer@example.com'
+        },
+        settings: {
+            displayMode: 'overlay',
+            theme: 'light',
+            locale: 'ar'
+        },
+        successCallback: function(data) {
+            // Handle successful payment
+            console.log('Payment successful:', data);
+            // Update store subscription in Supabase
+            updateStoreSubscription(plan, period, data);
+        },
+        closeCallback: function(data) {
+            console.log('Checkout closed:', data);
+        }
+    });
+}
+
+async function updateStoreSubscription(plan, period, paddleData){
+    const urlParams = new URLSearchParams(window.location.search);
+    const storeId = urlParams.get('store_id');
+    if(!storeId) return;
+
+    try{
+        const now = new Date();
+        let expiryDate = new Date(now);
+        if(period === '3months'){
+            expiryDate.setMonth(expiryDate.getMonth() + 3);
+        } else {
+            expiryDate.setMonth(expiryDate.getMonth() + 1);
+        }
+
+        const {error} = await _supabase
+            .from('store_settings')
+            .update({
+                subscription_plan: plan,
+                subscription_status: 'active',
+                expiry_date: expiryDate.toISOString(),
+                paddle_subscription_id: paddleData?.subscription_id || null
+            })
+            .eq('id', storeId);
+
+        if(error) throw error;
+
+        showToast('تم الاشتراك بنجاح! 🎉', 'success');
+        loadStoreData();
+
+    } catch(err){
+        console.error('Error updating subscription:', err);
+        showToast('تم الدفع بنجاح، لكن حدث خطأ في تحديث البيانات. يرجى التواصل مع الدعم.', 'error');
+    }
 }
 
 function startFree(){
-    if(!currentStoreId){alert('لا يمكن تحديد المتجر.');return}
-    window.location.href=`categories.html?store_id=${currentStoreId}`;
+    // Verify login first
+    if(!checkAuth()) return;
+
+    // Get store_id from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const storeId = urlParams.get('store_id');
+
+    if(!storeId){
+        showToast('❌ لا يمكن تحديد المتجر. رقم المتجر غير موجود في الرابط.', 'error');
+        return;
+    }
+
+    // First, fetch current subscription plan to check if already on a paid plan
+    (async function(){
+        try{
+            const {data: storeData, error: fetchError} = await _supabase
+                .from('store_settings')
+                .select('subscription_plan, subscription_status, expiry_date')
+                .eq('id', storeId)
+                .single();
+
+            if(fetchError) throw fetchError;
+
+            const currentPlan = storeData?.subscription_plan || 'free';
+
+            // If user is already on a paid plan, show alert and do NOT update
+            if(currentPlan !== 'free'){
+                showToast(`⚠️ أنت مشترك حالياً بخطة ${currentPlan}. لا يمكن التبديل للخطة المجانية.`, 'error');
+                return;
+            }
+
+            // User is on free plan — proceed with extension
+            const now = new Date();
+            const expiryDate = new Date(now);
+            expiryDate.setMonth(expiryDate.getMonth() + 1);
+
+            const {data, error} = await _supabase
+                .from('store_settings')
+                .update({
+                    subscription_plan: 'free',
+                    subscription_status: 'active',
+                    expiry_date: expiryDate.toISOString()
+                })
+                .eq('id', storeId)
+                .select()
+                .single();
+
+            if(error) throw error;
+
+            showToast('✅ تم تمديد الاشتراك المجاني بنجاح! صلاحية لمدة شهر.', 'success');
+            loadStoreData();
+
+        } catch(err){
+            console.error('Error updating free subscription:', err);
+            showToast('❌ حدث خطأ أثناء تحديث الاشتراك. يرجى المحاولة لاحقاً.', 'error');
+        }
+    })();
+}
+
+// Toast notification helper
+function showToast(message, type = 'info'){
+    // Remove existing toast
+    const existing = document.getElementById('toast-notification');
+    if(existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.id = 'toast-notification';
+
+    const bgColor = type === 'success' ? '#24b47e' : type === 'error' ? '#e74c3c' : '#2f3542';
+
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: ${bgColor};
+        color: white;
+        padding: 14px 28px;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: bold;
+        z-index: 9999;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        animation: toastSlideIn 0.3s ease;
+        direction: rtl;
+        text-align: center;
+        min-width: 280px;
+    `;
+    toast.innerText = message;
+
+    // Add animation keyframes if not present
+    if(!document.getElementById('toast-animations')){
+        const style = document.createElement('style');
+        style.id = 'toast-animations';
+        style.innerHTML = `
+            @keyframes toastSlideIn {
+                from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+                to { opacity: 1; transform: translateX(-50%) translateY(0); }
+            }
+            @keyframes toastSlideOut {
+                from { opacity: 1; transform: translateX(-50%) translateY(0); }
+                to { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    document.body.appendChild(toast);
+
+    // Auto remove after 4 seconds
+    setTimeout(() => {
+        toast.style.animation = 'toastSlideOut 0.3s ease forwards';
+        setTimeout(() => toast.remove(), 300);
+    }, 4000);
 }
 
 loadStoreData();

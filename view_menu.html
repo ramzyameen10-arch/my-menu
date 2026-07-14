@@ -636,6 +636,8 @@
 <base target="_blank">
 <base target="_blank">
 <base target="_blank">
+<base target="_blank">
+<base target="_blank">
 </head>
 <body>
 
@@ -929,6 +931,10 @@
     let shippingCost = 0;
     let deliveryEnabled = false;
 
+    // ===== متغيرات التحكم بعدد الطلبات الشهرية =====
+    let storeRemainingOrders = null;
+    let storeOrderWarningMessage = '';
+
     // ===== متغيرات نموذج العميل =====
     let customerMap = null;
     let customerLat = null;
@@ -1104,7 +1110,40 @@
         }
     });
 
-    async function buildSidebar(store, schedules) {
+    
+    // ===== جلب عدد الطلبات المتبقية =====
+    async function loadRemainingOrders(storeId) {
+        try {
+            const { data, error } = await _supabase.rpc('get_remaining_orders', {
+                p_store_id: storeId
+            });
+
+            if (error || !data) {
+                console.log('⚠️ لم يتم جلب عدد الطلبات المتبقية:', error);
+                return;
+            }
+
+            storeRemainingOrders = data.remaining;
+
+            // بناء رسالة التنبيه
+            if (data.warning && data.remaining > 0) {
+                storeOrderWarningMessage = `
+
+⚠️ *تنبيه:* يتبقى ${data.remaining} طلب${data.remaining === 1 ? '' : 'ات'} مجانية فقط هذا الشهر. قم بترقية حسابك للاستمرار في تلقي الطلبات.`;
+            } else if (data.blocked) {
+                storeOrderWarningMessage = `
+
+❌ *تنبيه : لقد  استنفذا متجرك الحد الشهري المجاني  للطبات . يتوجب عليك الترقية لتلقي الطلبات .`;
+            } else {
+                storeOrderWarningMessage = '';
+            }
+
+        } catch (e) {
+            console.error('خطأ في جلب العدد المتبقي:', e);
+        }
+    }
+
+async function buildSidebar(store, schedules) {
         if (store.logo_url) {
             const logoEl = document.getElementById('sidebar-logo');
             logoEl.src = store.logo_url;
@@ -1341,7 +1380,10 @@
         storeSchedules = schedules || [];
         storeTimezone = store.timezone || 'Asia/Riyadh';
 
-        await buildSidebar(store, schedules);
+        // ✅ جلب عدد الطلبات المتبقية للمتجر
+    await loadRemainingOrders(store.id);
+
+    await buildSidebar(store, schedules);
 
         deliveryEnabled = store.delivery_enabled === true;
         if (deliveryEnabled) {
@@ -1354,13 +1396,30 @@
             shippingMethods = methods || [];
         }
 
+        // ✅ جلب المنتجات
         const { data: allProducts } = await _supabase.from('products')
             .select(`*, categories(category_name, display_order)`)
             .eq('store_id', store.id).eq('is_available', true).order('product_order', { ascending: true });
 
+        // ✅ جلب الصور من product_images
+        const productIds = (allProducts || []).map(p => p.id);
+        const { data: productImages } = await _supabase
+            .from('product_images')
+            .select('product_id, image_url')
+            .in('product_id', productIds);
+
+        const imageMap = {};
+        if (productImages) {
+            productImages.forEach(img => {
+                imageMap[img.product_id] = img.image_url;
+            });
+        }
+
         const mainProducts = [];
         (allProducts || []).forEach(p => {
             p.id = String(p.id);
+            // ✅ ربط الصورة من product_images
+            p.image_url = imageMap[p.id] || p.image_url || '';
             if (p.product_type === 'addon') allAddonProducts[p.id] = p;
             else mainProducts.push(p);
         });
@@ -2307,6 +2366,11 @@ if (selectedDeliveryType === 'delivery' && customerLat && customerLng && !locati
         }
         msg += `💰 *الإجمالي:* ${(subtotal + shippingCost).toFixed(2)} ريال\n`;
         msg += `\n🔖 *رقم الطلب: #${orderNum}*`;
+
+        // ✅ إضافة رسالة التنبيه (إن وجدت)
+        if (storeOrderWarningMessage) {
+            msg += storeOrderWarningMessage;
+        }
 
         window.open(`https://wa.me/${merchantPhone.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`);
     }

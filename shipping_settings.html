@@ -112,7 +112,7 @@
         .empty-state-text { font-size: 13px; font-weight: 600; }
         .empty-state-sub { font-size: 11px; margin-top: 4px; }
 
-        .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: #1e293b; color: white; padding: 12px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; z-index: 9999; transition: transform 0.3s; white-space: nowrap; box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
+        .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-80px); background: #1e293b; color: white; padding: 14px 28px; border-radius: 12px; font-size: 14px; font-weight: 700; z-index: 99999; transition: transform 0.3s; white-space: nowrap; box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
         .toast.show { transform: translateX(-50%) translateY(0); }
         .toast.success { background: var(--primary-dark); }
         .toast.error { background: var(--danger); }
@@ -193,6 +193,7 @@
 
     </style>
 <base target="_blank">
+<base target="_blank">
 </head>
 <body>
 
@@ -271,45 +272,130 @@
     const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indudnlxdnd1em14enpoaWxnaWRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MTg1MDEsImV4cCI6MjA5MTQ5NDUwMX0.AyD4CYqA0cz9mC-bcOt16uUpueL_cAWT26Q92l574r0';
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
-    const userPhone = (localStorage.getItem('user_phone') || '').trim();
     const urlParams = new URLSearchParams(window.location.search);
     const storeId   = parseInt(urlParams.get('store_id'));
 
     let storeData   = null;
     let methodsData = [];
     let toastTimer  = null;
+    let currentUser = null;
+    let userPhone = '';
+
+    // ===== نظام المصادقة JWT Token =====
+    async function checkAuth() {
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+            window.location.href = "index.html";
+            return null;
+        }
+
+        try {
+            const response = await fetch(
+                'https://wnvyqvwuzmxzzhilgidh.supabase.co/functions/v1/verify-token',
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: token })
+                }
+            );
+
+            const result = await response.json();
+
+            if (!result.valid) {
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('user_phone');
+                localStorage.removeItem('user_phone_display');
+                localStorage.removeItem('is_logged_in');
+                window.location.href = "index.html";
+                return null;
+            }
+
+            return result.user;
+
+        } catch (err) {
+            console.error('Auth check failed:', err);
+            const phone = localStorage.getItem('user_phone');
+            if (!phone) {
+                window.location.href = "index.html";
+                return null;
+            }
+            return { phone: phone };
+        }
+    }
+
+    // ===== تهيئة المستخدم =====
+    async function initAuth(){
+        const user = await checkAuth();
+        if (!user) return false;
+
+        currentUser = user;
+        userPhone = user.phone || '';
+
+        if (userPhone) {
+            localStorage.setItem('user_phone', userPhone);
+        }
+        return true;
+    }
+
+    // ===== التحقق من ملكية المتجر =====
+    async function verifyStoreOwnership(storeId){
+        if(!storeId || !userPhone) return false;
+        try{
+            const {data: profile} = await _supabase.from('profiles').select('id').eq('phone_number', userPhone).single();
+            if(!profile) return false;
+            const {data: store, error} = await _supabase.from('store_settings').select('user_id').eq('id', storeId).single();
+            if(error || !store) return false;
+            return store.user_id === profile.id;
+        } catch(e){
+            console.error('Error verifying ownership:', e);
+            return false;
+        }
+    }
 
     async function init() {
-        if (!userPhone) { window.location.href = 'index.html'; return; }
-        if (!storeId)   { showToast('معرّف المتجر غير موجود', 'error'); return; }
+        // Verify login first
+        const isAuth = await initAuth();
+        if(!isAuth){
+            document.getElementById('loading-overlay').style.display = 'none';
+            showToast('⛔ يرجى تسجيل الدخول أولاً', 'error');
+            setTimeout(() => window.location.href = 'index.html', 2000);
+            return;
+        }
+
+        if(!storeId){
+            document.getElementById('loading-overlay').style.display = 'none';
+            showToast('❌ رقم المتجر غير موجود في الرابط.', 'error');
+            setTimeout(() => { window.location.href = 'manage_stores.html'; }, 2000);
+            return;
+        }
+
+        // Verify store ownership
+        const isOwner = await verifyStoreOwnership(storeId);
+        if(!isOwner){
+            document.getElementById('loading-overlay').style.display = 'none';
+            showToast('❌ ليس لديك صلاحية الوصول لهذا المتجر.', 'error');
+            setTimeout(() => { window.location.href = 'manage_stores.html'; }, 2000);
+            return;
+        }
+
         try {
-            const { data: profile } = await _supabase.from('profiles').select('id').eq('phone_number', userPhone).single();
-            if (!profile) { window.location.href = 'index.html'; return; }
-
-            const { data: store, error: storeErr } = await _supabase
+            const { data: store } = await _supabase
                 .from('store_settings').select('id, store_name, delivery_enabled, logo_url')
-                .eq('id', storeId).eq('user_id', profile.id).single();
+                .eq('id', storeId).single();
 
-            let storeRecord = store;
-            if (storeErr || !store) {
-                const { data: storeBasic, error: basicErr } = await _supabase
-                    .from('store_settings').select('id, store_name, logo_url')
-                    .eq('id', storeId).eq('user_id', profile.id).single();
-                if (basicErr || !storeBasic) {
-                    showToast('⛔ غير مصرح بالوصول', 'error');
-                    setTimeout(() => window.location.href = 'manage_stores.html', 2000);
-                    return;
-                }
-                storeRecord = { ...storeBasic, delivery_enabled: false };
+            if (!store) {
+                showToast('⛔ المتجر غير موجود', 'error');
+                setTimeout(() => window.location.href = 'manage_stores.html', 2000);
+                return;
             }
 
-            storeData = storeRecord;
-            document.getElementById('store-name-badge').textContent = storeRecord.store_name;
-            if (storeRecord.logo_url) {
-                document.getElementById('store-logo-img').src = storeRecord.logo_url;
+            storeData = store;
+            document.getElementById('store-name-badge').textContent = store.store_name;
+            if (store.logo_url) {
+                document.getElementById('store-logo-img').src = store.logo_url;
             }
 
-            const enabled = storeRecord.delivery_enabled === true;
+            const enabled = store.delivery_enabled === true;
             document.getElementById('master-toggle').checked = enabled;
             updateDeliveryStatusText(enabled);
             if (enabled) {
@@ -600,7 +686,13 @@
         toastTimer = setTimeout(() => el.classList.remove('show'), 3500);
     }
 
-    function goBack() { history.back(); }
+    function goBack() {
+        if(!storeId || !userPhone){
+            window.location.href = "index.html";
+            return;
+        }
+        window.location.href = `store_settings.html?mode=edit&store_id=${storeId}`;
+    }
 
     init();
 </script>

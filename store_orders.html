@@ -511,6 +511,7 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl
 <base target="_blank">
 <base target="_blank">
 <base target="_blank">
+<base target="_blank">
 </head>
 <body>
 
@@ -638,35 +639,178 @@ const SB_URL='https://wnvyqvwuzmxzzhilgidh.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indudnlxdnd1em14enpoaWxnaWRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MTg1MDEsImV4cCI6MjA5MTQ5NDUwMX0.AyD4CYqA0cz9mC-bcOt16uUpueL_cAWT26Q92l574r0';
 const _sb=supabase.createClient(SB_URL,SB_KEY);
 
-const userPhone=(localStorage.getItem('user_phone')||'').trim();
 const storeId=new URLSearchParams(window.location.search).get('store_id');
 
 let allOrders=[], curFilter='all', timer=null;
 let drawerOrder=null;
 let pendCh={id:null,st:null};
-let shippingMethodsCache={}; // cache: { methodId: name }
+let shippingMethodsCache={};
+let currentUser=null;
+let userPhone='';
 
 /* ================================================
    AUTH
 ================================================ */
-async function init(){
-    if(!userPhone||!storeId){ window.location.replace('index.html'); return; }
+// ===== Toast Notifications =====
+function showToast(message, type = 'info'){
+    const existing = document.getElementById('toast-notification');
+    if(existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.id = 'toast-notification';
+
+    const bgColor = type === 'success' ? '#24b47e' : type === 'error' ? '#e74c3c' : '#2f3542';
+
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: ${bgColor};
+        color: white;
+        padding: 14px 28px;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: bold;
+        z-index: 99999;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        animation: toastSlideIn 0.3s ease;
+        direction: rtl;
+        text-align: center;
+        min-width: 280px;
+    `;
+    toast.innerText = message;
+
+    if(!document.getElementById('toast-animations')){
+        const style = document.createElement('style');
+        style.id = 'toast-animations';
+        style.innerHTML = `
+            @keyframes toastSlideIn {
+                from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+                to { opacity: 1; transform: translateX(-50%) translateY(0); }
+            }
+            @keyframes toastSlideOut {
+                from { opacity: 1; transform: translateX(-50%) translateY(0); }
+                to { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.animation = 'toastSlideOut 0.3s ease forwards';
+        setTimeout(() => toast.remove(), 300);
+    }, 4000);
+}
+
+// ===== نظام المصادقة JWT Token =====
+async function checkAuth() {
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+        window.location.href = "index.html";
+        return null;
+    }
+
+    try {
+        const response = await fetch(
+            'https://wnvyqvwuzmxzzhilgidh.supabase.co/functions/v1/verify-token',
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: token })
+            }
+        );
+
+        const result = await response.json();
+
+        if (!result.valid) {
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('user_phone');
+            localStorage.removeItem('user_phone_display');
+            localStorage.removeItem('is_logged_in');
+            window.location.href = "index.html";
+            return null;
+        }
+
+        return result.user;
+
+    } catch (err) {
+        console.error('Auth check failed:', err);
+        const phone = localStorage.getItem('user_phone');
+        if (!phone) {
+            window.location.href = "index.html";
+            return null;
+        }
+        return { phone: phone };
+    }
+}
+
+// ===== تهيئة المستخدم =====
+async function initAuth(){
+    const user = await checkAuth();
+    if (!user) return false;
+
+    currentUser = user;
+    userPhone = user.phone || '';
+
+    if (userPhone) {
+        localStorage.setItem('user_phone', userPhone);
+    }
+    return true;
+}
+
+// ===== التحقق من ملكية المتجر =====
+async function verifyStoreOwnership(storeId){
+    if(!storeId || !userPhone) return false;
     try{
-        const {data:profile}=await _sb.from('profiles').select('id').eq('phone_number',userPhone).single();
-        if(!profile){ window.location.replace('index.html'); return; }
+        const {data: profile} = await _sb.from('profiles').select('id').eq('phone_number', userPhone).single();
+        if(!profile) return false;
+        const {data: store, error} = await _sb.from('store_settings').select('user_id').eq('id', storeId).single();
+        if(error || !store) return false;
+        return store.user_id === profile.id;
+    } catch(e){
+        console.error('Error verifying ownership:', e);
+        return false;
+    }
+}
+
+async function init(){
+    // Verify login first
+    const isAuth = await initAuth();
+    if(!isAuth){
+        showLoading();
+        document.querySelector('.center-msg span').innerText = '⛔ يرجى تسجيل الدخول أولا...';
+        document.querySelector('.center-msg span').style.color = '#e74c3c';
+        return;
+    }
+
+    if(!storeId){
+        showToast('❌ رقم المتجر غير موجود في الرابط.', 'error');
+        setTimeout(() => { window.location.href = 'manage_stores.html'; }, 2000);
+        return;
+    }
+
+    // Verify store ownership
+    const isOwner = await verifyStoreOwnership(storeId);
+    if(!isOwner){
+        showToast('❌ ليس لديك صلاحية الوصول لهذا المتجر.', 'error');
+        setTimeout(() => { window.location.href = 'manage_stores.html'; }, 2000);
+        return;
+    }
+
+    try{
         const {data:store}=await _sb.from('store_settings').select('id,store_name,logo_url')
-            .eq('id',storeId).eq('user_id',profile.id).single();
+            .eq('id',storeId).eq('user_id',currentUser.id||currentUser.user_id).single();
         if(!store){ window.location.replace('index.html'); return; }
         document.getElementById('store-name').textContent=store.store_name;
         if(store.logo_url){ document.getElementById('store-logo-img').src=store.logo_url; window.storeLogoUrl=store.logo_url; }
 
-        // اطلب إذن الإشعارات فور فتح الصفحة
         if('Notification' in window){
             if(Notification.permission==='default'){
-                // أظهر شريط الطلب بدل popup مباشرة
                 document.getElementById('notif-bar').classList.add('on');
             }
-            // إذا مرفوض سابقاً — أظهر الشريط كتذكير
             if(Notification.permission==='denied'){
                 document.getElementById('notif-bar').classList.add('on');
             }
@@ -675,7 +819,7 @@ async function init(){
         await loadShippingMethods();
         await loadOrders();
         timer=setInterval(()=>loadOrders(true),30000);
-    }catch(e){ window.location.replace('index.html'); }
+    }catch(e){ console.error(e); }
 }
 
 async function loadShippingMethods(){
@@ -1547,7 +1691,14 @@ if (o.created_at) {
     printWindow.document.close();
 }
 
-function goBack(){ sessionStorage.setItem('back_from_manage','true'); window.location.href='store_settings.html'; }
+function goBack(){
+    if(!storeId || !userPhone){
+        window.location.href = "index.html";
+        return;
+    }
+    sessionStorage.setItem('back_from_manage','true');
+    window.location.href='store_settings.html?store_id='+storeId;
+}
 
 /* ================================================
    ALERT SYSTEM — تنبيه مستمر حتى الإغلاق

@@ -21,7 +21,6 @@
         #step-2 { display: none; }
     </style>
 <base target="_blank">
-<base target="_blank">
 </head>
 <body>
 
@@ -56,41 +55,17 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-    // الرابط والمفتاح الخاص بك
+    // الرابط الصحيح والمؤكد
     const SB_URL = 'https://wnvyqvwuzmxzzhilgidh.supabase.co'; 
     const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indudnlxdnd1em14enpoaWxnaWRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MTg1MDEsImV4cCI6MjA5MTQ5NDUwMX0.AyD4CYqA0cz9mC-bcOt16uUpueL_cAWT26Q92l574r0';
     
     const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
     let timerInterval;
 
-    // تعيين الصورة الشخصية
+    // ملاحظة لرمزي: يمكنك وضع رابط صورتك الحقيقي هنا
     const myProfileImageUrl = "https://via.placeholder.com/50"; 
     document.getElementById('login-logo').src = myProfileImageUrl;
     document.getElementById('verify-logo').src = myProfileImageUrl;
-
-    // فحص تلقائي للجلسة النشطة
-    // إذا كان المستخدم مسجل دخول بالفعل → توجيه للـ Dashboard
-    // إذا كان هناك توكن في الهاش (من رابط Magic Link) → انتظر معالجته أولاً
-    async function checkExistingSession() {
-        // Check if this is a magic link callback (has access_token in hash)
-        const isMagicLinkCallback = window.location.hash.includes('access_token') || 
-                                    window.location.hash.includes('refresh_token');
-
-        if (isMagicLinkCallback) {
-            // Wait for Supabase to process the magic link hash
-            await new Promise(r => setTimeout(r, 800));
-        }
-
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        if (session) {
-            // Clean up the hash from URL to prevent issues on refresh
-            if (window.location.hash) {
-                history.replaceState(null, '', window.location.pathname + window.location.search);
-            }
-            window.location.href = "dashboard.html";
-        }
-    }
-    checkExistingSession();
 
     function startTimer() {
         let timeLeft = 60;
@@ -159,7 +134,7 @@
         btn.innerText = "جاري التحقق...";
 
         try {
-            // استدعاء الـ Edge Function المحدثة لتوليد الرابط الرسمي السحري
+            // ✅ استدعاء Edge Function مباشرة (التحقق كله في الخادم)
             const response = await fetch(
                 'https://wnvyqvwuzmxzzhilgidh.supabase.co/functions/v1/auth-session',
                 {
@@ -171,16 +146,17 @@
 
             const result = await response.json();
 
-            if (!response.ok || !result.action_link) {
-                throw new Error(result.error || 'كود التحقق غير صحيح أو انتهت صلاحيته');
+            if (!response.ok) {
+                throw new Error(result.error || 'فشل التحقق');
             }
 
-            // تخزين اسم الهاتف كبيانات واجهة إضافية
+            // ✅ تخزين JWT Token
+            localStorage.setItem('auth_token', result.token);
             localStorage.setItem('user_phone_display', phone);
             localStorage.setItem('is_logged_in', 'true');
+            localStorage.removeItem('user_phone'); // حذف القديم
 
-            // 🎉 توجيه التاجر فوراً للرابط السحري الرسمي ليقوم سوبابيز بالباقي
-            window.location.href = result.action_link;
+            window.location.href = "dashboard.html";
 
         } catch (err) {
             console.error('Verification error:', err);
@@ -190,10 +166,36 @@
         }
     }
 
-    // دالة تسجيل الخروج الرسمية والمحدثة بالكامل
-    async function logout() {
-        await supabaseClient.auth.signOut(); // إنهاء الجلسة سحابياً ومحلياً
-        localStorage.clear(); // مسح الذاكرة المؤقتة بالكامل
+    // دالة التحقق من الجلسة (للصفحات الأخرى)
+    async function checkAuth() {
+        const token = localStorage.getItem('auth_token');
+        if (!token) return null;
+
+        try {
+            const response = await fetch(
+                'https://wnvyqvwuzmxzzhilgidh.supabase.co/functions/v1/verify-token',
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: token })
+                }
+            );
+
+            const result = await response.json();
+            return result.valid ? result.user : null;
+
+        } catch (err) {
+            console.error('Auth check failed:', err);
+            return null;
+        }
+    }
+
+    // دالة تسجيل الخروج
+    function logout() {
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user_phone_display');
+        localStorage.removeItem('is_logged_in');
+        localStorage.removeItem('user_phone');
         window.location.href = 'index.html';
     }
 </script>

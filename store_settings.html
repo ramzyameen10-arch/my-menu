@@ -17,6 +17,7 @@
 		.user-avatar { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary); background: #eee; }
 		.welcome-section { font-size: 0.95em; font-weight: bold; color: #333; line-height: 1.2; }
 		.btn-back { background: #34495e; color: white; padding: 6px 12px; border-radius: 8px; border: none; cursor: pointer; font-size: 12px; }
+	.btn-logout { background: #e74c3c; color: white; padding: 6px 12px; border-radius: 8px; border: none; cursor: pointer; font-size: 12px; }
 		.card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 15px; width: 100%; box-sizing: border-box; }
 		.stores-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #f0f0f0; }
 		.stores-header h2 { color: #333; border-right: 4px solid var(--primary); padding-right: 10px; margin: 0; font-size: 1.1em; }
@@ -199,6 +200,8 @@
 <base target="_blank">
 <base target="_blank">
 <base target="_blank">
+<base target="_blank">
+<base target="_blank">
 </head>
 <body>
 
@@ -249,7 +252,10 @@
 			<img id="user-avatar" class="user-avatar" src="https://via.placeholder.com/45">
 			<div class="welcome-section" id="welcome-msg-user">جاري التحميل...</div>
 		</div>
-		<button onclick="sessionStorage.removeItem('back_from_manage'); window.history.back();" class="btn-back">رجوع</button>
+		<div>
+			<button onclick="sessionStorage.removeItem('back_from_manage'); window.location.href='dashboard.html';" class="btn-back">رجوع</button>
+			<button class="btn-logout" onclick="logout()">خروج</button>
+		</div>
 	</div>
 
 	<div class="card" id="form-container">
@@ -447,7 +453,10 @@
 	const SB_URL = 'https://wnvyqvwuzmxzzhilgidh.supabase.co';
 	const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indudnlxdnd1em14enpoaWxnaWRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MTg1MDEsImV4cCI6MjA5MTQ5NDUwMX0.AyD4CYqA0cz9mC-bcOt16uUpueL_cAWT26Q92l574r0';
 	const _supabase = supabase.createClient(SB_URL, SB_KEY);
-	const userPhone = (localStorage.getItem('user_phone') || "").trim();
+
+	// ✅ المتغيرات العالمية للمصادقة
+	let currentUser = null;
+	let userPhone = '';
 
 	let pendingLogoFile = null;
 	let clockInterval = null;
@@ -778,9 +787,75 @@
 		}
 	});
 
+
+	// ============================================================
+	// ✅ نظام المصادقة الجديد (JWT Token)
+	// ============================================================
+	async function checkAuth() {
+		const token = localStorage.getItem('auth_token');
+		if (!token) {
+			window.location.href = "index.html";
+			return null;
+		}
+
+		try {
+			const response = await fetch(
+				'https://wnvyqvwuzmxzzhilgidh.supabase.co/functions/v1/verify-token',
+				{
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ token: token })
+				}
+			);
+
+			const result = await response.json();
+
+			if (!result.valid) {
+				localStorage.removeItem('auth_token');
+				localStorage.removeItem('user_phone');
+				localStorage.removeItem('user_phone_display');
+				localStorage.removeItem('is_logged_in');
+				window.location.href = "index.html";
+				return null;
+			}
+
+			return result.user;
+
+		} catch (err) {
+			console.error('Auth check failed:', err);
+			localStorage.removeItem('auth_token');
+			localStorage.removeItem('user_phone');
+			localStorage.removeItem('user_phone_display');
+			localStorage.removeItem('is_logged_in');
+			window.location.href = "index.html";
+			return null;
+		}
+	}
+
+	// ============================================================
+	// ✅ تسجيل الخروج
+	// ============================================================
+	function logout() {
+		localStorage.removeItem('auth_token');
+		localStorage.removeItem('user_phone');
+		localStorage.removeItem('user_phone_display');
+		localStorage.removeItem('is_logged_in');
+		window.location.href = "index.html";
+	}
+
 	// ===== تهيئة الصفحة =====
 	async function init() {
-		if (!userPhone) { window.location.href = 'index.html'; return; }
+		const user = await checkAuth();
+		if (!user) return;
+
+		currentUser = user;
+		userPhone = user.phone || '';
+
+		// حفظ رقم الهاتف في localStorage للتوافق مع الدوال القديمة
+		if (userPhone) {
+			localStorage.setItem('user_phone', userPhone);
+		}
+
 		await fetchUserInfo();
 		await loadStores();
 	}
