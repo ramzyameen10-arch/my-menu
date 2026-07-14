@@ -838,29 +838,10 @@
 
 
 	// ============================================================
-	// ✅ نظام المصادقة الجديد (JWT Token)
+	// ✅ نظام المصادقة الجديد (Supabase Auth Sessions)
 	// ============================================================
 	async function checkAuth() {
-		// First, check if there's a hash with access_token (from magic link callback)
-		// Supabase JS client auto-processes this, but needs a moment
-		const hasHashToken = window.location.hash.includes('access_token');
-
-		// Try up to 3 times with delay (for magic link processing)
-		let session = null;
-		let error = null;
-
-		for (let attempt = 0; attempt < 3; attempt++) {
-			const result = await _supabase.auth.getSession();
-			session = result.data?.session;
-			error = result.error;
-
-			if (session) break;
-
-			// If there's a hash token, wait for Supabase to process it
-			if (hasHashToken || attempt < 2) {
-				await new Promise(r => setTimeout(r, 500));
-			}
-		}
+		const { data: { session }, error } = await _supabase.auth.getSession();
 
 		if (error || !session) {
 			localStorage.clear();
@@ -886,77 +867,33 @@
 		if (!user) return;
 
 		currentUser = user;
-		// Get phone from multiple sources (priority order)
-		userPhone = user.user_metadata?.phone || 
-		            user.phone || 
-		            localStorage.getItem('user_phone_display') || 
-		            localStorage.getItem('user_phone') || 
-		            '';
-
-		if (!userPhone) {
-			console.error('Could not determine user phone number');
-			alert('خطأ: لم يتم التعرف على رقم الهاتف. يرجى تسجيل الدخول مرة أخرى.');
-			await _supabase.auth.signOut();
-			localStorage.clear();
-			window.location.href = "index.html";
-			return;
-		}
+		// Get phone from user metadata (set during auth-session edge function)
+		userPhone = user.user_metadata?.phone || user.phone || '';
 
 		// حفظ رقم الهاتف في localStorage للتوافق مع الدوال القديمة
-		localStorage.setItem('user_phone', userPhone);
+		if (userPhone) {
+			localStorage.setItem('user_phone', userPhone);
+		}
 
 		const hasProfile = await fetchUserInfo();
 		if (!hasProfile) return;
 		await loadStores();
 	}
 
-	// Listen for auth state changes
-	_supabase.auth.onAuthStateChange((event, session) => {
-		if (event === 'SIGNED_OUT') {
-			localStorage.clear();
-			window.location.href = "index.html";
-		}
-	});
-
 	async function fetchUserInfo() {
 		try {
-			const { data, error } = await _supabase.from('profiles').select('username, profile_img_url').eq('phone_number', userPhone).single();
-			if (error) {
-				console.error('fetchUserInfo error:', error);
-				document.getElementById('welcome-msg-user').innerHTML = `مرحباً، <br>${userPhone}`;
-				return true;
-			}
+			const { data } = await _supabase.from('profiles').select('username, profile_img_url').eq('phone_number', userPhone).single();
 			if (data?.username) {
 				document.getElementById('welcome-msg-user').innerHTML = `مرحباً، <br>${data.username}`;
-			} else {
-				document.getElementById('welcome-msg-user').innerHTML = `مرحباً، <br>${userPhone}`;
 			}
-			if (data?.profile_img_url) {
-				document.getElementById('user-avatar').src = data.profile_img_url;
-			}
+			if (data?.profile_img_url) document.getElementById('user-avatar').src = data.profile_img_url;
 			return true;
-		} catch(e) { 
-			console.error('fetchUserInfo exception:', e);
-			document.getElementById('welcome-msg-user').innerHTML = `مرحباً، <br>${userPhone}`;
-			return true; 
-		}
+		} catch(e) { return true; }
 	}
 
 	async function loadStores() {
 		try {
-			// First get the user's profile to get their UUID
-			const { data: profile, error: profileError } = await _supabase.from('profiles').select('id').eq('phone_number', userPhone).single();
-
-			if (profileError || !profile) {
-				console.error('Profile not found for phone:', userPhone, profileError);
-				// Show empty state - user can create their first store
-				document.getElementById('status-msg').style.display = 'none';
-				document.getElementById('new-user-welcome').style.display = 'block';
-				document.getElementById('toggle-btn').style.display = 'none';
-				toggleForm(); // Open form for new user
-				return;
-			}
-
+			const { data: profile } = await _supabase.from('profiles').select('id').eq('phone_number', userPhone).single();
 			const { data: stores }  = await _supabase.from('store_settings').select('*, subscription_plan, subscription_status, expiry_date').eq('user_id', profile.id).order('id', { ascending: true });
 
 			sessionStorage.removeItem('back_from_manage');
