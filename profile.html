@@ -9,19 +9,77 @@
         :root { --primary: #24b47e; --dark: #2f3542; --bg: #f4f7f6; --edit: #3498db; --danger: #e74c3c; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; padding: 20px; direction: rtl; }
         .container { max-width: 600px; margin: 0 auto; }
-        
+
         /* الهيدر */
         .header { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
         h2 { margin: 0; color: var(--dark); font-size: 1.4em; }
 
         /* البطاقة التعريفية */
         .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        
-        /* قسم الصورة */
+
+        /* قسم الصورة - دائري ثابت + قابل للنقر */
         .profile-preview-wrapper { text-align: center; margin-bottom: 25px; position: relative; }
-        .profile-preview-wrapper img { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 4px solid var(--primary); background: #eee; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        .upload-btn-wrapper { margin-top: 12px; }
-        .btn-upload { background: var(--edit); color: white; padding: 8px 16px; border-radius: 20px; font-size: 13px; cursor: pointer; display: inline-block; border: none; font-weight: bold; }
+        .profile-avatar-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 4px solid var(--primary);
+            background: #eee;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .profile-avatar-circle:hover {
+            transform: scale(1.03);
+            box-shadow: 0 6px 14px rgba(36, 180, 126, 0.25);
+        }
+        .profile-avatar-circle:active {
+            transform: scale(0.98);
+        }
+        .profile-avatar-circle img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            display: block;
+            min-width: 100%;
+            min-height: 100%;
+            pointer-events: none;
+        }
+        /* أيقونة الكاميرا عند المرور */
+        .camera-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+        }
+        .profile-avatar-circle:hover .camera-overlay {
+            opacity: 1;
+        }
+        .camera-overlay span {
+            color: white;
+            font-size: 28px;
+        }
+        /* نص توضيحي */
+        .avatar-label {
+            margin-top: 10px;
+            font-size: 13px;
+            color: #888;
+            font-weight: 600;
+        }
         #file-input { display: none; }
         #upload-status { font-size: 12px; color: var(--primary); margin-top: 8px; font-weight: bold; }
 
@@ -32,6 +90,15 @@
         input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 5px rgba(36, 180, 126, 0.2); }
         input:disabled { background: #f0f0f0; cursor: not-allowed; color: #777; }
 
+        /* حقل مطلوب */
+        .field-required-wrapper { position: relative; margin-bottom: 20px; }
+        .field-required-wrapper input { margin: 0; border-color: #e74c3c; border-width: 1.5px; }
+        .field-required-wrapper input:focus { outline: none; border-color: #c0392b; box-shadow: 0 0 0 3px rgba(231,76,60,0.12); }
+        .field-required-wrapper input.valid { border-color: var(--primary); }
+        .field-required-wrapper input.valid:focus { box-shadow: 0 0 0 3px rgba(36,180,126,0.12); }
+        .required-label { display: flex; align-items: center; gap: 4px; font-size: 12px; color: #e74c3c; font-weight: 600; margin-bottom: 3px; }
+        .required-label span.dot { width: 6px; height: 6px; background: #e74c3c; border-radius: 50%; display: inline-block; }
+
         /* الأزرار */
         .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; margin-top: 10px; display: block; text-decoration: none; text-align: center; }
         .btn-save { background: var(--primary); color: white; }
@@ -39,31 +106,38 @@
         .btn:hover { opacity: 0.9; transform: translateY(-1px); }
         .btn:disabled { background: #ccc; cursor: not-allowed; transform: none; }
     </style>
+<base target="_blank">
+<base target="_blank">
 </head>
 <body>
 
 <div class="container">
     <div class="header">
         <h2>إعدادات الملف الشخصي</h2>
-        <a href="dashboard.html" class="btn" style="width: auto; padding: 8px 15px; margin: 0; font-size: 13px; background: #34495e; color: white;">العودة للوحة التحكم</a>
+        <button class="btn" style="width: auto; padding: 8px 15px; margin: 0; font-size: 13px; background: #34495e; color: white;" onclick="window.history.back()">رجوع</button>
     </div>
 
     <div class="card">
         <div class="profile-preview-wrapper">
-            <img id="img-preview" src="https://via.placeholder.com/120" alt="الصورة الشخصية">
-            <div class="upload-btn-wrapper">
-                <label for="file-input" class="btn-upload">📷 رفع صورة جديدة</label>
-                <input type="file" id="file-input" accept="image/*" onchange="uploadImage(this)">
-                <div id="upload-status" style="display: none;"></div>
+            <!-- الصورة نفسها قابلة للنقر -->
+            <div class="profile-avatar-circle" onclick="document.getElementById('file-input').click()">
+                <img id="img-preview" src="https://via.placeholder.com/120" alt="الصورة الشخصية">
+                <div class="camera-overlay">
+                    <span>📷</span>
+                </div>
             </div>
+            <!-- نص توضيحي -->
+            <div class="avatar-label">الصورة الشخصية</div>
+            <input type="file" id="file-input" accept="image/*" onchange="uploadImage(this)">
+            <div id="upload-status" style="display: none;"></div>
         </div>
 
         <input type="hidden" id="internal_user_id">
         <input type="hidden" id="profile_img_url_hidden">
 
-        <div class="form-group">
-            <label>اسم المستخدم</label>
-            <input type="text" id="username" placeholder="مثال: رمزي أمين">
+        <div class="field-required-wrapper">
+            <div class="required-label"><span class="dot"></span> اسم المستخدم (مطلوب)</div>
+            <input type="text" id="username" placeholder="مثال: رمزي أمين" oninput="validateRequired(this)">
         </div>
 
         <div class="form-group">
@@ -71,8 +145,8 @@
             <input type="text" id="phone_display" disabled>
         </div>
 
-        <button id="save-btn" class="btn btn-save" onclick="updateProfile()">حفظ التعديلات</button>
-        <a href="dashboard.html" class="btn btn-back">إلغاء</a>
+        <button id="save-btn" class="btn btn-save" onclick="updateProfile()">حفظ</button>
+        <button class="btn btn-back" onclick="window.history.back()">إلغاء</button>
     </div>
 </div>
 
@@ -81,18 +155,55 @@
     const SB_URL = 'https://wnvyqvwuzmxzzhilgidh.supabase.co'; 
     const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indudnlxdnd1em14enpoaWxnaWRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MTg1MDEsImV4cCI6MjA5MTQ5NDUwMX0.AyD4CYqA0cz9mC-bcOt16uUpueL_cAWT26Q92l574r0';
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
-    
-    // الحصول على رقم الهاتف من التخزين المحلي
-    const userPhone = (localStorage.getItem('user_phone') || "").trim();
+
+    // المتغيرات العالمية للمصادقة
+    let currentUser = null;
+    let userPhone = '';
+
+    // ============================================================
+    // ✅ نظام المصادقة الجديد (JWT Token)
+    // ============================================================
+    async function checkAuth() {
+        const { data: { session }, error } = await _supabase.auth.getSession();
+
+        if (error || !session) {
+            localStorage.clear();
+            window.location.href = "index.html";
+            return null;
+        }
+
+        return session.user;
+    }
+
+    // ============================================================
+    // ✅ تسجيل الخروج
+    // ============================================================
+    async function logout() {
+        await _supabase.auth.signOut();
+        localStorage.clear();
+        window.location.href = "index.html";
+    }
 
     // تشغيل الصفحة
     async function init() {
-        if (!userPhone) {
-            alert("يرجى تسجيل الدخول أولاً");
-            window.location.href = "index.html";
-            return;
+        const user = await checkAuth();
+        if (!user) return;
+
+        currentUser = user;
+        // Get phone from user metadata (set during auth-session edge function)
+        userPhone = user.user_metadata?.phone || user.phone || '';
+
+        // حفظ رقم الهاتف في localStorage للتوافق مع الدوال القديمة
+        if (userPhone) {
+            localStorage.setItem('user_phone', userPhone);
         }
+
         await loadUserData();
+    }
+
+    // التحقق من الحقول المطلوبة
+    function validateRequired(input) {
+        input.classList.toggle('valid', !!input.value.trim());
     }
 
     // 1. جلب بيانات المستخدم وتخزين الـ ID
@@ -112,9 +223,14 @@
                 document.getElementById('username').value = data.username || '';
                 document.getElementById('phone_display').value = data.phone_number || '';
                 document.getElementById('profile_img_url_hidden').value = data.profile_img_url || '';
-                
+
                 if (data.profile_img_url) {
                     document.getElementById('img-preview').src = data.profile_img_url;
+                }
+
+                // تحديث حالة التحقق للحقل المطلوب
+                if (data.username) {
+                    document.getElementById('username').classList.add('valid');
                 }
             } else {
                 alert("لم يتم العثور على سجل بروفايل لهذا الرقم.");
@@ -152,7 +268,7 @@
             // تحديث المعاينة والحقل المخفي
             document.getElementById('img-preview').src = publicUrl;
             document.getElementById('profile_img_url_hidden').value = publicUrl;
-            
+
             statusLabel.innerText = "✅ تم الرفع بنجاح";
             statusLabel.style.color = "var(--primary)";
         } catch (err) {
@@ -166,11 +282,18 @@
     async function updateProfile() {
         const saveBtn = document.getElementById('save-btn');
         const targetUuid = document.getElementById('internal_user_id').value;
-        const newUsername = document.getElementById('username').value;
+        const newUsername = document.getElementById('username').value.trim();
         const newImageUrl = document.getElementById('profile_img_url_hidden').value;
 
         if (!targetUuid) {
             alert("خطأ: لم يتم تحميل معرف المستخدم. يرجى إعادة تحميل الصفحة.");
+            return;
+        }
+
+        // ✅ التحقق من الحقل المطلوب
+        if (!newUsername) {
+            alert("⚠️ اسم المستخدم مطلوب. يرجى إدخال اسم المستخدم.");
+            document.getElementById('username').focus();
             return;
         }
 
@@ -192,7 +315,8 @@
 
             if (data && data.length > 0) {
                 alert("🎉 تم تحديث ملفك الشخصي بنجاح");
-                window.location.reload();
+                // ✅ التوجيه إلى صفحة الداشبورد بدلاً من إعادة التحميل
+                window.location.href = "dashboard.html";
             } else {
                 alert("لم يتم إجراء أي تغييرات. تأكد من الصلاحيات.");
             }
@@ -200,7 +324,7 @@
             alert("فشل التحديث: " + err.message);
         } finally {
             saveBtn.disabled = false;
-            saveBtn.innerText = "حفظ التعديلات";
+            saveBtn.innerText = "حفظ";
         }
     }
 
