@@ -841,7 +841,26 @@
 	// ✅ نظام المصادقة الجديد (JWT Token)
 	// ============================================================
 	async function checkAuth() {
-		const { data: { session }, error } = await _supabase.auth.getSession();
+		// First, check if there's a hash with access_token (from magic link callback)
+		// Supabase JS client auto-processes this, but needs a moment
+		const hasHashToken = window.location.hash.includes('access_token');
+
+		// Try up to 3 times with delay (for magic link processing)
+		let session = null;
+		let error = null;
+
+		for (let attempt = 0; attempt < 3; attempt++) {
+			const result = await _supabase.auth.getSession();
+			session = result.data?.session;
+			error = result.error;
+
+			if (session) break;
+
+			// If there's a hash token, wait for Supabase to process it
+			if (hasHashToken || attempt < 2) {
+				await new Promise(r => setTimeout(r, 500));
+			}
+		}
 
 		if (error || !session) {
 			localStorage.clear();
@@ -879,6 +898,20 @@
 		if (!hasProfile) return;
 		await loadStores();
 	}
+
+	// Listen for auth state changes (handles magic link callbacks robustly)
+	_supabase.auth.onAuthStateChange((event, session) => {
+		if (event === 'SIGNED_IN' && session) {
+			// If we were waiting for auth, reload the page to init properly
+			if (!currentUser) {
+				window.location.reload();
+			}
+		}
+		if (event === 'SIGNED_OUT') {
+			localStorage.clear();
+			window.location.href = "index.html";
+		}
+	});
 
 	async function fetchUserInfo() {
 		try {
