@@ -916,13 +916,12 @@
 	async function fetchUserInfo() {
 		try {
 			const { data } = await _supabase.from('profiles').select('username, profile_img_url').eq('phone_number', userPhone).single();
-			if (!data?.username) {
-				// لم يقم المستخدم بإضافة اسم بعد → توجيهه لإكمال الملف الشخصي
-				window.location.href = 'profile.html';
-				return false;
+			if (data?.username) {
+				document.getElementById('welcome-msg-user').innerHTML = `مرحباً، <br>${data.username}`;
 			}
-			document.getElementById('welcome-msg-user').innerHTML = `مرحباً، <br>${data.username}`;
-			if (data?.profile_img_url) document.getElementById('user-avatar').src = data.profile_img_url;
+			if (data?.profile_img_url) {
+				document.getElementById('user-avatar').src = data.profile_img_url;
+			}
 			return true;
 		} catch(e) { return true; }
 	}
