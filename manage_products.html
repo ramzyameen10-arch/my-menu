@@ -601,7 +601,7 @@ async function init() {
         await showToast('⚠️ خطأ في التحقق من الصلاحيات', 'error');
         setTimeout(() => window.location.href = 'dashboard.html', 2500);
         return;
-    }await loadCategoriesForDropdown();loadUserAvatar();const{data:store}=await _supabase.from('store_settings').select('store_name,logo_url,store_slug').eq('id',storeId).single();if(store){document.getElementById('store-display-title').innerText="متجر: "+store.store_name;storeSlug=store.store_slug;document.getElementById('main-store-logo').style.cursor='pointer';document.getElementById('main-store-logo').onclick=()=>{window.open(`view_menu.html?s=${store.store_slug}`,'_blank')};if(store.logo_url){const mLogo=document.getElementById('main-store-logo');mLogo.src=store.logo_url;mLogo.style.display='block';storeLogoUrl=store.logo_url}}
+    }await loadCategoriesForDropdown();loadUserAvatar();await getUsername();const{data:store}=await _supabase.from('store_settings').select('store_name,logo_url,store_slug').eq('id',storeId).single();if(store){document.getElementById('store-display-title').innerText="متجر: "+store.store_name;storeSlug=store.store_slug;document.getElementById('main-store-logo').style.cursor='pointer';document.getElementById('main-store-logo').onclick=()=>{window.open(`view_menu.html?s=${store.store_slug}`,'_blank')};if(store.logo_url){const mLogo=document.getElementById('main-store-logo');mLogo.src=store.logo_url;mLogo.style.display='block';storeLogoUrl=store.logo_url}}
 const el=document.getElementById('prod-list');sortableInstance=new Sortable(el,{handle:'.drag-handle',animation:150,ghostClass:'sortable-ghost',onEnd:async function(){showLoader(true);const cards=document.querySelectorAll('.product-card');const updates=[];cards.forEach((card,index)=>{const id=card.id.replace('row-','');const newOrder=index+1;const pIdx=allProducts.findIndex(p=>p.id==id);if(pIdx!==-1)allProducts[pIdx].product_order=newOrder;updates.push(_supabase.from('products').update({product_order:newOrder}).eq('id',id))});await Promise.all(updates);filterData();showLoader(false)}});await loadCategories();loadProducts()}
 async function loadCategories(){const{data}=await _supabase.from('categories').select('id,category_name').eq('store_id',storeId).order('display_order',{ascending:true});allCategories=data||[];const pCat=document.getElementById('p-cat'),fCat=document.getElementById('filter-cat'),warning=document.getElementById('no-cat-warning');fCat.innerHTML='<option value="">كل التصنيفات</option>';pCat.innerHTML='';if(data&&data.length>0){data.forEach(c=>{const opt=`<option value="${c.id}">${c.category_name}</option>`;pCat.innerHTML+=opt;fCat.innerHTML+=opt});warning.style.display='none'}else{pCat.innerHTML='<option value="">لا توجد تصنيفات!</option>';warning.style.display='block'}}
 async function loadProducts(){
@@ -1147,7 +1147,6 @@ async function getUsername() {
         document.getElementById('username-display').textContent = "مستخدم";
     }
 }
-getUsername();
 
 // ===== Product Type Functions =====
 function onProductTypeChange() {
