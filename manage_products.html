@@ -261,13 +261,14 @@ thead { display: none !important; }}
 <base target="_blank">
 <base target="_blank">
 <base target="_blank">
+<base target="_blank">
 </head>
 <body>
 <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
 <div id="sidebar" class="sidebar">
     <div style="display:flex; align-items:center; gap:10px; cursor:pointer;" onclick="openProfilePage()">
         <img id="sidebar-user-avatar" 
-             src="https://via.placeholder.com/40"
+             src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDQwIDQwIj48cmVjdCB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIGZpbGw9IiNmMGYwZjAiIHJ4PSI4Ii8+PGxpbmUgeDE9IjIwIiB5MT0iMTAiIHgyPSIyMCIgeTI9IjMwIiBzdHJva2U9IiNjY2MiIHN0cm9rZS13aWR0aD0iMi41IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTAiIHkxPSIyMCIgeDI9IjMwIiB5Mj0iMjAiIHN0cm9rZT0iI2NjYyIgc3Ryb2tlLXdpZHRoPSIyLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg=="
              style="width:40px; height:40px; border-radius:50%; object-fit:cover; border:2px solid var(--primary);">
         <div class="user-display">
     مرحباَ، <span id="username-display">...</span>
@@ -666,7 +667,7 @@ onclick="goToCloneStore()">
 
 
 </div>`;return}
-const fallback="https://via.placeholder.com/150?text=No+Image";const catValue=document.getElementById('filter-cat').value;const searchValue=document.getElementById('search-name').value;const canDrag=(catValue!==""&&searchValue==="");if(sortableInstance)sortableInstance.option("disabled",!canDrag);data.forEach(p=>{const hasSale=p.sale_price>0&&p.sale_price!==null;const displayPrice=(hasSale?p.sale_price:p.price).toFixed(2);const isAvail=p.is_available!==false;const productImg=(p.image_url&&p.image_url!=="")?p.image_url:(storeLogoUrl||fallback);list.innerHTML+=`
+const fallback="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiB2aWV3Qm94PSIwIDAgMTUwIDE1MCI+PHJlY3Qgd2lkdGg9IjE1MCIgaGVpZ2h0PSIxNTAiIGZpbGw9IiNmOGY5ZmEiIHJ4PSIxMiIvPjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiNhYWEiIHRleHQtYW5jaG9yPSJtaWRkbGUiPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==";const catValue=document.getElementById('filter-cat').value;const searchValue=document.getElementById('search-name').value;const canDrag=(catValue!==""&&searchValue==="");if(sortableInstance)sortableInstance.option("disabled",!canDrag);data.forEach(p=>{const hasSale=p.sale_price>0&&p.sale_price!==null;const displayPrice=(hasSale?p.sale_price:p.price).toFixed(2);const isAvail=p.is_available!==false;const productImg=(p.image_url&&p.image_url!=="")?p.image_url:(storeLogoUrl||fallback);list.innerHTML+=`
 <div class="product-card" id="row-${p.id}">
 <div class="card-top">
 <div class="drag-zone">${canDrag?'<div class="drag-handle">☰</div>':''}</div>
@@ -1197,13 +1198,14 @@ async function openAddonsPicker() {
     tempAddonIds = selectedAddonIds.map(Number);
     listEl.innerHTML = '<p style="text-align:center;color:#aaa;padding:20px 0;">جاري تحميل الإضافات...</p>';
     try {
-        const { data: addons } = await _supabase
+        const { data: addons, error } = await _supabase
             .from('products')
-            .select('id, product_name, price, sale_price, image_url')
+            .select('id, product_name, price, sale_price')
             .eq('store_id', storeId)
             .eq('product_type', 'addon')
             .eq('is_available', true)
             .order('product_name', { ascending: true });
+        if (error) { console.error('Addons query error:', error); throw error; }
         if (!addons || addons.length === 0) {
             listEl.innerHTML = `
                 <div style="text-align:center;padding:30px 20px;color:#aaa;">
@@ -1213,10 +1215,17 @@ async function openAddonsPicker() {
                 </div>`;
             return;
         }
-        const fallback = 'https://via.placeholder.com/45?text=+';
+        const addonIds = addons.map(a => a.id);
+        const { data: images } = await _supabase
+            .from('product_images')
+            .select('product_id, image_url')
+            .in('product_id', addonIds);
+        const imageMap = {};
+        if (images) { images.forEach(img => { imageMap[img.product_id] = img.image_url; }); }
+        const fallback = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSIgdmlld0JveD0iMCAwIDQ1IDQ1Ij48cmVjdCB3aWR0aD0iNDUiIGhlaWdodD0iNDUiIGZpbGw9IiNmMGYwZjAiIHJ4PSI4Ii8+PGxpbmUgeDE9IjIyLjUiIHkxPSIxMiIgeDI9IjIyLjUiIHkyPSIzMyIgc3Ryb2tlPSIjY2NjIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSIxMiIgeTE9IjIyLjUiIHgyPSIzMyIgeTI9IjIyLjUiIHN0cm9rZT0iI2NjYyIgc3Ryb2tlLXdpZHRoPSIzIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4=';
         listEl.innerHTML = addons.map(addon => {
-            const imgSrc = (addon.image_url && addon.image_url !== '') ? addon.image_url : fallback;
-            const displayPrice = (addon.sale_price > 0 ? addon.sale_price : addon.price).toFixed(2);
+            const imgSrc = imageMap[addon.id] || fallback;
+            const displayPrice = ((addon.sale_price > 0 ? addon.sale_price : addon.price) || 0).toFixed(2);
             const addonIdInt = parseInt(addon.id);
             const isChecked = tempAddonIds.map(Number).includes(addonIdInt);
             return `
@@ -1231,6 +1240,7 @@ async function openAddonsPicker() {
         }).join('');
     } catch (err) {
         listEl.innerHTML = `<p style="text-align:center;color:#e74c3c;">فشل تحميل الإضافات: ${err.message}</p>`;
+        console.error('Addons picker error:', err);
     }
 }
 

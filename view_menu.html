@@ -2245,8 +2245,7 @@ let deliveryAddress = null;
 if (selectedDeliveryType === 'delivery' && customerLat && customerLng && !locationSkipped) {
     deliveryAddress = `https://maps.google.com/maps?q=${customerLat.toFixed(6)},${customerLng.toFixed(6)}`;
 }
-
-            // حفظ في جدول orders
+// بناء بيانات الطلب وإرسالها إلى دالة new-create-order الوسيطة
             const orderPayload = {
                 store_id: currentStoreId,
                 customer_name: name,
@@ -2262,19 +2261,31 @@ if (selectedDeliveryType === 'delivery' && customerLat && customerLng && !locati
                 click_status: 'clicked'
             };
 
-            const { data: savedOrder, error } = await _supabase
-                .from('orders')
-                .insert(orderPayload)
-                .select('order_number, id')
-                .single();
+            let savedOrder = null;
+            try {
+                const edgeResponse = await fetch(`${SB_URL}/functions/v1/new-create-order`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${SB_KEY}`,
+                        'apikey': SB_KEY
+                    },
+                    body: JSON.stringify(orderPayload)
+                });
 
-            if (error) {
-                console.error('Supabase error:', error);
-                // نكمل حتى لو فشل الحفظ
+                const result = await edgeResponse.json();
+
+                if (!edgeResponse.ok || result.error) {
+                    console.error('Edge function error:', result.error || result);
+                } else {
+                    savedOrder = result.order;
+                }
+            } catch (err) {
+                console.error('فشل استدعاء دالة new-create-order:', err);
+                // نكمل حتى لو فشل الحفظ (نفس السلوك السابق)
             }
 
             const orderNum = savedOrder?.order_number || '—';
-
             // إغلاق النموذج
             document.getElementById('customer-modal-overlay').style.display = 'none';
             if (customerMap) { customerMap.remove(); customerMap = null; }
