@@ -788,7 +788,7 @@ async function init(){
 
     if(!storeId){
         showToast('❌ رقم المتجر غير موجود في الرابط.', 'error');
-        setTimeout(() => { window.location.href = 'manage_stores.html'; }, 2000);
+        setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
         return;
     }
 
@@ -796,7 +796,7 @@ async function init(){
     const isOwner = await verifyStoreOwnership(storeId);
     if(!isOwner){
         showToast('❌ ليس لديك صلاحية الوصول لهذا المتجر.', 'error');
-        setTimeout(() => { window.location.href = 'manage_stores.html'; }, 2000);
+        setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
         return;
     }
 
@@ -1275,19 +1275,36 @@ function fillActions(o){
 /* ================================================
    STATUS CHANGE
 ================================================ */
-async function doStatus(id,newSt){
+
+async function doStatus(id, newSt){
     try{
-        const{error}=await _sb.from('orders').update({status:newSt}).eq('id',id);
-        if(error) throw error;
-        const idx=allOrders.findIndex(o=>o.id==id);
-        if(idx!==-1) allOrders[idx].status=newSt;
+        const token = localStorage.getItem('auth_token');
+        const res = await fetch(
+            'https://wnvyqvwuzmxzzhilgidh.supabase.co/functions/v1/update-order-status',
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': SB_KEY,
+                    'Authorization': 'Bearer ' + SB_KEY
+                },
+                body: JSON.stringify({ token, order_id: id, new_status: newSt })
+            }
+        );
+        const result = await res.json();
+        if(!res.ok || result.error) throw new Error(result.error || 'فشل التحديث');
+
+        const idx = allOrders.findIndex(o => o.id == id);
+        if(idx !== -1) allOrders[idx].status = newSt;
         updateStats();
         renderList();
-        if(drawerOrder&&drawerOrder.id==id){
-            drawerOrder.status=newSt;
+        if(drawerOrder && drawerOrder.id == id){
+            drawerOrder.status = newSt;
             fillDrawer(drawerOrder);
         }
-    }catch(e){ alert('فشل تغيير الحالة: '+e.message); }
+    }catch(e){
+        alert('فشل تغيير الحالة: ' + e.message);
+    }
 }
 
 function openStatusModal(id){
@@ -1697,7 +1714,7 @@ function goBack(){
         return;
     }
     sessionStorage.setItem('back_from_manage','true');
-    window.location.href='store_settings.html?store_id='+storeId;
+    window.location.href='dashboard.html?store_id='+storeId;
 }
 
 /* ================================================

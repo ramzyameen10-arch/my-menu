@@ -365,7 +365,7 @@
         if(!storeId){
             document.getElementById('loading-overlay').style.display = 'none';
             showToast('❌ رقم المتجر غير موجود في الرابط.', 'error');
-            setTimeout(() => { window.location.href = 'manage_stores.html'; }, 2000);
+            setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
             return;
         }
 
@@ -374,7 +374,7 @@
         if(!isOwner){
             document.getElementById('loading-overlay').style.display = 'none';
             showToast('❌ ليس لديك صلاحية الوصول لهذا المتجر.', 'error');
-            setTimeout(() => { window.location.href = 'manage_stores.html'; }, 2000);
+            setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
             return;
         }
 
@@ -691,7 +691,7 @@
             window.location.href = "index.html";
             return;
         }
-        window.location.href = `store_settings.html?mode=edit&store_id=${storeId}`;
+        window.location.href = `dashboard.html?mode=edit&store_id=${storeId}`;
     }
 
     init();
