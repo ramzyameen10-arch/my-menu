@@ -7,6 +7,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="global.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <style>
 :root{--primary:#24b47e;--danger:#e74c3c;--edit:#3498db;--bg:#f4f7f6;--dark:#2f3542;--gray:#95a5a6}
@@ -84,7 +85,6 @@ thead { display: none !important; }}
 .card-actions {display: flex;gap: 8px;}
 .btn-opt {padding: 7px 12px;border-radius: 8px;font-size: 12px;border: none;color: white;font-weight: bold;cursor: pointer;}
 .drag-zone {color: #ddd;font-size: 18px;cursor: grab;flex-shrink: 0;}
-/* ===== Clone Store Button ===== */
 .btn-clone-store {
   width: 100%;
   max-width: 300px;
@@ -109,7 +109,6 @@ thead { display: none !important; }}
 #qr-modal { position: static !important; background: white !important; }}
 .sidebar-icon-buttons { display: flex; justify-content: space-around; align-items: center; background: #f8f9fa; padding: 8px; border-radius: 10px; margin-bottom: 10px; gap: 5px; }
 
-/* ===== product_type styles ===== */
 .product-type-toggle {
   display: flex;
   gap: 10px;
@@ -165,7 +164,6 @@ thead { display: none !important; }}
 }
 #btn-manage-addons:hover { background: #e8faf3; }
 
-/* ===== addons picker modal ===== */
 #addons-picker-modal {
   display: none;
   position: fixed;
@@ -257,9 +255,6 @@ thead { display: none !important; }}
   margin-right: 5px;
 }
 </style>
-<base target="_blank">
-<base target="_blank">
-<base target="_blank">
 <base target="_blank">
 <base target="_blank">
 </head>
@@ -372,13 +367,10 @@ onclick="sessionStorage.setItem('back_from_manage', 'true'); toggleSidebar(); wi
 <button class="btn-reset" title="مسح الفلاتر" style="display:flex;align-items:center;justify-content:center;width:40px;height:40px;padding:0;margin-right:5px" onclick="resetFilters()"><span style="font-size:18px">مسح</span></button>
 </div>
 
-<!-- Clone Store Button - Always visible -->
-
 <div id="prod-list" class="products-container">
 </div>
 </div>
 
-<!-- Addons Picker Modal -->
 <div id="addons-picker-modal">
   <div id="addons-picker-content">
     <div id="addons-picker-header">
@@ -421,27 +413,22 @@ onclick="sessionStorage.setItem('back_from_manage', 'true'); toggleSidebar(); wi
 </div>
 </div>
 </div>
-<script>
-const SB_URL='https://wnvyqvwuzmxzzhilgidh.supabase.co',SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indudnlxdnd1em14enpoaWxnaWRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MTg1MDEsImV4cCI6MjA5MTQ5NDUwMX0.AyD4CYqA0cz9mC-bcOt16uUpueL_cAWT26Q92l574r0',_supabase=supabase.createClient(SB_URL,SB_KEY);
-const storeId=new URLSearchParams(window.location.search).get('store_id');
 
-// ✅ المتغيرات العالمية للمصادقة
+<script>
+// ✅ عميل Supabase من global.js
+const _sb = getSupabaseClient();
+
+const storeId = new URLSearchParams(window.location.search).get('store_id');
 let currentUser = null;
 let userPhone = '';
-
-let allProducts=[],currentImgUrl="",activeTableId=null,storeLogoUrl="",sortableInstance, storeSlug = '';
-
-// addon state variables
+let allProducts=[], currentImgUrl="", activeTableId=null, storeLogoUrl="", sortableInstance, storeSlug = '';
 let selectedAddonIds = [];
 let tempAddonIds = [];
 
-// ============================================================
-// ✅ NEW: Helper — extract filename from Supabase Storage URL
-// ============================================================
+
 function extractStorageFileName(url, bucket) {
     if (!url || url.includes('placeholder') || url.includes('via.placeholder')) return null;
     try {
-        // URL pattern: .../storage/v1/object/public/<bucket>/<filename>
         const marker = `/object/public/${bucket}/`;
         const idx = url.indexOf(marker);
         if (idx === -1) return null;
@@ -458,18 +445,11 @@ async function deleteProductImage(imageUrl) {
         const marker = '/object/public/product-images/';
         const idx = imageUrl.indexOf(marker);
         if (idx === -1) return;
-        
-        // استخرج اسم الملف بدون decodeURIComponent أولاً
         const rawFileName = imageUrl.substring(idx + marker.length).split('?')[0];
-        console.log('📁 اسم الملف الخام:', rawFileName);
-        console.log('🔗 الرابط الكامل:', imageUrl);
-        
-        const { data, error } = await _supabase.storage
+        const { data, error } = await _sb.storage
             .from('product-images')
             .remove([rawFileName]);
-            
         if (error) console.warn('❌ فشل الحذف:', error);
-        else console.log('✅ النتيجة:', data);
     } catch (e) {
         console.warn('❌ خطأ:', e);
     }
@@ -477,62 +457,6 @@ async function deleteProductImage(imageUrl) {
 
 
 
-// ============================================================
-// ✅ نظام المصادقة الجديد (JWT Token)
-// ============================================================
-async function checkAuth() {
-    const token = localStorage.getItem('auth_token');
-    if (!token) {
-        window.location.href = "index.html";
-        return null;
-    }
-
-    try {
-        const response = await fetch(
-            'https://wnvyqvwuzmxzzhilgidh.supabase.co/functions/v1/verify-token',
-            {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token: token })
-            }
-        );
-
-        const result = await response.json();
-
-        if (!result.valid) {
-            localStorage.removeItem('auth_token');
-            localStorage.removeItem('user_phone');
-            localStorage.removeItem('user_phone_display');
-            localStorage.removeItem('is_logged_in');
-            window.location.href = "index.html";
-            return null;
-        }
-
-        return result.user;
-
-    } catch (err) {
-        console.error('Auth check failed:', err);
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('user_phone');
-        localStorage.removeItem('user_phone_display');
-        localStorage.removeItem('is_logged_in');
-        window.location.href = "index.html";
-        return null;
-    }
-}
-
-// ============================================================
-// ✅ تسجيل الخروج
-// ============================================================
-function logout() {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('user_phone');
-    localStorage.removeItem('user_phone_display');
-    localStorage.removeItem('is_logged_in');
-    window.location.href = "index.html";
-}
-
-// ===== Toast Notifications =====
 async function showToast(message, type = 'info'){
     const existing = document.getElementById('toast-notification');
     if(existing) existing.remove();
@@ -548,7 +472,6 @@ async function showToast(message, type = 'info'){
         document.head.appendChild(style);
     }
     document.body.appendChild(toast);
-    // Wait for animation to show
     await new Promise(r => setTimeout(r, 100));
     setTimeout(()=>{toast.style.animation='toastSlideOut 0.3s ease forwards';setTimeout(()=>toast.remove(),300);},4000);
 }
@@ -560,7 +483,6 @@ async function init() {
     currentUser = user;
     userPhone = user.phone || '';
 
-    // حفظ رقم الهاتف في localStorage للتوافق مع الدوال القديمة
     if (userPhone) {
         localStorage.setItem('user_phone', userPhone);
     }
@@ -571,79 +493,161 @@ async function init() {
         return;
     }
 
-    // ✅ التحقق من ملكية المتجر (منع الوصول غير المصرح به)
+    // ✅ التحقق من ملكية المتجر — باستخدام verifyStoreOwnership من global.js
+    const isOwner = await verifyStoreOwnership(storeId, currentUser.id);
+    if (!isOwner) {
+        await showToast('🚫 ليس لديك صلاحية الوصول إلى هذا المتجر', 'error');
+        setTimeout(() => window.location.href = 'dashboard.html', 2500);
+        return;
+    }
+
     try {
-        const { data: store, error: storeError } = await _supabase
+        await loadCategoriesForDropdown();
+        loadUserAvatar();
+        await getUsername();
+
+        const { data: store, error: storeError } = await _sb
             .from('store_settings')
-            .select('user_id, store_name')
+            .select('store_name,logo_url,store_slug')
             .eq('id', storeId)
             .single();
 
-        if (storeError || !store) {
-            await showToast('⚠️ المتجر غير موجود', 'error');
-            setTimeout(() => window.location.href = 'dashboard.html', 2500);
-            return;
+        if (storeError) {
+            console.error('❌ خطأ في جلب بيانات المتجر:', storeError);
         }
 
-        // جلب user_id الخاص بالمستخدم من جدول profiles
-        const { data: profile } = await _supabase
-            .from('profiles')
-            .select('id')
-            .eq('phone_number', userPhone)
-            .single();
-
-        if (!profile || store.user_id !== profile.id) {
-            await showToast('🚫 ليس لديك صلاحية الوصول إلى هذا المتجر', 'error');
-            setTimeout(() => window.location.href = 'dashboard.html', 2500);
-            return;
+        if (store) {
+            document.getElementById('store-display-title').innerText = "متجر: " + store.store_name;
+            storeSlug = store.store_slug;
+            document.getElementById('main-store-logo').style.cursor = 'pointer';
+            document.getElementById('main-store-logo').onclick = () => {
+                window.open(`view_menu.html?s=${store.store_slug}`, '_blank')
+            };
+            if (store.logo_url) {
+                const mLogo = document.getElementById('main-store-logo');
+                mLogo.src = store.logo_url;
+                mLogo.style.display = 'block';
+                storeLogoUrl = store.logo_url;
+            }
         }
-    } catch (err) {
-        console.error('Ownership check failed:', err);
-        await showToast('⚠️ خطأ في التحقق من الصلاحيات', 'error');
-        setTimeout(() => window.location.href = 'dashboard.html', 2500);
-        return;
-    }await loadCategoriesForDropdown();loadUserAvatar();await getUsername();const{data:store}=await _supabase.from('store_settings').select('store_name,logo_url,store_slug').eq('id',storeId).single();if(store){document.getElementById('store-display-title').innerText="متجر: "+store.store_name;storeSlug=store.store_slug;document.getElementById('main-store-logo').style.cursor='pointer';document.getElementById('main-store-logo').onclick=()=>{window.open(`view_menu.html?s=${store.store_slug}`,'_blank')};if(store.logo_url){const mLogo=document.getElementById('main-store-logo');mLogo.src=store.logo_url;mLogo.style.display='block';storeLogoUrl=store.logo_url}}
-const el=document.getElementById('prod-list');sortableInstance=new Sortable(el,{handle:'.drag-handle',animation:150,ghostClass:'sortable-ghost',onEnd:async function(){showLoader(true);const cards=document.querySelectorAll('.product-card');const updates=[];cards.forEach((card,index)=>{const id=card.id.replace('row-','');const newOrder=index+1;const pIdx=allProducts.findIndex(p=>p.id==id);if(pIdx!==-1)allProducts[pIdx].product_order=newOrder;updates.push(_supabase.from('products').update({product_order:newOrder}).eq('id',id))});await Promise.all(updates);filterData();showLoader(false)}});await loadCategories();loadProducts()}
-async function loadCategories(){const{data}=await _supabase.from('categories').select('id,category_name').eq('store_id',storeId).order('display_order',{ascending:true});allCategories=data||[];const pCat=document.getElementById('p-cat'),fCat=document.getElementById('filter-cat'),warning=document.getElementById('no-cat-warning');fCat.innerHTML='<option value="">كل التصنيفات</option>';pCat.innerHTML='';if(data&&data.length>0){data.forEach(c=>{const opt=`<option value="${c.id}">${c.category_name}</option>`;pCat.innerHTML+=opt;fCat.innerHTML+=opt});warning.style.display='none'}else{pCat.innerHTML='<option value="">لا توجد تصنيفات!</option>';warning.style.display='block'}}
-async function loadProducts(){
-    showLoader(true);
 
-    // ✅ جلب المنتجات
-    const { data: products } = await _supabase
-        .from('products')
-        .select('*,categories(category_name)')
-        .eq('store_id', storeId)
-        .order('product_order', { ascending: true });
-
-    if (!products) {
-        showLoader(false);
-        return;
-    }
-
-    // ✅ جلب الصور بشكل منفصل
-    const productIds = products.map(p => p.id);
-    const { data: images } = await _supabase
-        .from('product_images')
-        .select('product_id, image_url')
-        .in('product_id', productIds);
-
-    // ✅ ربط الصور بالمنتجات
-    const imageMap = {};
-    if (images) {
-        images.forEach(img => {
-            imageMap[img.product_id] = img.image_url;
+        const el = document.getElementById('prod-list');
+        sortableInstance = new Sortable(el, {
+            handle: '.drag-handle',
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            onEnd: async function () {
+                showLoader(true);
+                const cards = document.querySelectorAll('.product-card');
+                const updates = [];
+                cards.forEach((card, index) => {
+                    const id = card.id.replace('row-', '');
+                    const newOrder = index + 1;
+                    const pIdx = allProducts.findIndex(p => p.id == id);
+                    if (pIdx !== -1) allProducts[pIdx].product_order = newOrder;
+                    updates.push(_sb.from('products').update({ product_order: newOrder }).eq('id', id));
+                });
+                await Promise.all(updates);
+                filterData();
+                showLoader(false);
+            }
         });
+
+        await loadCategories();
+        await loadProducts();
+    } catch (err) {
+        console.error('❌ خطأ في init():', err);
+        showToast('❌ خطأ في تحميل الصفحة: ' + err.message, 'error');
+        showLoader(false);
     }
-
-    allProducts = products.map(p => ({
-        ...p,
-        image_url: imageMap[p.id] || ''
-    }));
-
-    filterData();
-    showLoader(false);
 }
-function renderTable(data){const list=document.getElementById('prod-list');list.innerHTML='';if(data.length===0){list.innerHTML=`
+
+async function loadCategories() {
+    const { data } = await _sb
+        .from('categories')
+        .select('id,category_name')
+        .eq('store_id', storeId)
+        .order('display_order', { ascending: true });
+
+    allCategories = data || [];
+    const pCat = document.getElementById('p-cat'),
+          fCat = document.getElementById('filter-cat'),
+          warning = document.getElementById('no-cat-warning');
+
+    fCat.innerHTML = '<option value="">كل التصنيفات</option>';
+    pCat.innerHTML = '';
+    if (data && data.length > 0) {
+        data.forEach(c => {
+            const opt = `<option value="${c.id}">${c.category_name}</option>`;
+            pCat.innerHTML += opt;
+            fCat.innerHTML += opt;
+        });
+        warning.style.display = 'none';
+    } else {
+        pCat.innerHTML = '<option value="">لا توجد تصنيفات!</option>';
+        warning.style.display = 'block';
+    }
+}
+
+async function loadProducts() {
+    showLoader(true);
+    try {
+        const { data: products, error: prodError } = await _sb
+            .from('products')
+            .select('*,categories(category_name)')
+            .eq('store_id', storeId)
+            .order('product_order', { ascending: true });
+
+        if (prodError) {
+            console.error('❌ خطأ في جلب المنتجات:', prodError);
+            showToast('❌ خطأ في تحميل المنتجات: ' + prodError.message, 'error');
+            showLoader(false);
+            return;
+        }
+
+        if (!products || products.length === 0) {
+            allProducts = [];
+            filterData();
+            showLoader(false);
+            return;
+        }
+
+        const productIds = products.map(p => p.id);
+        const { data: images, error: imgError } = await _sb
+            .from('product_images')
+            .select('product_id, image_url')
+            .in('product_id', productIds);
+
+        if (imgError) {
+            console.error('❌ خطأ في جلب الصور:', imgError);
+        }
+
+        const imageMap = {};
+        if (images) {
+            images.forEach(img => {
+                imageMap[img.product_id] = img.image_url;
+            });
+        }
+
+        allProducts = products.map(p => ({
+            ...p,
+            image_url: imageMap[p.id] || ''
+        }));
+
+        filterData();
+    } catch (err) {
+        console.error('❌ خطأ غير متوقع في loadProducts:', err);
+        showToast('❌ فشل تحميل المنتجات: ' + err.message, 'error');
+    } finally {
+        showLoader(false);
+    }
+}
+
+function renderTable(data) {
+    const list = document.getElementById('prod-list');
+    list.innerHTML = '';
+    if (data.length === 0) {
+        list.innerHTML = `
 <div style="text-align:center;padding:60px 20px;color:#aaa;">
 <div style="font-size:60px;margin-bottom:15px;">🛍️</div>
 <h3 style="color:#bbb;margin-bottom:8px;">لا توجد منتجات بعد</h3>
@@ -657,79 +661,132 @@ onclick="openMenuScanner();">
 onclick="toggleForm()">
 + منتج
 </button>
-
 <button class="btn-main" style="background:#39bdc8;padding:14px;border-radius:10px;font-size:15px;"
 onclick="goToCloneStore()">
 + منتج من متجر أخر
 </button>
-
 </div>
+</div>`;
+        return;
+    }
 
+    const fallback = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiB2aWV3Qm94PSIwIDAgMTUwIDE1MCI+PHJlY3Qgd2lkdGg9IjE1MCIgaGVpZ2h0PSIxNTAiIGZpbGw9IiNmOGY5ZmEiIHJ4PSIxMiIvPjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiNhYWEiIHRleHQtYW5jaG9yPSJtaWRkbGUiPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==";
+    const catValue = document.getElementById('filter-cat').value;
+    const searchValue = document.getElementById('search-name').value;
+    const canDrag = (catValue !== "" && searchValue === "");
+    if (sortableInstance) sortableInstance.option("disabled", !canDrag);
 
-</div>`;return}
-const fallback="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiB2aWV3Qm94PSIwIDAgMTUwIDE1MCI+PHJlY3Qgd2lkdGg9IjE1MCIgaGVpZ2h0PSIxNTAiIGZpbGw9IiNmOGY5ZmEiIHJ4PSIxMiIvPjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiNhYWEiIHRleHQtYW5jaG9yPSJtaWRkbGUiPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==";const catValue=document.getElementById('filter-cat').value;const searchValue=document.getElementById('search-name').value;const canDrag=(catValue!==""&&searchValue==="");if(sortableInstance)sortableInstance.option("disabled",!canDrag);data.forEach(p=>{const hasSale=p.sale_price>0&&p.sale_price!==null;const displayPrice=(hasSale?p.sale_price:p.price).toFixed(2);const isAvail=p.is_available!==false;const productImg=(p.image_url&&p.image_url!=="")?p.image_url:(storeLogoUrl||fallback);list.innerHTML+=`
+    data.forEach(p => {
+        const hasSale = p.sale_price > 0 && p.sale_price !== null;
+        const displayPrice = (hasSale ? p.sale_price : p.price).toFixed(2);
+        const isAvail = p.is_available !== false;
+        const productImg = (p.image_url && p.image_url !== "") ? p.image_url : (storeLogoUrl || fallback);
+        list.innerHTML += `
 <div class="product-card" id="row-${p.id}">
 <div class="card-top">
-<div class="drag-zone">${canDrag?'<div class="drag-handle">☰</div>':''}</div>
-<div class="order-badge" title="ترتيب المنتج">${p.product_order||0}</div>
+<div class="drag-zone">${canDrag ? '<div class="drag-handle">☰</div>' : ''}</div>
+<div class="order-badge" title="ترتيب المنتج">${p.product_order || 0}</div>
 <img src="${productImg}" class="p-card-img" onclick="changeImageInTable('${p.id}')">
 <div class="card-info">
-<strong class="product-name">${p.product_type==='addon'?'<span style="color:#e67e22;font-size:11px;background:#fef5e7;padding:1px 5px;border-radius:4px;margin-left:4px;font-weight:bold;">➕ إضافة</span>':''} ${p.product_name}</strong>
+<strong class="product-name">${p.product_type === 'addon' ? '<span style="color:#e67e22;font-size:11px;background:#fef5e7;padding:1px 5px;border-radius:4px;margin-left:4px;font-weight:bold;">➕ إضافة</span>' : ''} ${p.product_name}</strong>
 <div class="price-box">
-${hasSale?`<span class="old-price">${Number(p.price).toFixed(2)}</span>`:''}
+${hasSale ? `<span class="old-price">${Number(p.price).toFixed(2)}</span>` : ''}
 <span class="current-price">${displayPrice} ر.س</span>
 </div>
 </div>
 <div class="status-zone">
-<button class="status-btn ${isAvail?'status-available':'status-unavailable'}"
+<button class="status-btn ${isAvail ? 'status-available' : 'status-unavailable'}"
 onclick="toggleAvailability('${p.id}', ${isAvail})">
-${isAvail?'متوفر':'معطل'}
+${isAvail ? 'متوفر' : 'معطل'}
 </button>
 </div>
 </div>
 <div class="card-bottom">
 <div class="card-actions">
 <span class="icon-btn edit-icon"
-onclick='setupEdit(${JSON.stringify(p).replace(/'/g,"&apos;")})'
+onclick='setupEdit(${JSON.stringify(p).replace(/'/g, "&apos;")})'
 title="تعديل">✎</span>
 <span class="icon-btn delete-icon"
 onclick="deleteProd('${p.id}')"
 title="حذف">🗑</span>
 </div>
 <div class="cat-container">
-<span class="cat-name" id="cat-label-${p.id}" onclick="showCatDropdown('${p.id}')" title="اضغط لتغيير التصنيف">${p.categories?p.categories.category_name:'غير مصنف'}</span>
+<span class="cat-name" id="cat-label-${p.id}" onclick="showCatDropdown('${p.id}')" title="اضغط لتغيير التصنيف">${p.categories ? p.categories.category_name : 'غير مصنف'}</span>
 <select class="cat-dropdown" id="cat-select-${p.id}" style="display:none;" onchange="changeProductCategory('${p.id}', this.value)" onblur="hideCatDropdown('${p.id}')">
 </select>
 </div>
 <div style="width: 60px;"></div>
 </div>
-</div>`})}
-function filterData(){const n=document.getElementById('search-name').value.toLowerCase(),c=document.getElementById('filter-cat').value,s=document.getElementById('filter-status').value,sort=document.getElementById('sort-main').value;let filtered=allProducts.filter(p=>(p.product_name||"").toLowerCase().includes(n)&&(c===""||p.category_id==c)&&(s===""||String(p.is_available!==false)===s));if(sort==="alpha"){filtered.sort((a,b)=>(a.product_name||"").localeCompare(b.product_name||"",'ar'))}else if(sort==="price-low"){filtered.sort((a,b)=>(a.sale_price||a.price||0)-(b.sale_price||b.price||0))}else if(sort==="price-high"){filtered.sort((a,b)=>(b.sale_price||b.price||0)-(a.sale_price||a.price||0))}else if(sort==="avail-first"){filtered.sort((a,b)=>(b.is_available!==false?1:0)-(a.is_available!==false?1:0))}else if(sort==="unavail-first"){filtered.sort((a,b)=>(a.is_available===false?0:1)-(b.is_available===false?0:1))}else if(sort==="category"){filtered.sort((a,b)=>(a.categories?.category_name||"").localeCompare(b.categories?.category_name||"",'ar'))}else if(sort==="type-main"){filtered=filtered.filter(p=>p.product_type!=='addon')}else if(sort==="type-addon"){filtered=filtered.filter(p=>p.product_type==='addon')}else{filtered.sort((a,b)=>(parseInt(a.product_order)||0)-(parseInt(b.product_order)||0))}
-renderTable(filtered)}
-async function toggleAvailability(id,current){const nextStatus=!current;const pIdx=allProducts.findIndex(p=>p.id==id);if(pIdx!==-1)allProducts[pIdx].is_available=nextStatus;filterData();await _supabase.from('products').update({is_available:nextStatus}).eq('id',id)}
-function showLoader(s){document.getElementById('loading-overlay').style.display=s?'flex':'none'}
+</div>`;
+    });
+}
 
-// ✅ MODIFIED: changeImageInTable — stores old image URL before replacing
-function changeImageInTable(id){activeTableId=id;document.getElementById('table-file-input').click()}
+function filterData() {
+    const n = document.getElementById('search-name').value.toLowerCase(),
+          c = document.getElementById('filter-cat').value,
+          s = document.getElementById('filter-status').value,
+          sort = document.getElementById('sort-main').value;
 
-document.getElementById('table-file-input').onchange=async function(e){
-    const file=e.target.files[0];
-    if(!file||!activeTableId)return;
+    let filtered = allProducts.filter(p =>
+        (p.product_name || "").toLowerCase().includes(n) &&
+        (c === "" || p.category_id == c) &&
+        (s === "" || String(p.is_available !== false) === s)
+    );
+
+    if (sort === "alpha") {
+        filtered.sort((a, b) => (a.product_name || "").localeCompare(b.product_name || "", 'ar'));
+    } else if (sort === "price-low") {
+        filtered.sort((a, b) => (a.sale_price || a.price || 0) - (b.sale_price || b.price || 0));
+    } else if (sort === "price-high") {
+        filtered.sort((a, b) => (b.sale_price || b.price || 0) - (a.sale_price || a.price || 0));
+    } else if (sort === "avail-first") {
+        filtered.sort((a, b) => (b.is_available !== false ? 1 : 0) - (a.is_available !== false ? 1 : 0));
+    } else if (sort === "unavail-first") {
+        filtered.sort((a, b) => (a.is_available === false ? 0 : 1) - (b.is_available === false ? 0 : 1));
+    } else if (sort === "category") {
+        filtered.sort((a, b) => (a.categories?.category_name || "").localeCompare(b.categories?.category_name || "", 'ar'));
+    } else if (sort === "type-main") {
+        filtered = filtered.filter(p => p.product_type !== 'addon');
+    } else if (sort === "type-addon") {
+        filtered = filtered.filter(p => p.product_type === 'addon');
+    } else {
+        filtered.sort((a, b) => (parseInt(a.product_order) || 0) - (parseInt(b.product_order) || 0));
+    }
+    renderTable(filtered);
+}
+
+async function toggleAvailability(id, current) {
+    const nextStatus = !current;
+    const pIdx = allProducts.findIndex(p => p.id == id);
+    if (pIdx !== -1) allProducts[pIdx].is_available = nextStatus;
+    filterData();
+    await _sb.from('products').update({ is_available: nextStatus }).eq('id', id);
+}
+
+function showLoader(s) {
+    document.getElementById('loading-overlay').style.display = s ? 'flex' : 'none';
+}
+
+function changeImageInTable(id) {
+    activeTableId = id;
+    document.getElementById('table-file-input').click();
+}
+
+document.getElementById('table-file-input').onchange = async function (e) {
+    const file = e.target.files[0];
+    if (!file || !activeTableId) return;
     showLoader(true);
 
-    // ✅ جلب الصورة القديمة من product_images
-    const { data: oldImage } = await _supabase
+    const { data: oldImage } = await _sb
         .from('product_images')
         .select('id, image_url')
         .eq('product_id', activeTableId)
         .maybeSingle();
 
-    // ✅ حذف من جدول فقط - الصورة تبقى في Storage
     if (oldImage?.image_url) {
-        await _supabase.from('product_images').delete().eq('id', oldImage.id);
+        await _sb.from('product_images').delete().eq('id', oldImage.id);
     }
 
-    // ✅ ضغط الصورة قبل الرفع (WebP, 400px, 75%)
     let uploadFile = file;
     if (file.size > 80 * 1024 || !file.type.includes('webp')) {
         try {
@@ -740,13 +797,11 @@ document.getElementById('table-file-input').onchange=async function(e){
         }
     }
 
-    // ✅ اسم ملف فريد يعتمد على التوقيت ورقم المتجر
     const fName = `${Date.now()}_store_${storeId}.webp`;
-    await _supabase.storage.from('product-images').upload(fName, uploadFile);
-    const url = _supabase.storage.from('product-images').getPublicUrl(fName).data.publicUrl;
+    await _sb.storage.from('product-images').upload(fName, uploadFile);
+    const url = _sb.storage.from('product-images').getPublicUrl(fName).data.publicUrl;
 
-    // ✅ إدراج في product_images
-    await _supabase.from('product_images').insert({
+    await _sb.from('product_images').insert({
         product_id: activeTableId,
         store_id: storeId,
         image_url: url
@@ -760,28 +815,65 @@ document.getElementById('table-file-input').onchange=async function(e){
     showLoader(false);
 };
 
-function toggleForm(){const f=document.getElementById('product-form-container');f.style.display=(f.style.display==='block')?'none':'block';if(f.style.display==='none'){document.getElementById('edit-id').value="";document.getElementById('p-name').value="";document.getElementById('p-price').value="";document.getElementById('p-sale').value="";document.getElementById('p-order').value="";document.getElementById('p-desc').value="";document.getElementById('p-barcode').value="";document.getElementById('preview-img').style.display='none';document.getElementById('placeholder-text').style.display='block';
-resetProductTypeUI();
-}}
-function previewImage(i){if(i.files&&i.files[0]){const r=new FileReader();r.onload=(e)=>{const img=document.getElementById('preview-img');img.src=e.target.result;img.style.display='block';document.getElementById('placeholder-text').style.display='none'};r.readAsDataURL(i.files[0])}}
-function setupEdit(p){window.scrollTo({top:0,behavior:'smooth'});if(document.getElementById('product-form-container').style.display!=='block')toggleForm();document.getElementById('edit-id').value=p.id;document.getElementById('p-name').value=p.product_name;document.getElementById('p-price').value=p.price;document.getElementById('p-sale').value=p.sale_price||"";document.getElementById('p-order').value=p.product_order||"";document.getElementById('p-desc').value=p.description||"";document.getElementById('p-barcode').value=p.barcode||"";document.getElementById('p-cat').value=p.category_id||"";if(p.image_url){document.getElementById('preview-img').src=p.image_url;document.getElementById('preview-img').style.display='block';document.getElementById('placeholder-text').style.display='none';currentImgUrl=p.image_url}else{document.getElementById('preview-img').style.display='none';document.getElementById('placeholder-text').style.display='block';currentImgUrl="";}
-const pType = p.product_type || 'main';
-document.querySelector(`input[name="product_type"][value="${pType}"]`).checked = true;
-onProductTypeChange();
-if(pType === 'main') {
-  loadExistingProductAddons(p.id);
-}
+function toggleForm() {
+    const f = document.getElementById('product-form-container');
+    f.style.display = (f.style.display === 'block') ? 'none' : 'block';
+    if (f.style.display === 'none') {
+        document.getElementById('edit-id').value = "";
+        document.getElementById('p-name').value = "";
+        document.getElementById('p-price').value = "";
+        document.getElementById('p-sale').value = "";
+        document.getElementById('p-order').value = "";
+        document.getElementById('p-desc').value = "";
+        document.getElementById('p-barcode').value = "";
+        document.getElementById('preview-img').style.display = 'none';
+        document.getElementById('placeholder-text').style.display = 'block';
+        resetProductTypeUI();
+    }
 }
 
-// ✅ MODIFIED: handleSave — حذف الصورة القديمة عند رفع صورة جديدة
-// ============================================
-// ✅ NEW: ضغط صورة المنتج قبل الرفع
-// - الصيغة: WebP
-// - الأبعاد: 400×400px كحد أقصى
-// - الجودة: 75%
-// - الحجم المستهدف: 30-80 KB
-// - الحد الأقصى: 150 KB
-// ============================================
+function previewImage(i) {
+    if (i.files && i.files[0]) {
+        const r = new FileReader();
+        r.onload = (e) => {
+            const img = document.getElementById('preview-img');
+            img.src = e.target.result;
+            img.style.display = 'block';
+            document.getElementById('placeholder-text').style.display = 'none';
+        };
+        r.readAsDataURL(i.files[0]);
+    }
+}
+
+function setupEdit(p) {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (document.getElementById('product-form-container').style.display !== 'block') toggleForm();
+    document.getElementById('edit-id').value = p.id;
+    document.getElementById('p-name').value = p.product_name;
+    document.getElementById('p-price').value = p.price;
+    document.getElementById('p-sale').value = p.sale_price || "";
+    document.getElementById('p-order').value = p.product_order || "";
+    document.getElementById('p-desc').value = p.description || "";
+    document.getElementById('p-barcode').value = p.barcode || "";
+    document.getElementById('p-cat').value = p.category_id || "";
+    if (p.image_url) {
+        document.getElementById('preview-img').src = p.image_url;
+        document.getElementById('preview-img').style.display = 'block';
+        document.getElementById('placeholder-text').style.display = 'none';
+        currentImgUrl = p.image_url;
+    } else {
+        document.getElementById('preview-img').style.display = 'none';
+        document.getElementById('placeholder-text').style.display = 'block';
+        currentImgUrl = "";
+    }
+    const pType = p.product_type || 'main';
+    document.querySelector(`input[name="product_type"][value="${pType}"]`).checked = true;
+    onProductTypeChange();
+    if (pType === 'main') {
+        loadExistingProductAddons(p.id);
+    }
+}
+
 async function compressProductImage(file, maxWidth = 400, quality = 0.75) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -790,22 +882,16 @@ async function compressProductImage(file, maxWidth = 400, quality = 0.75) {
             img.onload = () => {
                 const canvas = document.createElement('canvas');
                 let w = img.width, h = img.height;
-
-                // تقليل الأبعاد إذا كانت أكبر من 400px
                 if (w > maxWidth) {
                     h = Math.round((h * maxWidth) / w);
                     w = maxWidth;
                 }
-
                 canvas.width = w;
                 canvas.height = h;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, w, h);
-
-                // تحويل إلى WebP بجودة 75%
                 canvas.toBlob((blob) => {
                     if (blob) {
-                        // ✅ اسم ملف فريد يعتمد على التوقيت الزمني ورقم المتجر
                         const uniqueFileName = `${Date.now()}_store_${storeId}.webp`;
                         const compressedFile = new File([blob], uniqueFileName, {
                             type: 'image/webp',
@@ -825,34 +911,32 @@ async function compressProductImage(file, maxWidth = 400, quality = 0.75) {
         reader.readAsDataURL(file);
     });
 }
-async function handleSave(){
-    const name=document.getElementById('p-name').value,
-          price=document.getElementById('p-price').value,
-          catId=document.getElementById('p-cat').value;
-    if(!name||!price||!catId){showToast("⚠️ يرجى إكمال الحقول المطلوبة", "error");return}
+
+async function handleSave() {
+    const name = document.getElementById('p-name').value,
+          price = document.getElementById('p-price').value,
+          catId = document.getElementById('p-cat').value;
+    if (!name || !price || !catId) { showToast("⚠️ يرجى إكمال الحقول المطلوبة", "error"); return; }
     showLoader(true);
-    
-    const id=document.getElementById('edit-id').value,
-          file=document.getElementById('p-file').files[0];
-    let url=currentImgUrl;
+
+    const id = document.getElementById('edit-id').value,
+          file = document.getElementById('p-file').files[0];
+    let url = currentImgUrl;
     let imageInserted = false;
 
-    if(file){
+    if (file) {
         const editIdVal = document.getElementById('edit-id').value;
 
-        // ✅ جلب الصورة القديمة من product_images
-        const { data: oldImage } = await _supabase
+        const { data: oldImage } = await _sb
             .from('product_images')
             .select('id, image_url')
             .eq('product_id', editIdVal || 0)
             .maybeSingle();
 
-        // ✅ حذف من جدول فقط - الصورة تبقى في Storage
         if (editIdVal && oldImage?.image_url) {
-            await _supabase.from('product_images').delete().eq('id', oldImage.id);
+            await _sb.from('product_images').delete().eq('id', oldImage.id);
         }
 
-        // ✅ ضغط الصورة قبل الرفع (WebP, 400px, 75%)
         let uploadFile = file;
         if (file.size > 80 * 1024 || !file.type.includes('webp')) {
             try {
@@ -863,14 +947,12 @@ async function handleSave(){
             }
         }
 
-        // ✅ اسم ملف فريد يعتمد على التوقيت ورقم المتجر
         const fN = `${Date.now()}_store_${storeId}.webp`;
-        await _supabase.storage.from('product-images').upload(fN, uploadFile);
-        url = _supabase.storage.from('product-images').getPublicUrl(fN).data.publicUrl;
+        await _sb.storage.from('product-images').upload(fN, uploadFile);
+        url = _sb.storage.from('product-images').getPublicUrl(fN).data.publicUrl;
 
-        // ✅ إدراج في product_images - فقط إذا كان تعديل (editIdVal موجود)
         if (editIdVal) {
-            await _supabase.from('product_images').insert({
+            await _sb.from('product_images').insert({
                 product_id: parseInt(editIdVal),
                 store_id: storeId,
                 image_url: url
@@ -879,60 +961,52 @@ async function handleSave(){
         }
     }
 
-    const{data:prof}=await _supabase.from('profiles').select('id').eq('phone_number',userPhone).single();
     const productType = document.querySelector('input[name="product_type"]:checked').value;
-    const payload={
-        product_name:name,
-        price:parseFloat(price),
-        sale_price:document.getElementById('p-sale').value?parseFloat(document.getElementById('p-sale').value):null,
-        product_order:parseInt(document.getElementById('p-order').value)||0,
-        description:document.getElementById('p-desc').value,
-        barcode:document.getElementById('p-barcode').value||null,
-        category_id:catId,
-        store_id:storeId,
-        user_id:prof.id,
-        product_type:productType
+    const payload = {
+        product_name: name,
+        price: parseFloat(price),
+        sale_price: document.getElementById('p-sale').value ? parseFloat(document.getElementById('p-sale').value) : null,
+        product_order: parseInt(document.getElementById('p-order').value) || 0,
+        description: document.getElementById('p-desc').value,
+        barcode: document.getElementById('p-barcode').value || null,
+        category_id: catId,
+        store_id: storeId,
+        user_id: currentUser.id,
+        product_type: productType
     };
 
     let savedProductId = null;
-    if(id && id !== ''){
-        await _supabase.from('products').update(payload).eq('id', id);
+    if (id && id !== '') {
+        await _sb.from('products').update(payload).eq('id', id);
         savedProductId = parseInt(id);
     } else {
-        // ✅ إدراج جديد مع التقاط خطأ الحد الأقصى
-        const { data: newProd, error: insertError } = await _supabase.from('products').insert([payload]).select('id').single();
-        
-        // ✅ التقاط خطأ الحد الأقصى للمنتجات (P0001)
+        const { data: newProd, error: insertError } = await _sb.from('products').insert([payload]).select('id').single();
+
         if (insertError) {
             showLoader(false);
-            
-            // فحص إذا كان الخطأ من نوع P0001 (تجاوز الحد الأقصى)
             const errorMsg = insertError.message || '';
             const errorCode = insertError.code || '';
             const errorDetails = insertError.details || '';
-            
-            // PostgREST يُرجع الخطأ في message أو details
-            if (errorCode === 'P0001' || 
-                errorMsg.includes('P0001') || 
+
+            if (errorCode === 'P0001' ||
+                errorMsg.includes('P0001') ||
                 errorMsg.includes('max_limit') ||
                 errorMsg.includes('الحد الأقصى') ||
                 errorDetails.includes('P0001') ||
                 errorDetails.includes('الحد الأقصى')) {
-                
+
                 showToast('⚠️ ' + errorMsg, 'error');
                 return;
             } else {
-                // خطأ آخر
                 showToast('❌ حدث خطأ: ' + errorMsg, 'error');
                 return;
             }
         }
-        
+
         if (newProd && newProd.id) {
             savedProductId = parseInt(newProd.id);
-            // ✅ إدراج صورة المنتج الجديد في product_images - فقط إذا لم تُدرج مسبقاً
             if (url && !imageInserted) {
-                await _supabase.from('product_images').insert({
+                await _sb.from('product_images').insert({
                     product_id: savedProductId,
                     store_id: storeId,
                     image_url: url
@@ -941,43 +1015,41 @@ async function handleSave(){
         }
     }
 
-    if(productType === 'main' && savedProductId) {
+    if (productType === 'main' && savedProductId) {
         await saveProductAddons(savedProductId);
     }
     toggleForm();
     await loadProducts();
 }
 
-// ✅ MODIFIED: deleteProd — حذف الصورة من Storage قبل حذف المنتج
-async function deleteProd(id){
-    if(confirm("هل أنت متأكد من حذف هذا المنتج؟")){
+async function deleteProd(id) {
+    if (confirm("هل أنت متأكد من حذف هذا المنتج؟")) {
         showLoader(true);
         const product = allProducts.find(p => p.id == id);
 
-        // ✅ حذف من جدول فقط - الصورة تبقى في Storage
-        const { data: img } = await _supabase
+        const { data: img } = await _sb
             .from('product_images')
             .select('image_url')
             .eq('product_id', id)
             .maybeSingle();
 
         if (img?.image_url) {
-            await _supabase.from('product_images').delete().eq('product_id', id);
+            await _sb.from('product_images').delete().eq('product_id', id);
         }
 
-        await _supabase.from('products').delete().eq('id',id);
+        await _sb.from('products').delete().eq('id', id);
         await loadProducts();
     }
 }
 
-function resetFilters(){document.getElementById('search-name').value="";document.getElementById('filter-cat').value="";document.getElementById('filter-status').value="";document.getElementById('sort-main').value="";filterData()}
-function logout() {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('user_phone');
-    localStorage.removeItem('user_phone_display');
-    localStorage.removeItem('is_logged_in');
-    window.location.href = 'index.html';
+function resetFilters() {
+    document.getElementById('search-name').value = "";
+    document.getElementById('filter-cat').value = "";
+    document.getElementById('filter-status').value = "";
+    document.getElementById('sort-main').value = "";
+    filterData();
 }
+
 async function openMenuScanner() {
     const modal = document.getElementById('scanner-modal');
     modal.style.display = 'flex';
@@ -993,59 +1065,142 @@ async function openMenuScanner() {
         btn.disabled = false;
         btn.style.opacity = "1";
         btn.innerText = "📸 اختر صورة المنيو للرفع";
-    } catch(e) {
+    } catch (e) {
         btn.innerText = "❌ خطأ في التحقق";
         btn.style.background = "#e74c3c";
     }
 }
-function closeScannerModal(){document.getElementById('scanner-modal').style.display='none';document.getElementById('modal-file-in').value='';document.getElementById('modal-output').innerText='';document.getElementById('modal-loading-section').style.display='none';document.getElementById('modal-upload-btn').style.display='flex'}
-async function startDirectUpload(input){const file=input.files[0];if(!file||!window.realUserId)return;const loading=document.getElementById('modal-loading-section'),btn=document.getElementById('modal-upload-btn'),output=document.getElementById('modal-output');btn.style.display='none';loading.style.display='block';output.innerText="";const reader=new FileReader();reader.readAsDataURL(file);reader.onload=async()=>{const base64Data=reader.result.split(',')[1];try{const response=await fetch(`${SB_URL}/functions/v1/analyze-image`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${SB_KEY}`},body:JSON.stringify({image:base64Data,store_id:parseInt(storeId),user_id:window.realUserId})});if(response.ok){output.style.color="#24b47e";output.innerText="✅ تمت العملية بنجاح! جاري التحديث...";if(typeof loadCategories==="function")await loadCategories();
-if(typeof loadProducts==="function")await loadProducts();setTimeout(closeScannerModal,2000)}else{throw new Error(await response.text())}}catch(err){output.style.color="#e74c3c";output.innerText="❌ فشل الرفع: "+err.message;btn.style.display='flex';loading.style.display='none'}}}
+
+function closeScannerModal() {
+    document.getElementById('scanner-modal').style.display = 'none';
+    document.getElementById('modal-file-in').value = '';
+    document.getElementById('modal-output').innerText = '';
+    document.getElementById('modal-loading-section').style.display = 'none';
+    document.getElementById('modal-upload-btn').style.display = 'flex';
+}
+
+async function startDirectUpload(input) {
+    const file = input.files[0];
+    if (!file || !window.realUserId) return;
+    const loading = document.getElementById('modal-loading-section'),
+          btn = document.getElementById('modal-upload-btn'),
+          output = document.getElementById('modal-output');
+    btn.style.display = 'none';
+    loading.style.display = 'block';
+    output.innerText = "";
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = async () => {
+        const base64Data = reader.result.split(',')[1];
+        try {
+            const response = await fetch(`${SB_URL}/functions/v1/analyze-image`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SB_KEY}` },
+                body: JSON.stringify({ image: base64Data, store_id: parseInt(storeId), user_id: window.realUserId })
+            });
+            if (response.ok) {
+                output.style.color = "#24b47e";
+                output.innerText = "✅ تمت العملية بنجاح! جاري التحديث...";
+                if (typeof loadCategories === "function") await loadCategories();
+                if (typeof loadProducts === "function") await loadProducts();
+                setTimeout(closeScannerModal, 2000);
+            } else {
+                throw new Error(await response.text());
+            }
+        } catch (err) {
+            output.style.color = "#e74c3c";
+            output.innerText = "❌ فشل الرفع: " + err.message;
+            btn.style.display = 'flex';
+            loading.style.display = 'none';
+        }
+    }
+}
+
 init();
-function toggleSidebar(){const sidebar=document.getElementById('sidebar');const overlay=document.getElementById('sidebar-overlay');sidebar.classList.toggle('active');if(sidebar.classList.contains('active'))overlay.style.display='block';else overlay.style.display='none'}
-function getStoreUrl(){if(!storeSlug)return null;return new URL(`view_menu.html?s=${storeSlug}`,window.location.href).href}
-function showQrCode(event){event.preventDefault();const storeUrl=getStoreUrl();if(!storeUrl){showToast('❌ لا يمكن العثور على رابط المتجر', 'error');return}
-const qrContainer=document.getElementById('qr-code-container');qrContainer.innerHTML=`<img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(storeUrl)}" alt="QR Code">`;document.getElementById('qr-modal').style.display='flex';toggleSidebar()}
-function closeQrModal(){document.getElementById('qr-modal').style.display='none'}
-function copyStoreLink(event){event.preventDefault();const storeUrl=getStoreUrl();if(!storeUrl){showToast('❌ لا يمكن العثور على رابط المتجر', 'error');return}
-navigator.clipboard.writeText(storeUrl).then(()=>{showToast('✅ تم نسخ رابط المتجر إلى الحافظة', 'success')}).catch(err=>{console.error('Failed to copy: ',err);showToast('❌ فشل نسخ الرابط', 'error')});toggleSidebar()}
-function shareStoreLink(event){event.preventDefault();const storeUrl=getStoreUrl();if(!storeUrl){showToast('❌ لا يمكن العثور على رابط المتجر', 'error');return}
-if(navigator.share){navigator.share({title:'رابط متجري',text:'تفضل بزيارة متجري للاطلاع على المنتجات',url:storeUrl,}).then(()=>console.log('Store shared successfully')).catch((error)=>console.log('Error sharing',error))}else{navigator.clipboard.writeText(storeUrl).then(()=>{showToast('✅ المشاركة غير مدعومة، تم نسخ الرابط بدلاً من ذلك', 'success')}).catch(err=>{showToast('❌ فشل نسخ الرابط', 'error')})};toggleSidebar()}
-function openStoreLink(event){event.preventDefault();const storeUrl=getStoreUrl();if(!storeUrl){showToast('❌ لا يمكن العثور على رابط المتجر', 'error');return}
-window.open(storeUrl,'_blank');toggleSidebar()}
-function printQR(){const qrImg=document.querySelector('#qr-code-container img');if(!qrImg)return;const printWin=window.open('','_blank');printWin.document.write(`
+
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    sidebar.classList.toggle('active');
+    if (sidebar.classList.contains('active')) overlay.style.display = 'block';
+    else overlay.style.display = 'none';
+}
+
+function getStoreUrl() {
+    if (!storeSlug) return null;
+    return new URL(`view_menu.html?s=${storeSlug}`, window.location.href).href;
+}
+
+function showQrCode(event) {
+    event.preventDefault();
+    const storeUrl = getStoreUrl();
+    if (!storeUrl) { showToast('❌ لا يمكن العثور على رابط المتجر', 'error'); return; }
+    const qrContainer = document.getElementById('qr-code-container');
+    qrContainer.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(storeUrl)}" alt="QR Code">`;
+    document.getElementById('qr-modal').style.display = 'flex';
+    toggleSidebar();
+}
+
+function closeQrModal() {
+    document.getElementById('qr-modal').style.display = 'none';
+}
+
+function copyStoreLink(event) {
+    event.preventDefault();
+    const storeUrl = getStoreUrl();
+    if (!storeUrl) { showToast('❌ لا يمكن العثور على رابط المتجر', 'error'); return; }
+    navigator.clipboard.writeText(storeUrl).then(() => {
+        showToast('✅ تم نسخ رابط المتجر إلى الحافظة', 'success');
+    }).catch(err => {
+        console.error('Failed to copy: ', err);
+        showToast('❌ فشل نسخ الرابط', 'error');
+    });
+    toggleSidebar();
+}
+
+function shareStoreLink(event) {
+    event.preventDefault();
+    const storeUrl = getStoreUrl();
+    if (!storeUrl) { showToast('❌ لا يمكن العثور على رابط المتجر', 'error'); return; }
+    if (navigator.share) {
+        navigator.share({ title: 'رابط متجري', text: 'تفضل بزيارة متجري للاطلاع على المنتجات', url: storeUrl })
+            .then(() => console.log('Store shared successfully'))
+            .catch((error) => console.log('Error sharing', error));
+    } else {
+        navigator.clipboard.writeText(storeUrl).then(() => {
+            showToast('✅ المشاركة غير مدعومة، تم نسخ الرابط بدلاً من ذلك', 'success');
+        }).catch(err => { showToast('❌ فشل نسخ الرابط', 'error'); });
+    }
+    toggleSidebar();
+}
+
+function openStoreLink(event) {
+    event.preventDefault();
+    const storeUrl = getStoreUrl();
+    if (!storeUrl) { showToast('❌ لا يمكن العثور على رابط المتجر', 'error'); return; }
+    window.open(storeUrl, '_blank');
+    toggleSidebar();
+}
+
+function printQR() {
+    const qrImg = document.querySelector('#qr-code-container img');
+    if (!qrImg) return;
+    const printWin = window.open('', '_blank');
+    printWin.document.write(`
 <html><head><title>طباعة QR</title>
 <style>
 body { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; margin:0; font-family:sans-serif; }
 img { width:250px; height:250px; }
 p { color:#333; font-size:16px; margin-top:15px; }
-
-/* ===== Clone Store Button ===== */
-.btn-clone-store {
-  width: 100%;
-  max-width: 300px;
-  margin: 0 auto;
-  padding: 10px 25px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: bold;
-  font-size: 14px;
-  transition: 0.3s;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-}
-.btn-clone-store:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-}
-
 </style></head>
 <body>
 <img src="${qrImg.src}">
 <p>امسح الكود لفتح المتجر</p>
 </body></html>
-`);printWin.document.close();printWin.onload=()=>{printWin.print()}}
+`);
+    printWin.document.close();
+    printWin.onload = () => { printWin.print(); };
+}
 
 function openProfilePage() {
     toggleSidebar();
@@ -1055,7 +1210,7 @@ function openProfilePage() {
 let allCategories = [];
 
 async function loadCategoriesForDropdown() {
-    const { data } = await _supabase.from('categories')
+    const { data } = await _sb.from('categories')
         .select('id, category_name')
         .eq('store_id', storeId)
         .order('display_order', { ascending: true });
@@ -1065,10 +1220,10 @@ async function loadCategoriesForDropdown() {
 function showCatDropdown(productId) {
     const label = document.getElementById('cat-label-' + productId);
     const select = document.getElementById('cat-select-' + productId);
-    select.innerHTML = allCategories.map(function(c) {
+    select.innerHTML = allCategories.map(function (c) {
         return '<option value="' + c.id + '">' + c.category_name + '</option>';
     }).join('');
-    const currentProduct = allProducts.find(function(p) { return p.id == productId; });
+    const currentProduct = allProducts.find(function (p) { return p.id == productId; });
     if (currentProduct && currentProduct.category_id) {
         select.value = currentProduct.category_id;
     }
@@ -1078,7 +1233,7 @@ function showCatDropdown(productId) {
 }
 
 function hideCatDropdown(productId) {
-    setTimeout(function() {
+    setTimeout(function () {
         var label = document.getElementById('cat-label-' + productId);
         var select = document.getElementById('cat-select-' + productId);
         if (label && select) {
@@ -1091,19 +1246,19 @@ function hideCatDropdown(productId) {
 async function changeProductCategory(productId, newCategoryId) {
     showLoader(true);
     try {
-        const { error } = await _supabase.from('products')
+        const { error } = await _sb.from('products')
             .update({ category_id: newCategoryId })
             .eq('id', productId);
         if (error) throw error;
-        const pIdx = allProducts.findIndex(function(p) { return p.id == productId; });
+        const pIdx = allProducts.findIndex(function (p) { return p.id == productId; });
         if (pIdx !== -1) {
             allProducts[pIdx].category_id = newCategoryId;
-            var newCat = allCategories.find(function(c) { return c.id == newCategoryId; });
+            var newCat = allCategories.find(function (c) { return c.id == newCategoryId; });
             if (newCat) {
                 allProducts[pIdx].categories = { category_name: newCat.category_name };
             }
         }
-        var newCat = allCategories.find(function(c) { return c.id == newCategoryId; });
+        var newCat = allCategories.find(function (c) { return c.id == newCategoryId; });
         var label = document.getElementById('cat-label-' + productId);
         if (label && newCat) {
             label.innerText = newCat.category_name;
@@ -1119,24 +1274,24 @@ async function changeProductCategory(productId, newCategoryId) {
 
 async function loadUserAvatar() {
     try {
-        const { data } = await _supabase
+        const { data } = await _sb
             .from('profiles')
             .select('profile_img_url')
-            .eq('phone_number', userPhone)
+            .eq('id', currentUser.id)
             .single();
         if (data && data.profile_img_url) {
             document.getElementById('sidebar-user-avatar').src = data.profile_img_url;
         }
-    } catch (e) {}
+    } catch (e) { }
 }
 
 async function getUsername() {
-    if (!userPhone) return;
+    if (!currentUser || !currentUser.id) return;
     try {
-        const { data, error } = await _supabase
+        const { data, error } = await _sb
             .from('profiles')
             .select('username')
-            .eq('phone_number', userPhone)
+            .eq('id', currentUser.id)
             .single();
         if (data && data.username) {
             document.getElementById('username-display').textContent = data.username;
@@ -1149,7 +1304,6 @@ async function getUsername() {
     }
 }
 
-// ===== Product Type Functions =====
 function onProductTypeChange() {
     const selected = document.querySelector('input[name="product_type"]:checked').value;
     const labelMain = document.getElementById('label-type-main');
@@ -1198,7 +1352,7 @@ async function openAddonsPicker() {
     tempAddonIds = selectedAddonIds.map(Number);
     listEl.innerHTML = '<p style="text-align:center;color:#aaa;padding:20px 0;">جاري تحميل الإضافات...</p>';
     try {
-        const { data: addons, error } = await _supabase
+        const { data: addons, error } = await _sb
             .from('products')
             .select('id, product_name, price, sale_price')
             .eq('store_id', storeId)
@@ -1216,7 +1370,7 @@ async function openAddonsPicker() {
             return;
         }
         const addonIds = addons.map(a => a.id);
-        const { data: images } = await _supabase
+        const { data: images } = await _sb
             .from('product_images')
             .select('product_id, image_url')
             .in('product_id', addonIds);
@@ -1272,7 +1426,7 @@ function closeAddonsPicker() {
 
 async function saveProductAddons(productId) {
     const mainId = parseInt(productId);
-    const { error: delError } = await _supabase.from('product_addons').delete().eq('main_product_id', mainId);
+    const { error: delError } = await _sb.from('product_addons').delete().eq('main_product_id', mainId);
     if (delError) console.error('خطأ في حذف الإضافات القديمة:', delError);
     if (selectedAddonIds.length > 0) {
         const rows = selectedAddonIds.map(addonId => ({
@@ -1280,14 +1434,14 @@ async function saveProductAddons(productId) {
             addon_product_id: parseInt(addonId),
             store_id: parseInt(storeId)
         }));
-        const { error: insError } = await _supabase.from('product_addons').insert(rows);
+        const { error: insError } = await _sb.from('product_addons').insert(rows);
         if (insError) console.error('خطأ في حفظ الإضافات:', insError);
     }
 }
 
 async function loadExistingProductAddons(productId) {
     try {
-        const { data } = await _supabase
+        const { data } = await _sb
             .from('product_addons')
             .select('addon_product_id')
             .eq('main_product_id', parseInt(productId));
@@ -1298,12 +1452,9 @@ async function loadExistingProductAddons(productId) {
     }
 }
 
-
-// ✅ Navigate to clone_store.html
 function goToCloneStore() {
     window.location.href = `clone_store.html?store_id=${storeId}`;
 }
-
 </script>
 </body>
 </html>

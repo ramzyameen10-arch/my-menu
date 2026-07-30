@@ -5,13 +5,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>خطط الاشتراك | نظام المنيو</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="global.js"></script>
 <style>
 :root{--primary:#24b47e;--primary-dark:#1a9c6a;--dark:#2f3542;--bg:#f4f7f6;--muted:#95a5a6}
 *{box-sizing:border-box}
 body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl;margin:0;padding:0}
 .container{max-width:900px;margin:auto;padding:15px}
-
-/* ===== الهيدر ===== */
 .top-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:25px;background:white;padding:12px 18px;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,0.05)}
 .header-left{display:flex;align-items:center;gap:10px}
 .header-right{display:flex;align-items:center;gap:12px}
@@ -19,13 +18,9 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl
 .back-btn:hover,.store-btn:hover{background:var(--bg)}
 .store-name-header{font-weight:bold;color:var(--dark);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px}
 .store-logo-header{width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid var(--primary);flex-shrink:0;background:#eee}
-
-/* ===== العنوان ===== */
 .hero{text-align:center;margin-bottom:25px}
 .hero h1{color:var(--dark);font-size:1.8em;margin:0 0 8px 0}
 .hero p{color:#888;font-size:14px;margin:0}
-
-/* ===== بطاقات الخطط ===== */
 .plans-grid{display:flex;gap:20px;flex-wrap:wrap;justify-content:center;align-items:stretch}
 .plan-card{background:white;border-radius:18px;padding:28px 24px;width:340px;box-shadow:0 4px 20px rgba(0,0,0,0.06);position:relative;display:flex;flex-direction:column}
 .plan-card.featured{border:2px solid var(--primary)}
@@ -49,8 +44,6 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl
 .cta-btn.primary:hover{background:var(--primary-dark)}
 .cta-btn.secondary{background:white;color:var(--dark);border:1px solid #ddd}
 .cta-btn.secondary:hover{background:var(--bg)}
-
-/* ===== زر إلغاء الاشتراك ===== */
 .cancel-sub-btn {
     display: block;
     width: fit-content;
@@ -69,8 +62,6 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl
     background: #e74c3c;
     color: white;
 }
-
-/* ===== رسالة الاشتراك النشط ===== */
 .active-sub-message {
     text-align: center;
     padding: 40px 20px;
@@ -124,12 +115,10 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl
     color: var(--primary);
     font-size: 15px;
 }
-
 @media(min-width:601px){
     .top-header,.hero{max-width:700px;margin-left:auto;margin-right:auto}
     .top-header{margin-bottom:25px}
 }
-
 @media(max-width:600px){
     .plans-grid{flex-wrap:nowrap;gap:10px;align-items:stretch}
     .plan-card{width:50%;padding:16px 10px;border-radius:14px}
@@ -150,14 +139,11 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl
     .active-sub-message h2{font-size:1.2em}
     .cancel-sub-btn{padding:9px 18px;font-size:13px}
 }
-
 @media(max-width:380px){
     .plan-card{padding:12px 8px}
     .price{font-size:1.3em}
     .features li{font-size:10.5px}
 }
-
-/* ===== حالة الاشتراك الحالي ===== */
 .sub-status-banner {
     display: flex;
     align-items: center;
@@ -206,8 +192,6 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl
 .sub-status-banner.active .sub-status-countdown { color: #166534; border: 1px solid #86efac; }
 .sub-status-banner.expired .sub-status-countdown { color: #991b1b; border: 1px solid #fca5a5; }
 .sub-status-banner.free .sub-status-countdown { color: #92400e; border: 1px solid #fcd34d; }
-
-/* ===== بادج الاشتراك ===== */
 .sub-badge { 
     display: inline-flex; 
     align-items: center; 
@@ -222,8 +206,6 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl
 .sub-badge.active { color: #166534; border: 1px solid #86efac; }
 .sub-badge.expired { color: #991b1b; border: 1px solid #fca5a5; }
 .sub-badge.free { color: #92400e; border: 1px solid #fcd34d; }
-
-/* ===== Modal تأكيد الإلغاء ===== */
 .modal-overlay {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
@@ -297,8 +279,6 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl
 .modal-btn.cancel:hover {
     background: #e8e8e8;
 }
-
-/* ===== شاشة تحديث الاشتراك بعد الدفع ===== */
 .payment-overlay {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
@@ -322,8 +302,6 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 .payment-overlay p { color: var(--dark); font-size: 14px; font-weight: bold; margin: 0; max-width: 280px; }
-
-/* ===== بانر دفعة معلقة (يفضل ظاهر حتى بعد إغلاق/فتح الصفحة) ===== */
 .pending-payment-banner {
     display: none;
     align-items: center;
@@ -379,7 +357,6 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl
 }
 .pending-payment-refresh-btn:hover { background: #1d4ed8; color: white; }
 .pending-payment-refresh-btn:disabled { opacity: 0.6; cursor: default; }
-
 @media(max-width:600px){
     .pending-payment-banner{padding:12px 14px}
     .pending-payment-text{font-size:12px}
@@ -387,16 +364,11 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl
 }
 </style>
 <base target="_blank">
-<!-- Paddle.js for inline checkout -->
 <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
-<base target="_blank">
-<base target="_blank">
-<base target="_blank">
 </head>
 <body>
 
 <div class="container">
-    <!-- الهيدر -->
     <div class="top-header">
         <div class="header-right">
             <img id="store-logo-header" class="store-logo-header" src="" alt="شعار المتجر" style="display:none">
@@ -408,7 +380,6 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl
         </div>
     </div>
 
-    <!-- بانر دفعة معلقة (يظل ظاهراً حتى بعد إغلاق/فتح الصفحة لحد ما الاشتراك يتفعّل فعلياً) -->
     <div id="pending-payment-banner" class="pending-payment-banner">
         <div class="pending-payment-left">
             <span class="pending-payment-spinner"></span>
@@ -420,7 +391,6 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl
         <button class="pending-payment-refresh-btn" id="pending-payment-refresh-btn" onclick="manualCheckPendingPayment()">🔄 تحقق الآن</button>
     </div>
 
-    <!-- حالة الاشتراك الحالي -->
     <div id="sub-status-banner" class="sub-status-banner" style="display:none;">
         <div class="sub-status-left">
             <span id="sub-status-badge"></span>
@@ -429,21 +399,17 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl
         <span class="sub-status-countdown" id="sub-status-countdown"></span>
     </div>
 
-    <!-- العنوان -->
     <div class="hero" id="hero-section">
         <h1 id="hero-title">اختر خطتك</h1>
         <p id="hero-desc">خطة مرنة تناسب احتياجات متجرك — ابدأ مجاناُ وانتقل للبرو متى شئت</p>
     </div>
 
-    <!-- محتوى الخطط / الاشتراك النشط -->
     <div id="plans-content">
         <div class="plans-grid" id="plans-grid">
-            <!-- خطة برو -->
             <div class="plan-card featured">
                 <span class="badge-popular">الأكثر شيوعاُ</span>
                 <div class="plan-title">برو</div>
                 <div class="plan-sub">للنمو والتوسع بلا حدود</div>
-
                 <div class="price-row">
                     <span class="old-price">59 ر.س/شهر</span>
                 </div>
@@ -462,8 +428,6 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl
                 </ul>
                 <button class="cta-btn primary" onclick="subscribeNow('pro')">اشترك الآن</button>
             </div>
-
-            <!-- خطة مجاني -->
             <div class="plan-card">
                 <div class="plan-title">مجاني</div>
                 <div class="plan-sub muted">للبدء السريع وتجربة المنصة</div>
@@ -485,7 +449,6 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl
     </div>
 </div>
 
-<!-- Modal تأكيد إلغاء الاشتراك -->
 <div id="cancel-modal" class="modal-overlay">
     <div class="modal-box">
         <div class="warning-icon">⚠️</div>
@@ -498,19 +461,14 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);direction:rtl
     </div>
 </div>
 
-<!-- شاشة انتظار تحديث الاشتراك بعد نجاح الدفع -->
 <div id="payment-overlay" class="payment-overlay">
     <div class="payment-spinner"></div>
     <p id="payment-overlay-text">تم الدفع بنجاح، جاري تفعيل اشتراكك...</p>
 </div>
 
 <script>
-// ===== إعدادات الاتصال بـ Supabase =====
-const SB_URL='https://wnvyqvwuzmxzzhilgidh.supabase.co',
-      SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indudnlxdnd1em14enpoaWxnaWRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MTg1MDEsImV4cCI6MjA5MTQ5NDUwMX0.AyD4CYqA0cz9mC-bcOt16uUpueL_cAWT26Q92l574r0',
-      _supabase=supabase.createClient(SB_URL,SB_KEY);
+const _sb = getSupabaseClient();
 
-// ✅ المتغيرات العالمية
 let currentUser = null;
 let userPhone = '';
 const urlParams = new URLSearchParams(window.location.search);
@@ -518,16 +476,10 @@ const currentStoreId = urlParams.get('store_id');
 let storeSlug = '';
 let currentStoreData = null;
 
-// ✅ متغيرات خاصة بحالة الدفع عبر Paddle
 let paddleCheckoutCompleted = false;
 let paddlePendingPlan = null;
-let bgPendingPollTimer = null; // مؤقّت الفحص الدوري في الخلفية للدفعة المعلقة
+let bgPendingPollTimer = null;
 
-// ============================================================
-// ✅ إدارة "الدفعة المعلقة" عبر localStorage
-// الهدف: البانر يفضل ظاهر حتى لو المستخدم قفل الصفحة وفتحها تاني،
-// لحد ما نتأكد فعلياً إن الـ webhook حدّث الاشتراك في قاعدة البيانات.
-// ============================================================
 function pendingPaymentKey(){
     return `pending_payment_${currentStoreId}`;
 }
@@ -552,85 +504,11 @@ function clearPendingPayment(){
     try{ localStorage.removeItem(pendingPaymentKey()); }catch(e){}
 }
 
-// ===== أسعار الخطط =====
 const PLAN_PRICES = {
     'pro': 39,
     'free': 0
 };
 
-// ============================================================
-// ✅ نظام المصادقة والمطابقة
-// ============================================================
-async function checkAuth() {
-    const token = localStorage.getItem('auth_token');
-    if (!token) {
-        window.location.href = "index.html";
-        return null;
-    }
-
-    try {
-        const response = await fetch(
-            'https://wnvyqvwuzmxzzhilgidh.supabase.co/functions/v1/verify-token',
-            {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token: token })
-            }
-        );
-
-        const result = await response.json();
-
-        if (!result.valid) {
-            logout();
-            return null;
-        }
-
-        return result.user;
-
-    } catch (err) {
-        console.error('Auth check failed:', err);
-        logout();
-        return null;
-    }
-}
-
-function logout() {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('user_phone');
-    localStorage.removeItem('user_phone_display');
-    localStorage.removeItem('is_logged_in');
-    window.location.href = "index.html";
-}
-
-async function initAuth(){
-    const user = await checkAuth();
-    if (!user) return false;
-
-    currentUser = user;
-    userPhone = user.phone || '';
-
-    if (userPhone) {
-        localStorage.setItem('user_phone', userPhone);
-    }
-    return true;
-}
-
-// ===== التحقق من ملكية المتجر =====
-async function verifyStoreOwnership(storeId){
-    if(!storeId || !userPhone) return false;
-    try{
-        const {data: profile} = await _supabase.from('profiles').select('id').eq('phone_number', userPhone).single();
-        if(!profile) return false;
-        const {data: store, error} = await _supabase.from('store_settings').select('user_id').eq('id', storeId).single();
-        if(error || !store) return false;
-        return store.user_id === profile.id;
-    } catch(e){
-        console.error('Error verifying ownership:', e);
-        return false;
-    }
-}
-
-// ===== عرض حالة الاشتراك في الأعلى =====
 function renderSubscriptionStatus(data){
     const plan = data.subscription_plan || 'free';
     const status = data.subscription_status || 'active';
@@ -671,7 +549,6 @@ function renderSubscriptionStatus(data){
             countdown.innerText = '⭐ ارتقِ للبرو';
         }
     } else if (isCanceled) {
-        // 🚫 مُلغى لكن لم ينتهِ — يبقى اللون الأخضر لأن الخدمة مستمرة
         banner.classList.add('active');
         badge.innerHTML = `<span class="sub-badge active">🚫 مُلغى — ${plan}</span>`;
         text.innerText = 'الخدمة مستمرة حتى: ' + expiry.toLocaleDateString('ar-SA', {year:'numeric', month:'long', day:'numeric'});
@@ -696,7 +573,6 @@ function renderSubscriptionStatus(data){
     }
 }
 
-// ===== HTML ثابت لبطاقات الخطط (لإعادة الاستخدام) =====
 function getPlansGridHTML() {
     return `
         <div class="plans-grid" id="plans-grid">
@@ -743,7 +619,6 @@ function getPlansGridHTML() {
     `;
 }
 
-// ===== التحقق من حالة الاشتراك وعرض الواجهة المناسبة =====
 function checkAndRenderPlans(data) {
     const plan = data.subscription_plan || 'free';
     const status = data.subscription_status || 'active';
@@ -759,8 +634,6 @@ function checkAndRenderPlans(data) {
     const plansContent = document.getElementById('plans-content');
 
     if (isCanceledButActive) {
-        // 🚫 الاشتراك مُلغى لكن لم ينتهِ بعد — الخدمة مستمرة
-        // لا نُعدّل heroTitle و heroDesc لأن البطاقة تحتوي على نفس المعلومات
         heroTitle.innerText = '';
         heroDesc.innerText = '';
         document.getElementById('hero-section').style.display = 'none';
@@ -802,7 +675,6 @@ function checkAndRenderPlans(data) {
             </div>
         `;
     } else if (isActivePaid) {
-        // ✅ الاشتراك مدفوع ونشط
         heroTitle.innerText = 'اشتراكك مفعل 🎉';
         heroDesc.innerText = 'أنت مشترك حالياُ في خطة ' + plan + ' بكل مميزاتها';
 
@@ -841,14 +713,12 @@ function checkAndRenderPlans(data) {
             </div>
         `;
     } else {
-        // ❌ الاشتراك منتهي أو مجاني
         heroTitle.innerText = 'اختر خطتك';
         heroDesc.innerText = 'خطة مرنة تناسب احتياجات متجرك — ابدأ مجاناُ وانتقل للبرو متى شئت';
         plansContent.innerHTML = getPlansGridHTML();
     }
 }
 
-// ===== Modal إلغاء الاشتراك =====
 function openCancelModal() {
     document.getElementById('cancel-modal').classList.add('show');
 }
@@ -857,9 +727,6 @@ function closeCancelModal() {
     document.getElementById('cancel-modal').classList.remove('show');
 }
 
-// ============================================================
-// 🎯 تأكيد إلغاء الاشتراك — إرسال طلب إلى Edge Function
-// ============================================================
 async function confirmCancelSubscription() {
     closeCancelModal();
 
@@ -876,7 +743,6 @@ async function confirmCancelSubscription() {
     try {
         const token = localStorage.getItem('auth_token');
 
-        // 🔄 إرسال الطلب إلى Edge Function في Supabase
         const response = await fetch(
             'https://wnvyqvwuzmxzzhilgidh.supabase.co/functions/v1/paddle-cancel-subscription',
             {
@@ -896,8 +762,6 @@ async function confirmCancelSubscription() {
 
         if (response.ok && result.success) {
             showToast('✅ ' + (result.message || 'تم إلغاء الاشتراك بنجاح!'), 'success');
-
-            // 🔄 فقط إعادة تحميل الصفحة — لا تحديث مباشر من المتصفح
             setTimeout(() => {
                 window.location.reload();
             }, 2000);
@@ -912,12 +776,17 @@ async function confirmCancelSubscription() {
     }
 }
 
-// ===== تحميل بيانات المتجر وتأكيد الهوية وعرضها للعميل =====
 async function loadStoreData(){
-    const isAuth = await initAuth();
-    if(!isAuth) return;
+    const user = await checkAuth();
+    if (!user) return;
 
-    const isOwner = await verifyStoreOwnership(currentStoreId);
+    currentUser = user;
+    userPhone = user.phone || '';
+    if (userPhone) {
+        localStorage.setItem('user_phone', userPhone);
+    }
+
+    const isOwner = await verifyStoreOwnership(currentStoreId, currentUser.id);
     if(!isOwner){
         showToast('❌ ليس لديك صلاحية الوصول لهذا المتجر.', 'error');
         setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
@@ -933,7 +802,7 @@ async function loadStoreData(){
     }
 
     try{
-        const{data,error}=await _supabase
+        const{data,error}=await _sb
             .from('store_settings')
             .select('store_name,logo_url,store_slug,subscription_plan,subscription_status,expiry_date,paddle_subscription_id')
             .eq('id',currentStoreId)
@@ -959,9 +828,6 @@ async function loadStoreData(){
     }
 }
 
-// ============================================================
-// ✅ عرض/إخفاء بانر "دفعة معلقة" بناءً على localStorage + بيانات المتجر الحالية
-// ============================================================
 function renderPendingPaymentBanner(data){
     const banner = document.getElementById('pending-payment-banner');
     const textEl = document.getElementById('pending-payment-text');
@@ -976,7 +842,6 @@ function renderPendingPaymentBanner(data){
 
     const currentPlan = data ? (data.subscription_plan || 'free') : 'free';
 
-    // ✅ الخطة اتحدثت فعلاً (سواء بينما الصفحة مفتوحة أو بعد إعادة فتحها) — امسح العلامة
     if(currentPlan === pending.plan){
         clearPendingPayment();
         banner.classList.remove('show');
@@ -985,7 +850,6 @@ function renderPendingPaymentBanner(data){
         return;
     }
 
-    // 🔵 لسه معلقة — اعرض البانر وابدأ فحص دوري في الخلفية
     banner.classList.add('show');
     const minutesPassed = Math.floor((Date.now() - pending.ts) / 60000);
 
@@ -1000,11 +864,8 @@ function renderPendingPaymentBanner(data){
     startBackgroundPendingPoll();
 }
 
-// ============================================================
-// ✅ فحص دوري في الخلفية (كل 10 ثوانٍ) طول ما فيه دفعة معلقة والصفحة مفتوحة
-// ============================================================
 function startBackgroundPendingPoll(){
-    if(bgPendingPollTimer) return; // شغال بالفعل
+    if(bgPendingPollTimer) return;
     bgPendingPollTimer = setInterval(async () => {
         const pending = getPendingPayment();
         if(!pending){
@@ -1012,7 +873,7 @@ function startBackgroundPendingPoll(){
             return;
         }
         try{
-            const {data, error} = await _supabase
+            const {data, error} = await _sb
                 .from('store_settings')
                 .select('subscription_plan')
                 .eq('id', currentStoreId)
@@ -1037,9 +898,6 @@ function stopBackgroundPendingPoll(){
     }
 }
 
-// ============================================================
-// ✅ زر "تحقق الآن" في بانر الدفعة المعلقة — فحص فوري بدون انتظار الفحص الدوري
-// ============================================================
 async function manualCheckPendingPayment(){
     const btn = document.getElementById('pending-payment-refresh-btn');
     const pending = getPendingPayment();
@@ -1051,7 +909,7 @@ async function manualCheckPendingPayment(){
     if(btn){ btn.disabled = true; btn.innerText = '⏳ جاري التحقق...'; }
 
     try{
-        const {data, error} = await _supabase
+        const {data, error} = await _sb
             .from('store_settings')
             .select('subscription_plan')
             .eq('id', currentStoreId)
@@ -1083,11 +941,6 @@ function goToStore(){
     }
 }
 
-// ============================================================
-// ✅ تهيئة Paddle مرة واحدة فقط عند تحميل الصفحة
-// (Paddle Billing v2 يعتمد على eventCallback مركزي داخل Initialize
-//  بدلاً من closeCallback/successCallback القديمة الخاصة بـ Paddle Classic)
-// ============================================================
 function initPaddleOnce(){
     if(window.paddleInitialized) return;
     if(typeof Paddle === 'undefined'){
@@ -1100,13 +953,10 @@ function initPaddleOnce(){
     Paddle.Initialize({
         token: 'test_2cc3d344a1d0e4e6d616fd1cafd',
         eventCallback: function(data){
-            // الدفع تم بنجاح على مستوى المتصفح
             if(data.name === 'checkout.completed'){
                 paddleCheckoutCompleted = true;
-                // نحفظ العلامة فوراً في localStorage عشان تفضل موجودة حتى لو المستخدم قفل الصفحة فوراً
                 savePendingPayment(paddlePendingPlan || 'pro');
             }
-            // المستخدم قفل نافذة الدفع (سواء بعد نجاح أو بدون إتمام الدفع)
             if(data.name === 'checkout.closed'){
                 if(paddleCheckoutCompleted){
                     paddleCheckoutCompleted = false;
@@ -1119,10 +969,6 @@ function initPaddleOnce(){
     window.paddleInitialized = true;
 }
 
-// ============================================================
-// ✅ بعد نجاح الدفع: ننتظر تحديث Webhook فعلياً لقاعدة البيانات
-// قبل إعادة تحميل الصفحة (بدل استنى وقت ثابت غير مضمون)
-// ============================================================
 function showPaymentOverlay(text){
     const overlay = document.getElementById('payment-overlay');
     const textEl = document.getElementById('payment-overlay-text');
@@ -1135,16 +981,9 @@ function hidePaymentOverlay(){
 }
 
 function handlePaymentSuccessAndRefresh(){
-    // العلامة محفوظة بالفعل في localStorage (savePendingPayment وقت checkout.completed)
-    // فنرجع للصفحة فوراً بدون أي انتظار — لو الاشتراك اتفعّل بالفعل هيظهر توست نجاح،
-    // ولو لسه، هيظهر بانر "دفعة معلقة" مع زر "تحقق الآن" تلقائياً (renderPendingPaymentBanner
-    // بيتنفذ داخل loadStoreData عند تحميل الصفحة من جديد).
     window.location.reload();
 }
 
-// ============================================================
-// ✅ دالة الاشتراك في برو (شهري فقط)
-// ============================================================
 function subscribeNow(plan){
     if(!currentUser){
         alert('يرجى تسجيل الدخول أولاُ.');
@@ -1185,14 +1024,9 @@ function subscribeNow(plan){
             theme: 'light',
             locale: 'ar'
         }
-        // ملاحظة: تمت إزالة closeCallback من هنا لأنه غير مدعوم في Paddle Billing v2.
-        // التعامل مع نجاح/إغلاق الدفع أصبح مركزياً عبر eventCallback في initPaddleOnce().
     });
 }
 
-// ============================================================
-// ✅ تمديد الاشتراك المجاني
-// ============================================================
 function startFree(){
     if(!currentUser) return;
 
@@ -1205,7 +1039,7 @@ function startFree(){
         try{
             const targetStoreId = currentStoreId;
 
-            const {data: targetStore, error: errFetch} = await _supabase
+            const {data: targetStore, error: errFetch} = await _sb
                 .from('store_settings')
                 .select('subscription_plan')
                 .eq('id', targetStoreId)
@@ -1224,7 +1058,7 @@ function startFree(){
             const expiryDate = new Date(now);
             expiryDate.setMonth(expiryDate.getMonth() + 1);
 
-            const {error} = await _supabase
+            const {error} = await _sb
                 .from('store_settings')
                 .update({
                     subscription_plan: 'free',
@@ -1245,7 +1079,6 @@ function startFree(){
     })();
 }
 
-// ===== Toast helper =====
 function showToast(message, type = 'info'){
     const existing = document.getElementById('toast-notification');
     if(existing) existing.remove();
@@ -1302,7 +1135,6 @@ function showToast(message, type = 'info'){
     }, delay);
 }
 
-// البدء التلقائي في جلب البيانات وتهيئة Paddle عند التحميل
 loadStoreData();
 initPaddleOnce();
 </script>

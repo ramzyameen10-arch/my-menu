@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>إعدادات الشحن والتوصيل</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="global.js"></script>
     <style>
         :root {
             --primary: #24b47e; --primary-dark: #1a8f63; --primary-light: #e8f8f2;
@@ -20,7 +21,6 @@
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); direction: rtl; color: var(--text); min-height: 100vh; padding-bottom: 40px; }
-
 
         .container { max-width: 560px; margin: auto; padding: 16px 12px; }
 
@@ -131,8 +131,7 @@
             .form-row { grid-template-columns: 1fr; }
             .stat-number { font-size: 18px; }
         }
-    
-        /* ===== Top Info Card (matching store_schedules style) ===== */
+
         .top-info-card {
             background: var(--white);
             border-radius: var(--radius);
@@ -190,10 +189,7 @@
         .btn-back-top:hover {
             background: #2c3e50;
         }
-
     </style>
-<base target="_blank">
-<base target="_blank">
 </head>
 <body>
 
@@ -204,7 +200,6 @@
 <div class="toast" id="toast"></div>
 
 <div class="container" style="padding-top:16px;">
-    <!-- Top Card matching store_schedules style -->
     <div class="top-info-card">
         <div class="top-info-content">
             <img class="top-info-logo" id="store-logo-img" src="https://via.placeholder.com/45" alt="شعار المتجر">
@@ -268,10 +263,7 @@
 </div>
 
 <script>
-    const SB_URL = 'https://wnvyqvwuzmxzzhilgidh.supabase.co';
-    const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indudnlxdnd1em14enpoaWxnaWRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MTg1MDEsImV4cCI6MjA5MTQ5NDUwMX0.AyD4CYqA0cz9mC-bcOt16uUpueL_cAWT26Q92l574r0';
-    const _supabase = supabase.createClient(SB_URL, SB_KEY);
-
+    const _sb = getSupabaseClient();   // ← من global.js
     const urlParams = new URLSearchParams(window.location.search);
     const storeId   = parseInt(urlParams.get('store_id'));
 
@@ -279,109 +271,40 @@
     let methodsData = [];
     let toastTimer  = null;
     let currentUser = null;
-    let userPhone = '';
+    let userPhone   = '';
 
-    // ===== نظام المصادقة JWT Token =====
-    async function checkAuth() {
-        const token = localStorage.getItem('auth_token');
-        if (!token) {
-            window.location.href = "index.html";
-            return null;
-        }
-
-        try {
-            const response = await fetch(
-                'https://wnvyqvwuzmxzzhilgidh.supabase.co/functions/v1/verify-token',
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ token: token })
-                }
-            );
-
-            const result = await response.json();
-
-            if (!result.valid) {
-                localStorage.removeItem('auth_token');
-                localStorage.removeItem('user_phone');
-                localStorage.removeItem('user_phone_display');
-                localStorage.removeItem('is_logged_in');
-                window.location.href = "index.html";
-                return null;
-            }
-
-            return result.user;
-
-        } catch (err) {
-            console.error('Auth check failed:', err);
-            const phone = localStorage.getItem('user_phone');
-            if (!phone) {
-                window.location.href = "index.html";
-                return null;
-            }
-            return { phone: phone };
-        }
-    }
-
-    // ===== تهيئة المستخدم =====
-    async function initAuth(){
-        const user = await checkAuth();
-        if (!user) return false;
+    async function init() {
+        const user = await checkAuth();   // ← من global.js
+        if (!user) return;
 
         currentUser = user;
-        userPhone = user.phone || '';
+        userPhone   = user.phone || '';
 
         if (userPhone) {
             localStorage.setItem('user_phone', userPhone);
         }
-        return true;
-    }
 
-    // ===== التحقق من ملكية المتجر =====
-    async function verifyStoreOwnership(storeId){
-        if(!storeId || !userPhone) return false;
-        try{
-            const {data: profile} = await _supabase.from('profiles').select('id').eq('phone_number', userPhone).single();
-            if(!profile) return false;
-            const {data: store, error} = await _supabase.from('store_settings').select('user_id').eq('id', storeId).single();
-            if(error || !store) return false;
-            return store.user_id === profile.id;
-        } catch(e){
-            console.error('Error verifying ownership:', e);
-            return false;
-        }
-    }
-
-    async function init() {
-        // Verify login first
-        const isAuth = await initAuth();
-        if(!isAuth){
-            document.getElementById('loading-overlay').style.display = 'none';
-            showToast('⛔ يرجى تسجيل الدخول أولاً', 'error');
-            setTimeout(() => window.location.href = 'index.html', 2000);
-            return;
-        }
-
-        if(!storeId){
+        if (!storeId) {
             document.getElementById('loading-overlay').style.display = 'none';
             showToast('❌ رقم المتجر غير موجود في الرابط.', 'error');
             setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
             return;
         }
 
-        // Verify store ownership
-        const isOwner = await verifyStoreOwnership(storeId);
-        if(!isOwner){
+        const isOwner = await verifyStoreOwnership(storeId, user.id);   // ← من global.js
+        if (!isOwner) {
             document.getElementById('loading-overlay').style.display = 'none';
-            showToast('❌ ليس لديك صلاحية الوصول لهذا المتجر.', 'error');
-            setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
+            showToast('🚫 ليس لديك صلاحية الوصول إلى هذا المتجر', 'error');
+            setTimeout(() => { window.location.href = 'dashboard.html'; }, 2500);
             return;
         }
 
         try {
-            const { data: store } = await _supabase
-                .from('store_settings').select('id, store_name, delivery_enabled, logo_url')
-                .eq('id', storeId).single();
+            const { data: store } = await _sb
+                .from('store_settings')
+                .select('id, store_name, delivery_enabled, logo_url')
+                .eq('id', storeId)
+                .single();
 
             if (!store) {
                 showToast('⛔ المتجر غير موجود', 'error');
@@ -403,7 +326,7 @@
                 document.getElementById('stats-row').style.display = 'grid';
             }
             await loadMethods();
-        } catch(e) {
+        } catch (e) {
             showToast('خطأ في التحميل: ' + e.message, 'error');
         } finally {
             document.getElementById('loading-overlay').style.display = 'none';
@@ -411,7 +334,7 @@
     }
 
     async function loadMethods() {
-        const { data: methods, error } = await _supabase
+        const { data: methods, error } = await _sb
             .from('shipping_methods').select('*, shipping_zones(*)')
             .eq('store_id', storeId).order('id', { ascending: true });
         if (error) { showToast('خطأ في تحميل الشحن', 'error'); return; }
@@ -561,7 +484,7 @@
     async function saveMasterToggle() {
         const enabled = document.getElementById('master-toggle').checked;
         try {
-            const { error } = await _supabase.from('store_settings').update({ delivery_enabled: enabled }).eq('id', storeId);
+            const { error } = await _sb.from('store_settings').update({ delivery_enabled: enabled }).eq('id', storeId);
             if (error) {
                 showToast('⚠️ تأكد من تنفيذ: ALTER TABLE store_settings ADD COLUMN delivery_enabled BOOLEAN DEFAULT FALSE', 'error');
                 document.getElementById('master-toggle').checked = !enabled;
@@ -635,17 +558,17 @@
             };
             let methodId = m.id;
             if (!methodId) {
-                const { data: inserted, error } = await _supabase.from('shipping_methods').insert([payload]).select().single();
+                const { data: inserted, error } = await _sb.from('shipping_methods').insert([payload]).select().single();
                 if (error) throw error;
                 methodId = inserted.id; methodsData[idx].id = methodId; methodsData[idx]._new = false;
             } else {
-                const { error } = await _supabase.from('shipping_methods').update(payload).eq('id', methodId);
+                const { error } = await _sb.from('shipping_methods').update(payload).eq('id', methodId);
                 if (error) throw error;
             }
             if (m.type === 'custom') {
                 await saveZones(idx, methodId);
             } else {
-                await _supabase.from('shipping_zones').delete().eq('shipping_method_id', methodId);
+                await _sb.from('shipping_zones').delete().eq('shipping_method_id', methodId);
                 methodsData[idx].zones = [];
             }
             showToast('✅ تم حفظ طريقة الشحن', 'success');
@@ -658,11 +581,11 @@
 
     async function saveZones(idx, methodId) {
         const zones = methodsData[idx].zones || [];
-        await _supabase.from('shipping_zones').delete().eq('shipping_method_id', methodId);
+        await _sb.from('shipping_zones').delete().eq('shipping_method_id', methodId);
         const validZones = zones.filter(z => z.city_name && z.city_name.trim());
         if (validZones.length === 0) return;
         const rows = validZones.map(z => ({ shipping_method_id: methodId, city_name: z.city_name.trim(), price: parseFloat(z.price) || 0 }));
-        const { error } = await _supabase.from('shipping_zones').insert(rows);
+        const { error } = await _sb.from('shipping_zones').insert(rows);
         if (error) throw error;
     }
 
@@ -670,7 +593,7 @@
         const m = methodsData[idx];
         if (!confirm(`⚠️ حذف "${m.name}"؟\nسيتم حذف جميع أسعار المدن المرتبطة بها.`)) return;
         if (m.id) {
-            const { error } = await _supabase.from('shipping_methods').delete().eq('id', m.id);
+            const { error } = await _sb.from('shipping_methods').delete().eq('id', m.id);
             if (error) { showToast('فشل الحذف: ' + error.message, 'error'); return; }
         }
         methodsData.splice(idx, 1); renderMethods(); updateStats();

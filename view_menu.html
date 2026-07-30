@@ -1358,7 +1358,7 @@ async function buildSidebar(store, schedules) {
     // ===== Init =====
     async function init() {
         if (!slug) return;
-        const { data: store } = await _supabase.from('store_settings').select('*').eq('store_slug', slug).single();
+        const { data: store } = await _supabase.from('store_public_info').select('*').eq('store_slug', slug).single();
         if (!store) return;
         storeData = store;
         currentStoreId = store.id;

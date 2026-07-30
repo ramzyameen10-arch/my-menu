@@ -9,88 +9,37 @@
         :root { --primary: #24b47e; --dark: #2f3542; --bg: #f4f7f6; --edit: #3498db; --danger: #e74c3c; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; padding: 20px; direction: rtl; }
         .container { max-width: 600px; margin: 0 auto; }
-
-        /* الهيدر */
         .header { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
         h2 { margin: 0; color: var(--dark); font-size: 1.4em; }
-
-        /* البطاقة التعريفية */
         .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-
-        /* قسم الصورة - دائري ثابت + قابل للنقر */
         .profile-preview-wrapper { text-align: center; margin-bottom: 25px; position: relative; }
         .profile-avatar-circle {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            overflow: hidden;
-            border: 4px solid var(--primary);
-            background: #eee;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            position: relative;
-            cursor: pointer;
+            width: 120px; height: 120px; border-radius: 50%; overflow: hidden;
+            border: 4px solid var(--primary); background: #eee;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin: 0 auto;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; position: relative; cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
         }
-        .profile-avatar-circle:hover {
-            transform: scale(1.03);
-            box-shadow: 0 6px 14px rgba(36, 180, 126, 0.25);
-        }
-        .profile-avatar-circle:active {
-            transform: scale(0.98);
-        }
-        .profile-avatar-circle img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            object-position: center;
-            display: block;
-            min-width: 100%;
-            min-height: 100%;
-            pointer-events: none;
-        }
-        /* أيقونة الكاميرا عند المرور */
+        .profile-avatar-circle:hover { transform: scale(1.03); box-shadow: 0 6px 14px rgba(36, 180, 126, 0.25); }
+        .profile-avatar-circle:active { transform: scale(0.98); }
+        .profile-avatar-circle img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; min-width: 100%; min-height: 100%; pointer-events: none; }
         .camera-overlay {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            border-radius: 50%;
-            background: rgba(0,0,0,0.35);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: opacity 0.2s;
-            pointer-events: none;
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            border-radius: 50%; background: rgba(0,0,0,0.35);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; transition: opacity 0.2s; pointer-events: none;
         }
-        .profile-avatar-circle:hover .camera-overlay {
-            opacity: 1;
-        }
-        .camera-overlay span {
-            color: white;
-            font-size: 28px;
-        }
-        /* نص توضيحي */
-        .avatar-label {
-            margin-top: 10px;
-            font-size: 13px;
-            color: #888;
-            font-weight: 600;
-        }
+        .profile-avatar-circle:hover .camera-overlay { opacity: 1; }
+        .camera-overlay span { color: white; font-size: 28px; }
+        .avatar-label { margin-top: 10px; font-size: 13px; color: #888; font-weight: 600; }
         #file-input { display: none; }
         #upload-status { font-size: 12px; color: var(--primary); margin-top: 8px; font-weight: bold; }
-
-        /* الحقول */
         .form-group { margin-bottom: 20px; }
         label { display: block; margin-bottom: 8px; font-weight: bold; color: var(--dark); }
         input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; transition: 0.3s; }
         input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 5px rgba(36, 180, 126, 0.2); }
         input:disabled { background: #f0f0f0; cursor: not-allowed; color: #777; }
-
-        /* حقل مطلوب */
         .field-required-wrapper { position: relative; margin-bottom: 20px; }
         .field-required-wrapper input { margin: 0; border-color: #e74c3c; border-width: 1.5px; }
         .field-required-wrapper input:focus { outline: none; border-color: #c0392b; box-shadow: 0 0 0 3px rgba(231,76,60,0.12); }
@@ -98,14 +47,13 @@
         .field-required-wrapper input.valid:focus { box-shadow: 0 0 0 3px rgba(36,180,126,0.12); }
         .required-label { display: flex; align-items: center; gap: 4px; font-size: 12px; color: #e74c3c; font-weight: 600; margin-bottom: 3px; }
         .required-label span.dot { width: 6px; height: 6px; background: #e74c3c; border-radius: 50%; display: inline-block; }
-
-        /* الأزرار */
         .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; margin-top: 10px; display: block; text-decoration: none; text-align: center; }
         .btn-save { background: var(--primary); color: white; }
         .btn-back { background: #34495e; color: white; }
         .btn:hover { opacity: 0.9; transform: translateY(-1px); }
         .btn:disabled { background: #ccc; cursor: not-allowed; transform: none; }
     </style>
+<base target="_blank">
 <base target="_blank">
 </head>
 <body>
@@ -118,14 +66,10 @@
 
     <div class="card">
         <div class="profile-preview-wrapper">
-            <!-- الصورة نفسها قابلة للنقر -->
             <div class="profile-avatar-circle" onclick="document.getElementById('file-input').click()">
                 <img id="img-preview" src="https://via.placeholder.com/120" alt="الصورة الشخصية">
-                <div class="camera-overlay">
-                    <span>📷</span>
-                </div>
+                <div class="camera-overlay"><span>📷</span></div>
             </div>
-            <!-- نص توضيحي -->
             <div class="avatar-label">الصورة الشخصية</div>
             <input type="file" id="file-input" accept="image/*" onchange="uploadImage(this)">
             <div id="upload-status" style="display: none;"></div>
@@ -150,50 +94,36 @@
 </div>
 
 <script>
-    // إعدادات الاتصال بـ Supabase
-    const SB_URL = 'https://wnvyqvwuzmxzzhilgidh.supabase.co'; 
-    const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indudnlxdnd1em14enpoaWxnaWRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MTg1MDEsImV4cCI6MjA5MTQ5NDUwMX0.AyD4CYqA0cz9mC-bcOt16uUpueL_cAWT26Q92l574r0';
-    const _supabase = supabase.createClient(SB_URL, SB_KEY);
+// ============================================================
+// ⚠️ مهم: لا تفتح هذا الملف مباشرة من file:/// 
+//        لأن المتصفح يمنع بعض العمليات الأمنية (CORS).
+//        استخدم سيرفر محلي مثل Live Server في VS Code.
+// ============================================================
+const SB_URL = 'https://wnvyqvwuzmxzzhilgidh.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indudnlxdnd1em14enpoaWxnaWRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MTg1MDEsImV4cCI6MjA5MTQ5NDUwMX0.AyD4CYqA0cz9mC-bcOt16uUpueL_cAWT26Q92l574r0';
 
-    // المتغيرات العالمية للمصادقة
-    let currentUser = null;
-    let userPhone = '';
+// ✅ عميل Supabase واحد فقط (يُنشأ بعد التحقق من التوكن)
+//    هذا يمنع تنبيه GoTrueClient الأصفر.
+let _supabaseAuthed = null;
 
-    // ============================================================
-    // ✅ نظام المصادقة الجديد (JWT Token)
-    // ============================================================
-    async function checkAuth() {
-        const token = localStorage.getItem('auth_token');
-        if (!token) {
-            window.location.href = "index.html";
-            return null;
-        }
+let currentUser = null;
+let userPhone = '';
 
-        try {
-            const response = await fetch(
-                'https://wnvyqvwuzmxzzhilgidh.supabase.co/functions/v1/verify-token',
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ token: token })
-                }
-            );
-
-            const result = await response.json();
-
-            if (!result.valid) {
-                localStorage.removeItem('auth_token');
-                localStorage.removeItem('user_phone');
-                localStorage.removeItem('user_phone_display');
-                localStorage.removeItem('is_logged_in');
-                window.location.href = "index.html";
-                return null;
-            }
-
-            return result.user;
-
-        } catch (err) {
-            console.error('Auth check failed:', err);
+// ============================================================
+// ✅ نظام المصادقة (JWT Token) - عميل واحد فقط
+// ============================================================
+async function checkAuth() {
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+        window.location.href = "index.html";
+        return null;
+    }
+    try {
+        const response = await fetch('https://wnvyqvwuzmxzzhilgidh.supabase.co/functions/v1/verify-token', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: token })
+        });
+        const result = await response.json();
+        if (!result.valid) {
             localStorage.removeItem('auth_token');
             localStorage.removeItem('user_phone');
             localStorage.removeItem('user_phone_display');
@@ -201,164 +131,151 @@
             window.location.href = "index.html";
             return null;
         }
-    }
-
-    // ============================================================
-    // ✅ تسجيل الخروج
-    // ============================================================
-    function logout() {
+        // ✅ عميل واحد فقط مع التوكن — يمنع تنبيه GoTrueClient الأصفر
+        _supabaseAuthed = supabase.createClient(SB_URL, SB_KEY, {
+            global: { headers: { Authorization: `Bearer ${token}` } }
+        });
+        return result.user;
+    } catch (err) {
+        console.error('Auth check failed:', err);
         localStorage.removeItem('auth_token');
         localStorage.removeItem('user_phone');
         localStorage.removeItem('user_phone_display');
         localStorage.removeItem('is_logged_in');
         window.location.href = "index.html";
+        return null;
     }
+}
 
-    // تشغيل الصفحة
-    async function init() {
-        const user = await checkAuth();
-        if (!user) return;
+function logout() {
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('user_phone');
+    localStorage.removeItem('user_phone_display');
+    localStorage.removeItem('is_logged_in');
+    window.location.href = "index.html";
+}
 
-        currentUser = user;
-        userPhone = user.phone || '';
+async function init() {
+    const user = await checkAuth();
+    if (!user) return;
+    currentUser = user;
+    userPhone = user.phone || '';
+    if (userPhone) localStorage.setItem('user_phone', userPhone);
+    await loadUserData();
+}
 
-        // حفظ رقم الهاتف في localStorage للتوافق مع الدوال القديمة
-        if (userPhone) {
-            localStorage.setItem('user_phone', userPhone);
-        }
+function validateRequired(input) {
+    input.classList.toggle('valid', !!input.value.trim());
+}
 
-        await loadUserData();
-    }
+async function loadUserData() {
+    try {
+        const { data, error } = await _supabaseAuthed
+            .from('profiles')
+            .select('*')
+            .eq('id', currentUser.id)
+            .maybeSingle();
 
-    // التحقق من الحقول المطلوبة
-    function validateRequired(input) {
-        input.classList.toggle('valid', !!input.value.trim());
-    }
+        if (error) throw error;
 
-    // 1. جلب بيانات المستخدم وتخزين الـ ID
-    async function loadUserData() {
-        try {
-            const { data, error } = await _supabase
-                .from('profiles')
-                .select('*')
-                .eq('phone_number', userPhone)
-                .maybeSingle();
+        if (data) {
+            document.getElementById('internal_user_id').value = data.id;
+            document.getElementById('username').value = data.username || '';
+            document.getElementById('phone_display').value = data.phone_number || '';
+            document.getElementById('profile_img_url_hidden').value = data.profile_img_url || '';
 
-            if (error) throw error;
-
-            if (data) {
-                // أهم خطوة: تخزين الـ UUID في حقل مخفي
-                document.getElementById('internal_user_id').value = data.id;
-                document.getElementById('username').value = data.username || '';
-                document.getElementById('phone_display').value = data.phone_number || '';
-                document.getElementById('profile_img_url_hidden').value = data.profile_img_url || '';
-
-                if (data.profile_img_url) {
-                    document.getElementById('img-preview').src = data.profile_img_url;
-                }
-
-                // تحديث حالة التحقق للحقل المطلوب
-                if (data.username) {
-                    document.getElementById('username').classList.add('valid');
-                }
-            } else {
-                alert("لم يتم العثور على سجل بروفايل لهذا الرقم.");
+            if (data.profile_img_url) {
+                document.getElementById('img-preview').src = data.profile_img_url;
             }
-        } catch (err) {
-            console.error("Fetch Error:", err.message);
-        }
-    }
-
-    // 2. وظيفة رفع الصورة إلى الـ Storage
-    async function uploadImage(input) {
-        const file = input.files[0];
-        if (!file) return;
-
-        const statusLabel = document.getElementById('upload-status');
-        statusLabel.style.display = "block";
-        statusLabel.innerText = "⏳ جاري رفع الصورة...";
-        statusLabel.style.color = "var(--edit)";
-
-        try {
-            const fileExt = file.name.split('.').pop();
-            const fileName = `avatar_${Date.now()}.${fileExt}`;
-
-            // الرفع إلى الحاوية (Bucket) المسماة avatars
-            const { data, error } = await _supabase.storage
-                .from('avatars')
-                .upload(fileName, file);
-
-            if (error) throw error;
-
-            // جلب الرابط العام للصورة
-            const { data: urlData } = _supabase.storage.from('avatars').getPublicUrl(fileName);
-            const publicUrl = urlData.publicUrl;
-
-            // تحديث المعاينة والحقل المخفي
-            document.getElementById('img-preview').src = publicUrl;
-            document.getElementById('profile_img_url_hidden').value = publicUrl;
-
-            statusLabel.innerText = "✅ تم الرفع بنجاح";
-            statusLabel.style.color = "var(--primary)";
-        } catch (err) {
-            alert("خطأ أثناء الرفع: " + err.message);
-            statusLabel.innerText = "❌ فشل الرفع";
-            statusLabel.style.color = "var(--danger)";
-        }
-    }
-
-    // 3. وظيفة التحديث باستخدام الـ ID (المعرف الفريد)
-    async function updateProfile() {
-        const saveBtn = document.getElementById('save-btn');
-        const targetUuid = document.getElementById('internal_user_id').value;
-        const newUsername = document.getElementById('username').value.trim();
-        const newImageUrl = document.getElementById('profile_img_url_hidden').value;
-
-        if (!targetUuid) {
-            alert("خطأ: لم يتم تحميل معرف المستخدم. يرجى إعادة تحميل الصفحة.");
-            return;
-        }
-
-        // ✅ التحقق من الحقل المطلوب
-        if (!newUsername) {
-            alert("⚠️ اسم المستخدم مطلوب. يرجى إدخال اسم المستخدم.");
-            document.getElementById('username').focus();
-            return;
-        }
-
-        saveBtn.disabled = true;
-        saveBtn.innerText = "⏳ جاري حفظ البيانات...";
-
-        try {
-            // التحديث بالاعتماد على الـ ID لضمان الأمان والدقة
-            const { data, error } = await _supabase
-                .from('profiles')
-                .update({ 
-                    username: newUsername, 
-                    profile_img_url: newImageUrl 
-                })
-                .eq('id', targetUuid)
-                .select();
-
-            if (error) throw error;
-
-            if (data && data.length > 0) {
-                alert("🎉 تم تحديث ملفك الشخصي بنجاح");
-                // ✅ التوجيه إلى صفحة الداشبورد بدلاً من إعادة التحميل
-                window.location.href = "dashboard.html";
-            } else {
-                alert("لم يتم إجراء أي تغييرات. تأكد من الصلاحيات.");
+            if (data.username) {
+                document.getElementById('username').classList.add('valid');
             }
-        } catch (err) {
-            alert("فشل التحديث: " + err.message);
-        } finally {
-            saveBtn.disabled = false;
-            saveBtn.innerText = "حفظ";
+        } else {
+            alert("لم يتم العثور على سجل بروفايل لهذا المستخدم.");
         }
+    } catch (err) {
+        console.error("Fetch Error:", err.message);
+    }
+}
+
+async function uploadImage(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const statusLabel = document.getElementById('upload-status');
+    statusLabel.style.display = "block";
+    statusLabel.innerText = "⏳ جاري رفع الصورة...";
+    statusLabel.style.color = "var(--edit)";
+
+    try {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `avatar_${Date.now()}.${fileExt}`;
+
+        const { data, error } = await _supabaseAuthed.storage
+            .from('avatars')
+            .upload(fileName, file);
+
+        if (error) throw error;
+
+        const { data: urlData } = _supabaseAuthed.storage.from('avatars').getPublicUrl(fileName);
+        const publicUrl = urlData.publicUrl;
+
+        document.getElementById('img-preview').src = publicUrl;
+        document.getElementById('profile_img_url_hidden').value = publicUrl;
+
+        statusLabel.innerText = "✅ تم الرفع بنجاح";
+        statusLabel.style.color = "var(--primary)";
+    } catch (err) {
+        alert("خطأ أثناء الرفع: " + err.message);
+        statusLabel.innerText = "❌ فشل الرفع";
+        statusLabel.style.color = "var(--danger)";
+    }
+}
+
+async function updateProfile() {
+    const saveBtn = document.getElementById('save-btn');
+    const targetUuid = document.getElementById('internal_user_id').value;
+    const newUsername = document.getElementById('username').value.trim();
+    const newImageUrl = document.getElementById('profile_img_url_hidden').value;
+
+    if (!targetUuid) {
+        alert("خطأ: لم يتم تحميل معرف المستخدم. يرجى إعادة تحميل الصفحة.");
+        return;
     }
 
-    // تشغيل الدالة الأساسية عند التحميل
-    init();
+    if (!newUsername) {
+        alert("⚠️ اسم المستخدم مطلوب. يرجى إدخال اسم المستخدم.");
+        document.getElementById('username').focus();
+        return;
+    }
+
+    saveBtn.disabled = true;
+    saveBtn.innerText = "⏳ جاري حفظ البيانات...";
+
+    try {
+        const { data, error } = await _supabaseAuthed
+            .from('profiles')
+            .update({ username: newUsername, profile_img_url: newImageUrl })
+            .eq('id', targetUuid)
+            .select();
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+            alert("🎉 تم تحديث ملفك الشخصي بنجاح");
+            window.location.href = "dashboard.html";
+        } else {
+            alert("لم يتم إجراء أي تغييرات. تأكد من الصلاحيات.");
+        }
+    } catch (err) {
+        alert("فشل التحديث: " + err.message);
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerText = "حفظ";
+    }
+}
+
+init();
 </script>
 
 </body>
