@@ -1,169 +1,456 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منصة تجار رمزي - دخول</title>
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .card { background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 380px; text-align: center; }
-        
-        /* تنسيق الهيدر */
-        .profile-header { display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }
-        .profile-header h2 { margin: 0; font-size: 1.4rem; color: #333; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="دكّانك — أنشئ متجرك وقائمتك الرقمية برمز QR، وتابع طلباتك وتوصيلك، بتسجيل دخول برقم واتسابك فقط.">
+<title>دكّانك | متجرك ومنيوهك الرقمي</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Tajawal:wght@400;500;700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+	:root{
+		--paper:#F2F4EE;
+		--card:#FFFFFF;
+		--ink:#10241C;
+		--ink-soft:#2A4137;
+		--muted:#65756A;
+		--green:#17945F;
+		--green-deep:#0E6E47;
+		--green-bright:#35C98B;
+		--stamp:#D6432A;
+		--border:#DCE3DC;
+		--shadow:0 16px 40px -18px rgba(16,36,28,0.28);
+		--shadow-sm:0 6px 16px -8px rgba(16,36,28,0.18);
+		--radius:16px;
+		--display:'Lalezar', system-ui, sans-serif;
+		--body:'Tajawal','Segoe UI', Tahoma, sans-serif;
+		--mono:'JetBrains Mono', ui-monospace, monospace;
+	}
+	*{box-sizing:border-box;}
+	html{scroll-behavior:smooth;}
+	body{
+		margin:0; background:var(--paper); color:var(--ink-soft);
+		font-family:var(--body); direction:rtl; line-height:1.6;
+		-webkit-font-smoothing:antialiased;
+	}
+	img,svg{display:block;}
+	a{color:inherit; text-decoration:none;}
+	button{font-family:inherit;}
+	:focus-visible{ outline:3px solid var(--green-bright); outline-offset:3px; border-radius:6px; }
+	.wrap{ max-width:1120px; margin:0 auto; padding:0 20px; }
 
-        input { width: 100%; padding: 12px; margin: 15px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 1.1rem; text-align: center; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background-color: #25D366; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: bold; }
-        button:disabled { background-color: #ccc; cursor: not-allowed; }
-        .timer-text { font-size: 0.9rem; color: #666; margin-top: 10px; }
-        #resend-link { color: #007bff; cursor: pointer; display: none; text-decoration: underline; margin-top: 10px; font-size: 0.9rem; }
-        #step-2 { display: none; }
-    </style>
-<base target="_blank">
+	/* ---------- NAV ---------- */
+	.nav{ position:sticky; top:0; z-index:50; background:rgba(242,244,238,0.86); backdrop-filter:blur(8px); border-bottom:1px solid var(--border); }
+	.nav-inner{ max-width:1120px; margin:0 auto; padding:14px 20px; display:flex; align-items:center; justify-content:space-between; gap:16px; }
+	.brand{ display:flex; align-items:center; gap:8px; font-family:var(--display); font-size:1.25rem; color:var(--ink); }
+	.brand-mark{ display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:10px; background:var(--green); color:#fff; font-family:var(--mono); font-weight:700; font-size:15px; }
+	.nav-links{ display:flex; align-items:center; gap:22px; font-weight:700; font-size:14px; }
+	.nav-links a:not(.btn-nav){ color:var(--ink-soft); }
+	.nav-links a:not(.btn-nav):hover{ color:var(--green-deep); }
+	.btn-nav{ background:var(--ink); color:#fff; padding:9px 18px; border-radius:10px; font-weight:700; transition:transform .15s ease, background .2s ease; }
+	.btn-nav:hover{ background:var(--green-deep); transform:translateY(-1px); }
+	.nav-links-mobile-hide{ display:flex; }
+	@media (max-width:640px){ .nav-links-mobile-hide{ display:none; } }
+
+	/* ---------- HERO ---------- */
+	.hero{ position:relative; overflow:hidden; padding:64px 0 40px; }
+	.hero::before{
+		content:""; position:absolute; inset:0; z-index:0; pointer-events:none;
+		background-image: radial-gradient(var(--border) 1.4px, transparent 1.4px);
+		background-size:22px 22px;
+		-webkit-mask-image: radial-gradient(ellipse 60% 55% at 82% 30%, #000 0%, transparent 70%);
+		mask-image: radial-gradient(ellipse 60% 55% at 82% 30%, #000 0%, transparent 70%);
+		opacity:.7;
+	}
+	.hero-inner{ position:relative; z-index:1; display:flex; align-items:center; gap:56px; }
+	.hero-copy{ flex:1.05; min-width:0; }
+	.eyebrow{ display:inline-block; font-size:13px; font-weight:700; color:var(--green-deep); background:rgba(23,148,95,0.1); border:1px solid rgba(23,148,95,0.25); padding:6px 14px; border-radius:100px; margin-bottom:18px; }
+	h1{ font-family:var(--display); font-weight:400; font-size:clamp(2.1rem,4.6vw,3.3rem); line-height:1.18; color:var(--ink); margin:0 0 18px; }
+	.lead{ font-size:17px; color:var(--muted); max-width:52ch; margin:0 0 28px; line-height:1.85; }
+	.hero-actions{ display:flex; flex-wrap:wrap; gap:12px; margin-bottom:26px; }
+	.btn-primary{ background:var(--green); color:#fff; font-weight:700; padding:14px 26px; border-radius:12px; box-shadow:var(--shadow-sm); border:none; cursor:pointer; font-size:15px; transition:transform .15s ease, background .2s ease; }
+	.btn-primary:hover{ background:var(--green-deep); transform:translateY(-2px); }
+	.btn-ghost{ padding:14px 22px; border-radius:12px; border:1.5px solid var(--border); font-weight:700; font-size:15px; color:var(--ink-soft); transition:border-color .2s ease, color .2s ease; }
+	.btn-ghost:hover{ border-color:var(--green); color:var(--green-deep); }
+	.hero-tags{ display:flex; flex-wrap:wrap; gap:8px; }
+	.tag-pill{ font-size:12.5px; font-weight:700; color:var(--muted); background:var(--card); border:1px solid var(--border); padding:6px 12px; border-radius:100px; }
+
+	/* ---------- TICKET (signature element) ---------- */
+	.ticket{ position:relative; background:var(--card); border-radius:6px; box-shadow:var(--shadow); padding:22px 20px 26px; }
+	.ticket::before,.ticket::after{ content:""; position:absolute; right:0; left:0; height:14px; background-image:radial-gradient(circle at 12px 50%, var(--paper) 8px, transparent 8.5px); background-size:24px 14px; background-repeat:repeat-x; }
+	.ticket::before{ top:-7px; }
+	.ticket::after{ bottom:-7px; }
+	.hero-visual{ flex:.95; min-width:0; display:flex; justify-content:center; }
+	.ticket-hero{ width:100%; max-width:330px; transform:translateY(-18px) rotate(-2.5deg); opacity:0; animation:ticketIn .8s .15s cubic-bezier(.2,.8,.2,1) forwards; }
+	@keyframes ticketIn{ to{ transform:translateY(0) rotate(-2.5deg); opacity:1; } }
+	@media (prefers-reduced-motion:reduce){ .ticket-hero{ animation:none; opacity:1; transform:rotate(-2.5deg);} }
+	.stamp{ position:absolute; top:18px; left:-14px; background:transparent; border:2px dashed var(--stamp); color:var(--stamp); font-weight:700; font-size:11px; padding:5px 10px; border-radius:8px; transform:rotate(-10deg); white-space:nowrap; }
+
+	/* ---------- BUSINESS ROW ---------- */
+	.strip{ padding:10px 0 46px; }
+	.strip-inner{ display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+
+	/* ---------- SECTIONS ---------- */
+	section{ padding:70px 0; }
+	.section-head{ text-align:center; max-width:640px; margin:0 auto 44px; }
+	.section-eyebrow{ font-size:13px; font-weight:700; color:var(--green-deep); margin-bottom:10px; display:block; }
+	h2{ font-family:var(--display); font-weight:400; font-size:clamp(1.7rem,3.4vw,2.3rem); color:var(--ink); margin:0 0 12px; }
+	.section-sub{ color:var(--muted); font-size:15.5px; margin:0; }
+
+	/* ---------- FEATURES ---------- */
+	.features-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+	@media (max-width:920px){ .features-grid{ grid-template-columns:repeat(2,1fr);} }
+	@media (max-width:520px){ .features-grid{ grid-template-columns:1fr;} }
+	.feature{ background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:22px 20px; transition:transform .2s ease, box-shadow .2s ease, border-color .2s ease; opacity:0; transform:translateY(14px); }
+	.feature.in-view{ opacity:1; transform:translateY(0); transition:opacity .5s ease, transform .5s ease; }
+	.feature:hover{ transform:translateY(-4px); box-shadow:var(--shadow-sm); border-color:rgba(23,148,95,0.35); }
+	.feature-icon{ width:42px; height:42px; border-radius:11px; background:rgba(23,148,95,0.1); display:flex; align-items:center; justify-content:center; margin-bottom:14px; color:var(--green-deep); }
+	.feature h3{ font-size:15.5px; margin:0 0 6px; color:var(--ink); }
+	.feature p{ font-size:13.5px; color:var(--muted); margin:0; line-height:1.75; }
+
+	/* ---------- HOW IT WORKS ---------- */
+	.steps{ display:flex; gap:20px; position:relative; }
+	@media (max-width:760px){ .steps{ flex-direction:column; } }
+	.step{ flex:1; background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:26px 22px; position:relative; opacity:0; transform:translateY(14px); }
+	.step.in-view{ opacity:1; transform:translateY(0); transition:opacity .5s ease, transform .5s ease; }
+	.step-num{ font-family:var(--mono); font-weight:700; font-size:13px; color:#fff; background:var(--ink); width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center; margin-bottom:16px; }
+	.step h3{ font-size:15.5px; margin:0 0 8px; color:var(--ink); }
+	.step p{ font-size:13.5px; color:var(--muted); margin:0; line-height:1.75; }
+
+	/* ---------- LOGIN ---------- */
+	.login-ticket{ width:100%; max-width:390px; padding:28px 24px 30px; }
+	.login-scissor{ display:flex; align-items:center; gap:8px; color:var(--muted); font-size:11.5px; font-weight:700; margin-bottom:18px; }
+	.login-scissor .line{ flex:1; border-top:1.5px dashed var(--border); }
+	.login-title{ font-family:var(--display); font-weight:400; font-size:1.5rem; color:var(--ink); margin:0 0 6px; text-align:center; }
+	.login-sub{ text-align:center; color:var(--muted); font-size:13.5px; margin:0 0 22px; }
+	label.field-label{ display:block; font-size:12.5px; font-weight:700; color:var(--ink-soft); margin-bottom:6px; }
+	input[type="tel"], input[type="number"]{
+		width:100%; padding:13px 14px; border:1.5px solid var(--border); border-radius:10px;
+		font-size:15px; font-family:var(--mono); direction:ltr; text-align:center; letter-spacing:1px;
+		background:var(--paper); color:var(--ink); margin-bottom:16px; transition:border-color .2s ease;
+	}
+	input[type="tel"]:focus, input[type="number"]:focus{ outline:none; border-color:var(--green); background:#fff; }
+	.btn-block{ width:100%; padding:14px; background:var(--green); color:#fff; border:none; border-radius:10px; cursor:pointer; font-size:15px; font-weight:700; transition:background .2s ease; }
+	.btn-block:hover{ background:var(--green-deep); }
+	.btn-block:disabled{ background:#B9C7BE; cursor:not-allowed; }
+	#step-2{ display:none; }
+	#target-phone{ text-align:center; font-family:var(--mono); direction:ltr; color:var(--muted); font-size:13px; margin:-6px 0 16px; }
+	.timer-text{ font-size:12.5px; color:var(--muted); text-align:center; margin-top:12px; }
+	#resend-link{ color:var(--green-deep); cursor:pointer; display:none; text-decoration:underline; margin-top:10px; font-size:12.5px; text-align:center; font-weight:700; }
+	.change-number{ color:var(--stamp); cursor:pointer; margin-top:20px; font-size:12.5px; text-align:center; font-weight:700; }
+	.login-note{ display:flex; align-items:center; gap:8px; justify-content:center; margin-top:22px; font-size:12px; color:var(--muted); }
+
+	/* ---------- FOOTER ---------- */
+	footer{ background:var(--ink); color:rgba(255,255,255,0.75); padding:40px 0 26px; margin-top:20px; }
+	.footer-inner{ display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:16px; }
+	.footer-brand{ font-family:var(--display); color:#fff; font-size:1.1rem; }
+	.footer-bars{ display:flex; gap:2px; align-items:flex-end; height:20px; opacity:.5; }
+	.footer-bars span{ width:3px; background:var(--green-bright); }
+	.footer-note{ font-size:12.5px; color:rgba(255,255,255,0.45); text-align:center; margin-top:22px; }
+</style>
 </head>
 <body>
 
-<div class="card">
-    <div id="step-1">
-        <div class="profile-header">
-            <h2>منصة تجار رمزي</h2>
-        </div>
-        
-        <p>أدخل رقم الواتساب</p>
-        <input type="tel" id="phone" placeholder="9665XXXXXXXX" value="966552806414">
-        <button id="send-btn" onclick="requestOTP()">إرسال كود التحقق</button>
-    </div>
+<header class="nav">
+	<div class="nav-inner">
+		<div class="brand"><span class="brand-mark">د</span> دكّانك</div>
+		<nav class="nav-links nav-links-mobile-hide">
+			<a href="#features">المزايا</a>
+			<a href="#how">كيف تعمل</a>
+			<a href="#login" class="btn-nav">تسجيل الدخول</a>
+		</nav>
+		<a href="#login" class="btn-nav" style="display:none" id="mobile-login-btn">دخول</a>
+	</div>
+</header>
 
-    <div id="step-2">
-        <div class="profile-header">
-            <h2>تحقق من الرمز</h2>
-        </div>
-        <p id="target-phone"></p>
-        <input type="number" id="otp" placeholder="أدخل الكود المكون من 4 أرقام">
-        <button id="verify-btn" onclick="verifyOTP()">تأكيد الدخول</button>
-        
-        <div class="timer-text" id="timer-container">يمكنك إعادة الإرسال خلال: <span id="seconds">60</span> ثانية</div>
-        <div id="resend-link" onclick="requestOTP()">إعادة إرسال الكود؟</div>
-        
-        <p style="color:red; cursor:pointer; margin-top:20px;" onclick="location.reload()">تغيير الرقم</p>
-    </div>
-</div>
+<section class="hero" id="top">
+	<div class="wrap hero-inner">
+		<div class="hero-copy">
+			<span class="eyebrow">منصّة القوائم الرقمية للمتاجر والمطاعم</span>
+			<h1>افتح متجرك الرقمي برقم واتسابك، بس.</h1>
+			<p class="lead">قائمة منتجات، رمز QR على الطاولة، تتبّع للطلبات، وتوصيل بسعر مختلف لكل مدينة — كل هذا بدون كلمة مرور. تدخل بكود يوصلك على واتساب وخلاص.</p>
+			<div class="hero-actions">
+				<a href="#login" class="btn-primary">ابدأ الآن مجاناً</a>
+				<a href="#features" class="btn-ghost">شوف المزايا</a>
+			</div>
+			<div class="hero-tags">
+				<span class="tag-pill">🍽️ مطاعم</span>
+				<span class="tag-pill">☕ مقاهي</span>
+				<span class="tag-pill">🛒 سوبرماركت</span>
+				<span class="tag-pill">👗 ملابس</span>
+				<span class="tag-pill">🍰 حلويات</span>
+				<span class="tag-pill">💊 صيدليات</span>
+			</div>
+		</div>
+		<div class="hero-visual" id="login">
+			<div class="ticket ticket-hero login-ticket">
+				<span class="stamp">بدون كلمة مرور</span>
+				<div class="login-scissor">✂️ <span class="line"></span> اقطع هنا وابدأ <span class="line"></span></div>
+
+				<div id="step-1">
+					<h3 class="login-title">تسجيل الدخول</h3>
+					<p class="login-sub">أدخل رقم واتسابك عشان نرسل لك كود التحقق</p>
+					<label class="field-label" for="phone">رقم الواتساب</label>
+					<input type="tel" id="phone" placeholder="9665XXXXXXXX" value="966552806414">
+					<button id="send-btn" class="btn-block" onclick="requestOTP()">إرسال كود التحقق</button>
+				</div>
+
+				<div id="step-2">
+					<h3 class="login-title">تحقق من الرمز</h3>
+					<p id="target-phone"></p>
+					<label class="field-label" for="otp">كود التحقق</label>
+					<input type="number" id="otp" placeholder="0000">
+					<button id="verify-btn" class="btn-block" onclick="verifyOTP()">تأكيد الدخول</button>
+
+					<div class="timer-text" id="timer-container">يمكنك إعادة الإرسال خلال: <span id="seconds">60</span> ثانية</div>
+					<div id="resend-link" onclick="requestOTP()">إعادة إرسال الكود؟</div>
+
+					<p class="change-number" onclick="location.reload()">تغيير الرقم</p>
+				</div>
+
+				<div class="login-note">🔒 دخول آمن — بدون كلمة مرور، وبدون تخزين بياناتك عند طرف ثالث</div>
+			</div>
+		</div>
+	</div>
+</section>
+
+<section class="strip">
+	<div class="wrap strip-inner">
+		<span class="tag-pill">📱 QR على كل طاولة</span>
+		<span class="tag-pill">🚚 توصيل حسب المدينة</span>
+		<span class="tag-pill">🕐 دوام وتوقيت مباشر</span>
+		<span class="tag-pill">📊 تقارير أداء</span>
+		<span class="tag-pill">🎨 ألوان وشعار خاص بك</span>
+	</div>
+</section>
+
+<section id="features">
+	<div class="wrap">
+		<div class="section-head">
+			<span class="section-eyebrow">كل اللي يحتاجه متجرك</span>
+			<h2>مزايا مبنية لأصحاب المحلات، مو للمبرمجين</h2>
+			<p class="section-sub">كل أداة هنا مصممة عشان تديرها بنفسك من جوالك، بدون تعقيد.</p>
+		</div>
+		<div class="features-grid" id="features-grid">
+			<div class="feature reveal">
+				<div class="feature-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect><path d="M7 14h.01M10 18h.01M7 18h.01M3 14h.01M3 18h.01"></path></svg></div>
+				<h3>قائمة رقمية بـ QR</h3>
+				<p>زبونك يمسح كود واحد ويشوف قائمتك كاملة، بدون ما ينزّل أي تطبيق.</p>
+			</div>
+			<div class="feature reveal">
+				<div class="feature-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></div>
+				<h3>منتجات وتصنيفات</h3>
+				<p>رتّب منتجاتك بتصنيفات، وحدّث الأسعار والصور في أي وقت.</p>
+			</div>
+			<div class="feature reveal">
+				<div class="feature-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"></rect><path d="M16 8h4l3 5v3h-7V8z"></path><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg></div>
+				<h3>الشحن والتوصيل</h3>
+				<p>حدد سعر توصيل مختلف لكل مدينة، أو فعّل توصيل مجاني فوق مبلغ معيّن.</p>
+			</div>
+			<div class="feature reveal">
+				<div class="feature-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></div>
+				<h3>أوقات الدوام</h3>
+				<p>اضبط منطقتك الزمنية وأوقات دوامك، والزبون يشوف متجرك مفتوح أو مقفول فعليًا.</p>
+			</div>
+			<div class="feature reveal">
+				<div class="feature-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 13h6M9 17h4"/></svg></div>
+				<h3>سجل الطلبات</h3>
+				<p>تابع كل طلب لحظة وصوله، من التأكيد إلى التسليم.</p>
+			</div>
+			<div class="feature reveal">
+				<div class="feature-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18.7 8 13 13.7l-3-3L4 17"/></svg></div>
+				<h3>تقارير الأداء</h3>
+				<p>اطّلع على أداء متجرك بالأرقام، مو بس بالحدس.</p>
+			</div>
+			<div class="feature reveal">
+				<div class="feature-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5"></circle><circle cx="17.5" cy="10.5" r=".5"></circle><circle cx="8.5" cy="7.5" r=".5"></circle><circle cx="6.5" cy="12.5" r=".5"></circle><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C22.008 6.454 17.53 2 12 2z"></path></svg></div>
+				<h3>ألوان وهوية خاصة</h3>
+				<p>لوّن متجرك بألوانك وشعارك الخاص، يطلع بهويتك مو هوية المنصة.</p>
+			</div>
+			<div class="feature reveal">
+				<div class="feature-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg></div>
+				<h3>موقعك على الخريطة</h3>
+				<p>زوّد زبائنك بزر اتجاهات مباشر لموقعك على خرائط جوجل.</p>
+			</div>
+		</div>
+	</div>
+</section>
+
+<section id="how">
+	<div class="wrap">
+		<div class="section-head">
+			<span class="section-eyebrow">ثلاث خطوات، وخلاص</span>
+			<h2>تدخل بدون تسجيل، وبدون كلمة مرور</h2>
+			<p class="section-sub">ما يحتاج بريد إلكتروني ولا نموذج طويل — رقم واتسابك يكفي.</p>
+		</div>
+		<div class="steps">
+			<div class="step reveal">
+				<div class="step-num">01</div>
+				<h3>أدخل رقم الواتساب</h3>
+				<p>تكتب رقمك، وإحنا نرسل لك كود تحقق مباشرة على واتساب.</p>
+			</div>
+			<div class="step reveal">
+				<div class="step-num">02</div>
+				<h3>أدخل الكود</h3>
+				<p>كود مكوّن من 4 أرقام، يصلك خلال ثوانٍ، تكتبه وتضغط تأكيد.</p>
+			</div>
+			<div class="step reveal">
+				<div class="step-num">03</div>
+				<h3>أنشئ متجرك وابدأ</h3>
+				<p>تضيف اسم متجرك ومنتجاتك، وتبدأ تستقبل الطلبات فوراً.</p>
+			</div>
+		</div>
+	</div>
+</section>
+
+<footer>
+	<div class="wrap footer-inner">
+		<div class="footer-brand">دكّانك</div>
+		<div class="footer-bars" aria-hidden="true">
+			<span style="height:8px"></span><span style="height:16px"></span><span style="height:10px"></span>
+			<span style="height:20px"></span><span style="height:6px"></span><span style="height:14px"></span>
+			<span style="height:18px"></span><span style="height:9px"></span>
+		</div>
+	</div>
+	<div class="wrap footer-note">© <span id="year"></span> دكّانك — كل الحقوق محفوظة</div>
+</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="global.js"></script>
 
 <script>
-    // ============================================================
-    // ✅ عميل Supabase وآليات المصادقة (checkAuth/logout) أصبحت موحّدة
-    //    وتُستمد من global.js لتفادي التكرار والتعارض بين الصفحات.
-    //    (getSupabaseClient, checkAuth, logout)
-    // ============================================================
-    let timerInterval;
+	// ============================================================
+	// ✅ عميل Supabase وآليات المصادقة (checkAuth/logout) موحّدة
+	//    وتُستمد من global.js لتفادي التكرار والتعارض بين الصفحات.
+	// ============================================================
+	document.getElementById('year').textContent = new Date().getFullYear();
+	document.getElementById('mobile-login-btn').style.display = window.innerWidth <= 640 ? 'inline-block' : 'none';
 
-    function startTimer() {
-        let timeLeft = 60;
-        const secondsSpan = document.getElementById('seconds');
-        const timerContainer = document.getElementById('timer-container');
-        const resendLink = document.getElementById('resend-link');
+	// كشف عن العناصر عند الظهور بالتمرير
+	(function revealOnScroll(){
+		const items = document.querySelectorAll('.reveal');
+		if (!('IntersectionObserver' in window) || !items.length) {
+			items.forEach(el => el.classList.add('in-view'));
+			return;
+		}
+		const obs = new IntersectionObserver((entries) => {
+			entries.forEach(entry => {
+				if (entry.isIntersecting) { entry.target.classList.add('in-view'); obs.unobserve(entry.target); }
+			});
+		}, { threshold: 0.15 });
+		items.forEach(el => obs.observe(el));
+	})();
 
-        timerContainer.style.display = 'block';
-        resendLink.style.display = 'none';
+	let timerInterval;
 
-        clearInterval(timerInterval);
-        timerInterval = setInterval(() => {
-            timeLeft--;
-            secondsSpan.innerText = timeLeft;
-            if (timeLeft <= 0) {
-                clearInterval(timerInterval);
-                timerContainer.style.display = 'none';
-                resendLink.style.display = 'block';
-            }
-        }, 1000);
-    }
+	function startTimer() {
+		let timeLeft = 60;
+		const secondsSpan = document.getElementById('seconds');
+		const timerContainer = document.getElementById('timer-container');
+		const resendLink = document.getElementById('resend-link');
 
-    async function requestOTP() {
-        const phone = document.getElementById('phone').value.trim();
-        const btn = document.getElementById('send-btn');
-        
-        if (!phone) return alert("الرجاء إدخال الرقم");
+		timerContainer.style.display = 'block';
+		resendLink.style.display = 'none';
 
-        btn.disabled = true;
-        btn.innerText = "جاري التحقق والإرسال...";
+		clearInterval(timerInterval);
+		timerInterval = setInterval(() => {
+			timeLeft--;
+			secondsSpan.innerText = timeLeft;
+			if (timeLeft <= 0) {
+				clearInterval(timerInterval);
+				timerContainer.style.display = 'none';
+				resendLink.style.display = 'block';
+			}
+		}, 1000);
+	}
 
-        try {
-            const sb = getSupabaseClient(); // ← من global.js
+	async function requestOTP() {
+		const phone = document.getElementById('phone').value.trim();
+		const btn = document.getElementById('send-btn');
 
-            // 1. محاولة إضافة الرقم أولاً في جدول auth.users من خلال دالة الـ RPC الأمنة
-            const { data: createData, error: createError } = await sb.rpc('admin_create_user_by_phone', { input_phone: phone });
-            
-            if (createError) {
-                console.error("خطأ أثناء تسجيل المستخدم أو التحقق منه:", createError);
-            }
+		if (!phone) return alert("الرجاء إدخال الرقم");
 
-            // 2. إرسال كود التحقق OTP (سواء كان المستخدم جديد وتم إنشاؤه أو موجود مسبقاً)
-            const { error: otpError } = await sb.rpc('request_whatsapp_otp', { input_phone: phone });
-            if (otpError) throw otpError;
+		btn.disabled = true;
+		btn.innerText = "جاري التحقق والإرسال...";
 
-            // الانتقال للخطوة الثانية
-            document.getElementById('step-1').style.display = 'none';
-            document.getElementById('step-2').style.display = 'block';
-            document.getElementById('target-phone').innerText = "تم الإرسال إلى: " + phone;
-            document.getElementById('otp').value = ""; 
-            
-            startTimer();
+		try {
+			// ملاحظة: هذا الطلب عام (قبل تسجيل الدخول)، لذا نستخدم عميل Supabase
+			// "نظيف" بدون أي توكن مخزّن مسبقاً. استخدام getSupabaseClient() هنا
+			// كان يُرفق أحياناً توكن قديم منتهي (JWT expired) من جلسة سابقة على
+			// نفس الجهاز، فيسبب 401 Unauthorized عند نداء دوال الـ RPC العامة.
+			const sb = supabase.createClient(SB_URL, SB_KEY);
 
-        } catch (err) {
-            alert("خطأ: " + err.message);
-            btn.disabled = false;
-            btn.innerText = "إعادة المحاولة";
-        }
-    }
+			// 1. محاولة إضافة الرقم أولاً في جدول auth.users من خلال دالة الـ RPC الأمنة
+			const { data: createData, error: createError } = await sb.rpc('admin_create_user_by_phone', { input_phone: phone });
 
-    async function verifyOTP() {
-        const code = document.getElementById('otp').value.trim();
-        const phone = document.getElementById('phone').value.trim();
-        const btn = document.getElementById('verify-btn');
+			if (createError) {
+				console.error("خطأ أثناء تسجيل المستخدم أو التحقق منه:", createError);
+			}
 
-        if (!code) return alert("أدخل الكود أولاً");
-        btn.disabled = true;
-        btn.innerText = "جاري التحقق...";
+			// 2. إرسال كود التحقق OTP (سواء كان المستخدم جديد وتم إنشاؤه أو موجود مسبقاً)
+			const { error: otpError } = await sb.rpc('request_whatsapp_otp', { input_phone: phone });
+			if (otpError) throw otpError;
 
-        try {
-            // ✅ استدعاء Edge Function مباشرة (التحقق كله في الخادم)
-            const response = await fetch(
-                'https://wnvyqvwuzmxzzhilgidh.supabase.co/functions/v1/auth-session',
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ phone: phone, otpCode: code })
-                }
-            );
+			// الانتقال للخطوة الثانية
+			document.getElementById('step-1').style.display = 'none';
+			document.getElementById('step-2').style.display = 'block';
+			document.getElementById('target-phone').innerText = "تم الإرسال إلى: " + phone;
+			document.getElementById('otp').value = "";
 
-            const result = await response.json();
+			startTimer();
 
-            if (!response.ok) {
-                throw new Error(result.error || 'فشل التحقق');
-            }
+		} catch (err) {
+			alert("خطأ: " + err.message);
+			btn.disabled = false;
+			btn.innerText = "إعادة المحاولة";
+		}
+	}
 
-            // ✅ تخزين JWT Token
-            localStorage.setItem('auth_token', result.token);
-            localStorage.setItem('user_phone_display', phone);
-            localStorage.setItem('is_logged_in', 'true');
-            localStorage.removeItem('user_phone'); // حذف القديم
+	async function verifyOTP() {
+		const code = document.getElementById('otp').value.trim();
+		const phone = document.getElementById('phone').value.trim();
+		const btn = document.getElementById('verify-btn');
 
-            window.location.href = "dashboard.html";
+		if (!code) return alert("أدخل الكود أولاً");
+		btn.disabled = true;
+		btn.innerText = "جاري التحقق...";
 
-        } catch (err) {
-            console.error('Verification error:', err);
-            alert("فشل التحقق: " + err.message);
-            btn.disabled = false;
-            btn.innerText = "تأكيد الدخول";
-        }
-    }
+		try {
+			// ✅ استدعاء Edge Function مباشرة (التحقق كله في الخادم)
+			const response = await fetch(
+				'https://wnvyqvwuzmxzzhilgidh.supabase.co/functions/v1/auth-session',
+				{
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ phone: phone, otpCode: code })
+				}
+			);
 
-    // ملاحظة: دالتا checkAuth() و logout() لهذه الصفحة تأتيان الآن
-    // من global.js مباشرة (بدون تعريف محلي مكرر هنا) لضمان توحيد
-    // آلية المصادقة عبر كل صفحات الموقع.
+			const result = await response.json();
+
+			if (!response.ok) {
+				throw new Error(result.error || 'فشل التحقق');
+			}
+
+			// ✅ تخزين JWT Token
+			localStorage.setItem('auth_token', result.token);
+			localStorage.setItem('user_phone_display', phone);
+			localStorage.setItem('is_logged_in', 'true');
+			localStorage.removeItem('user_phone'); // حذف القديم
+
+			window.location.href = "dashboard.html";
+
+		} catch (err) {
+			console.error('Verification error:', err);
+			alert("فشل التحقق: " + err.message);
+			btn.disabled = false;
+			btn.innerText = "تأكيد الدخول";
+		}
+	}
+
+	// ملاحظة: دالتا checkAuth() و logout() لهذه الصفحة تأتيان من global.js
+	// مباشرة (بدون تعريف محلي مكرر هنا) لضمان توحيد آلية المصادقة عبر الموقع.
 </script>
 </body>
 </html>
