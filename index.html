@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="دكّانك — أنشئ متجرك وقائمتك الرقمية برمز QR، وتابع طلباتك وتوصيلك، بتسجيل دخول برقم واتسابك فقط.">
-<title>دكّانك | متجرك ومنيوهك الرقمي</title>
+<title>دكّانك | متجرك وقائمة منتجاتك الرقمية</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Rakkas&family=Tajawal:wght@400;500;700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
@@ -106,20 +106,83 @@
 	.ai-demo-visual{ flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; gap:14px; }
 
 	.compare-wrap{
-		position:relative; width:100%; max-width:340px; aspect-ratio:3/4;
+		position:relative; width:100%; max-width:340px;
+		min-height:480px; height:auto;
 		border-radius:20px; overflow:hidden; box-shadow:var(--shadow);
 		background:var(--card); touch-action:pan-y;
 	}
+	@media (max-width:400px){
+		.compare-wrap{ min-height:420px; }
+	}
 	.compare-layer{ position:absolute; inset:0; }
-	.compare-after{ padding:18px; }
+	.compare-after{ padding:0; }
 	.compare-before{ clip-path: inset(0 0 0 var(--reveal, 50%)); transition:clip-path .05s linear; }
 
-	.digital-menu-mock{ font-family:var(--body); height:100%; }
-	.dm-head{ display:flex; justify-content:space-between; align-items:center; font-weight:700; font-size:12.5px; color:var(--ink); padding-bottom:10px; margin-bottom:10px; border-bottom:1.5px solid var(--border); }
-	.dm-badge{ background:rgba(23,148,95,0.12); color:var(--green-deep); font-size:10.5px; font-weight:700; padding:3px 8px; border-radius:100px; }
-	.dm-cat{ font-size:11px; font-weight:700; color:var(--green-deep); margin:12px 0 6px; }
-	.dm-item{ display:flex; justify-content:space-between; font-size:12.5px; color:var(--ink-soft); background:var(--paper); border-radius:8px; padding:8px 10px; margin-bottom:6px; }
-	.dm-price{ font-family:var(--mono); font-weight:700; color:var(--ink); direction:ltr; }
+	/* ===== Digital Menu Mock ===== */
+	.digital-menu-mock{
+		font-family:var(--body); height:100%; background:#f8f8f8;
+		display:flex; flex-direction:column; overflow-y:auto;
+	}
+	.dm-header{
+		background:#C41E24; color:#fff; padding:10px 14px;
+		display:flex; align-items:center; justify-content:center;
+		font-weight:700; font-size:13px; gap:6px;
+	}
+	.dm-topbar{
+		display:flex; align-items:center; justify-content:space-between;
+		padding:10px 14px; background:#fff; border-bottom:1px solid #eee;
+	}
+	.dm-topbar-left{ display:flex; align-items:center; gap:10px; color:#333; font-size:16px; }
+	.dm-topbar-right{ display:flex; align-items:center; gap:8px; }
+	.dm-store-avatar{
+		width:32px; height:32px; border-radius:8px; object-fit:cover;
+		background:#ddd;
+	}
+	.dm-store-name{ font-weight:700; font-size:14px; color:#222; }
+	.dm-subtitle{ font-size:11px; color:#888; }
+	.dm-cat-bar{
+		display:flex; align-items:center; justify-content:center; gap:8px;
+		padding:8px 14px; background:#fff;
+	}
+	.dm-cat-pill{
+		background:#C41E24; color:#fff; font-size:11px; font-weight:700;
+		padding:4px 12px; border-radius:100px;
+	}
+	.dm-cat-text{ font-size:11px; color:#666; }
+	.dm-list{ flex:1; overflow-y:auto; padding:10px 14px; }
+	.dm-cat-title{
+		font-size:13px; font-weight:700; color:#C41E24;
+		margin:8px 0 6px; display:flex; align-items:center; gap:6px;
+	}
+	.dm-cat-title::before{
+		content:""; display:inline-block; width:3px; height:16px;
+		background:#C41E24; border-radius:2px;
+	}
+	.dm-product{
+		display:flex; align-items:center; gap:10px;
+		background:#fff; border-radius:12px; padding:10px;
+		margin-bottom:8px; box-shadow:0 1px 4px rgba(0,0,0,0.04);
+	}
+	.dm-product-img-wrap{
+		position:relative; flex-shrink:0;
+	}
+	.dm-product-img{
+		width:56px; height:56px; border-radius:10px; object-fit:cover;
+		background:#eee;
+	}
+	.dm-product-add{
+		position:absolute; bottom:-6px; left:-6px;
+		width:22px; height:22px; border-radius:50%;
+		background:#C41E24; color:#fff; border:none;
+		display:flex; align-items:center; justify-content:center;
+		font-size:14px; font-weight:700; cursor:pointer;
+		box-shadow:0 2px 6px rgba(196,30,36,0.3);
+	}
+	.dm-product-info{ flex:1; min-width:0; }
+	.dm-product-name{ font-size:13px; font-weight:700; color:#222; margin-bottom:2px; }
+	.dm-product-desc{ font-size:10px; color:#999; margin-bottom:4px; }
+	.dm-product-price{ font-family:var(--mono); font-weight:700; color:#C41E24; font-size:13px; direction:ltr; text-align:right; }
+	.dm-product-price span{ font-size:10px; color:#888; font-weight:400; }
 
 	.paper-menu-mock{
 		position:relative; height:100%; background:#F3EFE2; padding:26px 20px;
@@ -137,6 +200,28 @@
 		box-shadow:0 4px 12px rgba(16,36,28,0.25); pointer-events:none; z-index:5;
 	}
 	.compare-range{ width:100%; max-width:340px; accent-color:var(--green); cursor:pointer; }
+	.compare-wrap.auto-play{
+		--reveal: 50%;
+		animation: autoSlide 4s ease-in-out infinite alternate;
+	}
+	@keyframes autoSlide{
+		0% { --reveal: 0%; }
+		45% { --reveal: 0%; }
+		55% { --reveal: 100%; }
+		100% { --reveal: 100%; }
+	}
+	/* For browsers that don't support CSS variable animation, fallback */
+	@supports not (animation: autoSlide 1s){
+		.compare-wrap.auto-play .compare-before{
+			animation: clipSlide 4s ease-in-out infinite alternate;
+		}
+		@keyframes clipSlide{
+			0% { clip-path: inset(0 0 0 0%); }
+			45% { clip-path: inset(0 0 0 0%); }
+			55% { clip-path: inset(0 0 0 100%); }
+			100% { clip-path: inset(0 0 0 100%); }
+		}
+	}
 	.compare-labels{ width:100%; max-width:340px; display:flex; justify-content:space-between; font-size:12px; font-weight:700; color:var(--muted); }
 
 	/* ---------- SECTIONS ---------- */
@@ -188,6 +273,19 @@
 	.change-number{ color:var(--stamp); cursor:pointer; margin-top:20px; font-size:12.5px; text-align:center; font-weight:700; }
 	.login-note{ display:flex; align-items:center; gap:8px; justify-content:center; margin-top:22px; font-size:12px; color:var(--muted); }
 
+	/* ---------- TERMS CHECKBOX ---------- */
+	.terms-row{
+		display:flex; align-items:center; gap:8px;
+		margin-bottom:16px; font-size:12.5px; color:var(--ink-soft);
+	}
+	.terms-row input[type="checkbox"]{
+		width:18px; height:18px; accent-color:var(--green);
+		cursor:pointer; flex-shrink:0;
+	}
+	.terms-row label{ cursor:pointer; user-select:none; }
+	.terms-row a{ color:#2563EB; font-weight:700; text-decoration:underline; }
+	.terms-row a:hover{ color:#1d4ed8; }
+
 	/* ---------- CUSTOM COUNTRY DROPDOWN ---------- */
 	.country-select-wrap{ flex:0 0 116px; min-width:0; position:relative; }
 	.country-trigger{
@@ -222,7 +320,6 @@
 		padding:6px 10px 2px; font-size:11px; font-weight:700; color:var(--muted);
 		text-transform:uppercase; letter-spacing:.5px;
 	}
-	/* الزائد على اليسار دائماً */
 	.code-ltr{ direction:ltr; display:inline-block; unicode-bidi:embed; }
 
 	/* ---------- FOOTER ---------- */
@@ -237,9 +334,9 @@
 	.footer-legal a:hover{ color:#fff; text-decoration:underline; }
 	.footer-legal .dot{ color:rgba(255,255,255,0.3); }
 </style>
+<base target="_blank">
 </head>
 <body>
-
 <header class="nav">
 	<div class="nav-inner">
 		<div class="brand"><span class="brand-mark">د</span> دكّانك</div>
@@ -256,10 +353,10 @@
 	<div class="wrap hero-inner">
 		<div class="hero-copy">
 			<span class="eyebrow">✨ مدعومة بالذكاء الاصطناعي</span>
-			<h1>صوّر منيوك الورقي... وخلّه رقمي في دقيقة.</h1>
-			<p class="lead">التقط صورة لصفحة المنيو اللي عندك، والذكاء الاصطناعي يقرأ الأصناف والأسعار ويبنيلك قائمة رقمية مرتبة برمز QR جاهز للطباعة — تراجعها وتنشرها، بدون ما تكتب منتج واحد بإيدك. والدخول؟ برقم واتسابك بس، بدون كلمة مرور.</p>
+			<h1>صوّر قائمة منتجاتك الورقية... وخلّها رقمية في دقيقة.</h1>
+			<p class="lead">أنشئ متجرك برقم واتسابك، وبعدها من صفحة المنتجات ارفع صورة واضحة لقائمة منتجاتك — والذكاء الاصطناعي يقرأ الأصناف والأسعار ويبنيلك قائمة رقمية مرتبة برمز QR جاهز للطباعة، تراجعها وتنشرها بضغطة وحدة.</p>
 			<div class="hero-actions">
-				<a href="#login" class="btn-primary">حوّل منيوك الآن مجاناً</a>
+				<a href="#login" class="btn-primary">حوّل قائمة منتجاتك الآن مجاناً</a>
 				<a href="#ai-demo" class="btn-ghost">شوف كيف تشتغل</a>
 			</div>
 			<div class="hero-tags">
@@ -279,8 +376,6 @@
 					<label class="field-label" for="phone_number">رقم الواتساب</label>
 					<div class="phone-row">
 						<input type="tel" id="phone_number" inputmode="numeric" placeholder="5XXXXXXXX" value="552806414" maxlength="9">
-						
-						<!-- Custom Country Dropdown -->
 						<div class="country-select-wrap" id="countryWrap">
 							<div class="country-trigger" id="countryTrigger" tabindex="0" role="button" aria-haspopup="listbox" aria-expanded="false">
 								<img id="triggerFlag" src="https://flagcdn.com/w20/sa.png" width="20" height="15" style="border-radius:2px;object-fit:cover;" alt="">
@@ -295,6 +390,12 @@
 						<input type="hidden" id="country_code" value="966">
 					</div>
 					<input type="hidden" id="phone">
+
+					<div class="terms-row">
+						<input type="checkbox" id="termsCheck" required>
+						<label for="termsCheck">أوافق على <a href="terms.html" target="_blank">الشروط والأحكام</a></label>
+					</div>
+
 					<button id="send-btn" class="btn-block" onclick="requestOTP()">إرسال كود التحقق</button>
 				</div>
 
@@ -322,7 +423,7 @@
 		<div class="ai-demo-copy">
 			<span class="section-eyebrow">من الورق إلى الشاشة</span>
 			<h2>اسحب وشوف الفرق بعينك</h2>
-			<p class="section-sub">هذا نفسه اللي يصير لمنيوك: تصوّره وأنت بمطبخك أو محلك، والذكاء الاصطناعي يقرأ كل صنف وسعره وينظمها لك بقائمة رقمية أنيقة خلال ثوانٍ.</p>
+			<p class="section-sub">هذا نفسه اللي يصير لقائمة منتجاتك: من صفحة المنتجات في متجرك، ترفع صورة واضحة لقائمة منتجاتك، والذكاء الاصطناعي يقرأ كل صنف وسعره وينظمها لك بقائمة رقمية أنيقة خلال ثوانٍ.</p>
 			<ul class="ai-demo-points">
 				<li>✅ يقرأ الأصناف والأسعار حتى لو الخط بخط اليد</li>
 				<li>✅ يرتبها بتصنيفات تلقائياً</li>
@@ -330,31 +431,79 @@
 			</ul>
 		</div>
 		<div class="ai-demo-visual">
-			<div class="compare-wrap" id="compareWrap" style="--reveal:50%">
+			<div class="compare-wrap auto-play" id="compareWrap" style="--reveal:50%">
 				<div class="compare-layer compare-after">
 					<div class="digital-menu-mock">
-						<div class="dm-head"><span>📋 قائمة محمصة الرابية</span><span class="dm-badge">رقمي ✓</span></div>
-						<div class="dm-cat">المشروبات الساخنة</div>
-						<div class="dm-item"><span>قهوة عربية</span><span class="dm-price">12 ر.س</span></div>
-						<div class="dm-item"><span>لاتيه</span><span class="dm-price">16 ر.س</span></div>
-						<div class="dm-cat">الحلا</div>
-						<div class="dm-item"><span>كنافة بالجبن</span><span class="dm-price">18 ر.س</span></div>
-						<div class="dm-item"><span>تشيز كيك</span><span class="dm-price">22 ر.س</span></div>
+						<div class="dm-header">🍽️ مطعم الباسل يرحب بكم</div>
+						<div class="dm-topbar">
+							<div class="dm-topbar-left">
+								<span>☰</span>
+								<span>🔍</span>
+							</div>
+							<div class="dm-topbar-right">
+								<div>
+									<div class="dm-store-name">الباسل</div>
+									<div class="dm-subtitle">برجر اللحم والدجاج - المشوي والطازج</div>
+								</div>
+								<img class="dm-store-avatar" src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=64&h=64&fit=crop" alt="">
+							</div>
+						</div>
+						<div class="dm-cat-bar">
+							<span class="dm-cat-pill">عام</span>
+							<span class="dm-cat-text">برجر اللحم والدجاج - المشوي والطازج</span>
+						</div>
+						<div class="dm-list">
+							<div class="dm-cat-title">عام</div>
+							<div class="dm-product">
+								<div class="dm-product-img-wrap">
+									<img class="dm-product-img" src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=120&h=120&fit=crop" alt="">
+									<button class="dm-product-add">+</button>
+								</div>
+								<div class="dm-product-info">
+									<div class="dm-product-name">قابل للتخصيص</div>
+									<div class="dm-product-desc">برجر لحم طازج مع جبنة</div>
+									<div class="dm-product-price">555 <span>ر.س</span></div>
+								</div>
+							</div>
+							<div class="dm-product">
+								<div class="dm-product-img-wrap">
+									<img class="dm-product-img" src="https://images.unsplash.com/photo-1529006557810-274b9b2fc783?w=120&h=120&fit=crop" alt="">
+									<button class="dm-product-add">+</button>
+								</div>
+								<div class="dm-product-info">
+									<div class="dm-product-name">برجر دجاج مشوي</div>
+									<div class="dm-product-desc">دجاج طازج مشوي على الفحم</div>
+									<div class="dm-product-price">444 <span>ر.س</span></div>
+								</div>
+							</div>
+							<div class="dm-product">
+								<div class="dm-product-img-wrap">
+									<img class="dm-product-img" src="https://images.unsplash.com/photo-1551782450-a2132b4ba21d?w=120&h=120&fit=crop" alt="">
+									<button class="dm-product-add">+</button>
+								</div>
+								<div class="dm-product-info">
+									<div class="dm-product-name">ساندويتش كلاسيك</div>
+									<div class="dm-product-desc">الطعم الأصلي اللي تحبه</div>
+									<div class="dm-product-price">55 <span>ر.س</span></div>
+								</div>
+							</div>
+						</div>
 					</div>
 				</div>
 				<div class="compare-layer compare-before">
 					<div class="paper-menu-mock">
 						<div class="paper-stain"></div>
-						<div class="paper-title">منيو اليوم</div>
-						<div class="paper-line">قهوة عربية .... 12</div>
-						<div class="paper-line">لاتيه .......... 16</div>
-						<div class="paper-line">كنافة جبن ..... 18</div>
-						<div class="paper-line">تشيز كيك ..... 22</div>
+						<div class="paper-title">قائمة اليوم</div>
+						<div class="paper-line">برجر لحم طازج .... 555</div>
+						<div class="paper-line">برجر دجاج مشوي ... 444</div>
+						<div class="paper-line">ساندويتش كلاسيك .. 55</div>
+						<div class="paper-line">مشروب غازي ........ 8</div>
+						<div class="paper-line">بطاطس مقلي ....... 12</div>
 					</div>
 				</div>
 				<div class="compare-handle" id="compareHandle">↔</div>
 			</div>
-			<input type="range" id="compareRange" class="compare-range" min="0" max="100" value="50" aria-label="قارن بين المنيو الورقي والرقمي">
+			<input type="range" id="compareRange" class="compare-range" min="0" max="100" value="50" aria-label="قارن بين القائمة الورقية والرقمية">
 			<div class="compare-labels"><span>📄 ورقي</span><span>📱 رقمي</span></div>
 		</div>
 	</div>
@@ -362,7 +511,7 @@
 
 <section class="strip">
 	<div class="wrap strip-inner">
-		<span class="tag-pill">🤖 استيراد المنيو بالذكاء الاصطناعي</span>
+		<span class="tag-pill">🤖 استيراد قائمة المنتجات بالذكاء الاصطناعي</span>
 		<span class="tag-pill">📱 QR على كل طاولة</span>
 		<span class="tag-pill">🚚 توصيل حسب المدينة</span>
 		<span class="tag-pill">🕐 دوام وتوقيت مباشر</span>
@@ -375,14 +524,14 @@
 	<div class="wrap">
 		<div class="section-head">
 			<span class="section-eyebrow">كل اللي يحتاجه متجرك</span>
-			<h2>مزايا مبنية لأصحاب المحلات، مو للمبرمجين</h2>
+			<h2>مزايا بسيطة، تديرها بنفسك بأقل جهد</h2>
 			<p class="section-sub">كل أداة هنا مصممة عشان تديرها بنفسك من جوالك، بدون تعقيد.</p>
 		</div>
 		<div class="features-grid" id="features-grid">
 			<div class="feature reveal">
 				<div class="feature-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6L12 3z"/><path d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 15z"/></svg></div>
-				<h3>استيراد المنيو بالذكاء الاصطناعي</h3>
-				<p>صوّر منيوك الورقي، والذكاء الاصطناعي يستخرج الأصناف والأسعار وينشئ قائمتك الرقمية تلقائياً.</p>
+				<h3>استيراد قائمة المنتجات بالذكاء الاصطناعي</h3>
+				<p>من صفحة المنتجات، ارفع صورة واضحة لقائمة منتجاتك والذكاء الاصطناعي يحوّلها تلقائياً إلى قائمة رقمية جاهزة تراجعها قبل النشر.</p>
 			</div>
 			<div class="feature reveal">
 				<div class="feature-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect><path d="M7 14h.01M10 18h.01M7 18h.01M3 14h.01M3 18h.01"></path></svg></div>
@@ -390,9 +539,19 @@
 				<p>زبونك يمسح كود واحد ويشوف قائمتك كاملة، بدون ما ينزّل أي تطبيق.</p>
 			</div>
 			<div class="feature reveal">
+				<div class="feature-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div>
+				<h3>رابط خاص بمتجرك</h3>
+				<p>لمتجرك رابط ثابت خاص فيك، تقدر تحطه في بايو انستقرام أو تشاركه في أي مكان.</p>
+			</div>
+			<div class="feature reveal">
 				<div class="feature-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></div>
 				<h3>منتجات وتصنيفات</h3>
 				<p>رتّب منتجاتك بتصنيفات، وحدّث الأسعار والصور في أي وقت.</p>
+			</div>
+			<div class="feature reveal">
+				<div class="feature-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></div>
+				<h3>إضافات على المنتجات</h3>
+				<p>أضف خيارات اختيارية لمنتجك (حجم، نكهة، إضافات)، وخلّ عميلك يخصص طلبه بنفسه.</p>
 			</div>
 			<div class="feature reveal">
 				<div class="feature-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"></rect><path d="M16 8h4l3 5v3h-7V8z"></path><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg></div>
@@ -403,6 +562,11 @@
 				<div class="feature-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></div>
 				<h3>أوقات الدوام</h3>
 				<p>اضبط منطقتك الزمنية وأوقات دوامك، والزبون يشوف متجرك مفتوح أو مقفول فعليًا.</p>
+			</div>
+			<div class="feature reveal">
+				<div class="feature-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></div>
+				<h3>استلام الطلبات عبر واتساب</h3>
+				<p>طلبات عملائك توصلك مباشرة على واتساب فور تأكيدها، بجانب سجلها الكامل داخل المنصة.</p>
 			</div>
 			<div class="feature reveal">
 				<div class="feature-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 13h6M9 17h4"/></svg></div>
@@ -431,25 +595,25 @@
 <section id="how">
 	<div class="wrap">
 		<div class="section-head">
-			<span class="section-eyebrow">من الصورة إلى متجر جاهز</span>
-			<h2>ثلاث خطوات، وقائمتك رقمية</h2>
-			<p class="section-sub">ما يحتاج تكتب منتج واحد بإيدك، ولا بريد إلكتروني ولا نموذج طويل.</p>
+			<span class="section-eyebrow">بسيطة من البداية للنهاية</span>
+			<h2>من التسجيل إلى قائمة رقمية جاهزة</h2>
+			<p class="section-sub">ما يحتاج بريد إلكتروني ولا نموذج طويل، ولا تكتب منتجاتك واحد واحد بإيدك.</p>
 		</div>
 		<div class="steps">
 			<div class="step reveal">
 				<div class="step-num">01</div>
-				<h3>صوّر منيوك الورقي</h3>
-				<p>بصورة واحدة من جوالك لصفحة المنيو أو لوحة الأسعار عندك.</p>
+				<h3>سجّل برقم واتسابك</h3>
+				<p>كود تحقق يوصلك على واتساب، وتنشئ متجرك مباشرة بدون كلمة مرور.</p>
 			</div>
 			<div class="step reveal">
 				<div class="step-num">02</div>
-				<h3>الذكاء الاصطناعي يبنيها رقمياً</h3>
-				<p>يقرأ الأصناف والأسعار وينظمها بتصنيفات خلال ثوانٍ، وتراجعها قبل النشر.</p>
+				<h3>ارفع صورة قائمة منتجاتك من صفحة المنتجات</h3>
+				<p>من صفحة إدارة المنتجات، ارفع صورة واضحة لقائمة منتجاتك أو لوحة الأسعار عندك.</p>
 			</div>
 			<div class="step reveal">
 				<div class="step-num">03</div>
-				<h3>سجّل برقم واتسابك وانشرها</h3>
-				<p>كود تحقق على واتساب، وخلاص — قائمتك جاهزة برمز QR لعملائك.</p>
+				<h3>الذكاء الاصطناعي يحوّلها رقمياً</h3>
+				<p>يقرأ الأصناف والأسعار وينظمها بتصنيفات خلال ثوانٍ، وتراجعها قبل النشر.</p>
 			</div>
 		</div>
 	</div>
@@ -472,18 +636,49 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="global.js"></script>
-
 <script>
 	document.getElementById('year').textContent = new Date().getFullYear();
 	document.getElementById('mobile-login-btn').style.display = window.innerWidth <= 640 ? 'inline-block' : 'none';
 
-	// ---------- AI DEMO COMPARE SLIDER ----------
+	// ---------- AI DEMO COMPARE SLIDER (Auto-play + Manual) ----------
 	(function initCompareSlider(){
 		const wrap = document.getElementById('compareWrap');
 		const range = document.getElementById('compareRange');
 		if (!wrap || !range) return;
-		range.addEventListener('input', () => {
+
+		let isAutoPlaying = true;
+		let autoPlayFrame = 0;
+		let direction = 1; // 1 = revealing digital, -1 = revealing paper
+		let currentReveal = 50;
+
+		function animate() {
+			if (!isAutoPlaying) return;
+			// Smooth oscillation between 0% and 100%
+			const time = Date.now() / 1000;
+			const val = 50 + 50 * Math.sin(time * 0.8); // oscillate 0-100 over ~4s
+			currentReveal = val;
+			wrap.style.setProperty('--reveal', val + '%');
+			range.value = val;
+			autoPlayFrame = requestAnimationFrame(animate);
+		}
+
+		// Start auto-play
+		autoPlayFrame = requestAnimationFrame(animate);
+
+		// When user touches the slider, stop auto-play
+		range.addEventListener('mousedown', function() {
+			isAutoPlaying = false;
+			cancelAnimationFrame(autoPlayFrame);
+		});
+		range.addEventListener('touchstart', function() {
+			isAutoPlaying = false;
+			cancelAnimationFrame(autoPlayFrame);
+		});
+
+		// Manual control
+		range.addEventListener('input', function() {
 			wrap.style.setProperty('--reveal', range.value + '%');
+			currentReveal = parseFloat(range.value);
 		});
 	})();
 
@@ -536,20 +731,18 @@
 	let selectedCountry = countryGroups[0].countries[0];
 
 	function flagUrl(code) {
-		return `https://flagcdn.com/w20/${code}.png`;
+		return 'https://flagcdn.com/w20/' + code + '.png';
 	}
 
-	function renderCountryList(filter = '') {
+	function renderCountryList(filter) {
 		const list = document.getElementById('countryList');
-		const q = filter.trim().toLowerCase();
+		const q = (filter || '').trim().toLowerCase();
 		list.innerHTML = '';
 
-		countryGroups.forEach(group => {
-			const matched = group.countries.filter(c =>
-				c.code.includes(q) ||
-				('+' + c.code).includes(q) ||
-				c.keywords.toLowerCase().includes(q)
-			);
+		countryGroups.forEach(function(group) {
+			const matched = group.countries.filter(function(c) {
+				return c.code.includes(q) || ('+' + c.code).includes(q) || c.keywords.toLowerCase().includes(q);
+			});
 			if (!matched.length) return;
 
 			const label = document.createElement('div');
@@ -557,15 +750,15 @@
 			label.textContent = group.label;
 			list.appendChild(label);
 
-			matched.forEach(c => {
+			matched.forEach(function(c) {
 				const opt = document.createElement('div');
 				opt.className = 'country-option' + (c.code === selectedCountry.code ? ' active' : '');
 				opt.setAttribute('role', 'option');
 				opt.setAttribute('data-code', c.code);
 				opt.setAttribute('data-ph', c.ph);
 				opt.setAttribute('data-len', c.len);
-				opt.innerHTML = `<img class="flag-img" src="${flagUrl(c.flag)}" alt=""><span class="code">+${c.code}</span>`;
-				opt.onclick = () => selectCountry(c);
+				opt.innerHTML = '<img class="flag-img" src="' + flagUrl(c.flag) + '" alt=""><span class="code">+' + c.code + '</span>';
+				opt.onclick = function() { selectCountry(c); };
 				list.appendChild(opt);
 			});
 		});
@@ -613,12 +806,14 @@
 	}
 
 	document.getElementById('countryTrigger').addEventListener('click', toggleDropdown);
-	document.getElementById('countryTrigger').addEventListener('keydown', (e) => {
+	document.getElementById('countryTrigger').addEventListener('keydown', function(e) {
 		if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleDropdown(e); }
 		if (e.key === 'Escape') closeDropdown();
 	});
-	document.getElementById('countrySearch').addEventListener('input', (e) => renderCountryList(e.target.value));
-	document.addEventListener('click', (e) => {
+	document.getElementById('countrySearch').addEventListener('input', function(e) {
+		renderCountryList(e.target.value);
+	});
+	document.addEventListener('click', function(e) {
 		if (!document.getElementById('countryWrap').contains(e.target)) closeDropdown();
 	});
 
@@ -628,15 +823,18 @@
 	(function revealOnScroll(){
 		const items = document.querySelectorAll('.reveal');
 		if (!('IntersectionObserver' in window) || !items.length) {
-			items.forEach(el => el.classList.add('in-view'));
+			items.forEach(function(el) { el.classList.add('in-view'); });
 			return;
 		}
-		const obs = new IntersectionObserver((entries) => {
-			entries.forEach(entry => {
-				if (entry.isIntersecting) { entry.target.classList.add('in-view'); obs.unobserve(entry.target); }
+		const obs = new IntersectionObserver(function(entries) {
+			entries.forEach(function(entry) {
+				if (entry.isIntersecting) {
+					entry.target.classList.add('in-view');
+					obs.unobserve(entry.target);
+				}
 			});
 		}, { threshold: 0.15 });
-		items.forEach(el => obs.observe(el));
+		items.forEach(function(el) { obs.observe(el); });
 	})();
 
 	let timerInterval;
@@ -651,7 +849,7 @@
 		resendLink.style.display = 'none';
 
 		clearInterval(timerInterval);
-		timerInterval = setInterval(() => {
+		timerInterval = setInterval(function() {
 			timeLeft--;
 			secondsSpan.innerText = timeLeft;
 			if (timeLeft <= 0) {
@@ -662,53 +860,146 @@
 		}, 1000);
 	}
 
+	// ═══════════════════════════════════════════════════════
+	// 🔒 دوال مساعدة للقفل
+	// ═══════════════════════════════════════════════════════
+	function isPhoneLocked() {
+		const lockUntil = localStorage.getItem('otp_lock_until');
+		if (!lockUntil) return false;
+		return new Date(lockUntil) > new Date();
+	}
+
+	function getLockRemainingMinutes() {
+		const lockUntil = localStorage.getItem('otp_lock_until');
+		if (!lockUntil) return 0;
+		const diff = new Date(lockUntil) - new Date();
+		return Math.max(0, Math.ceil(diff / 60000));
+	}
+
+	function showLockUI(minutes) {
+		const sendBtn = document.getElementById('send-btn');
+		if (sendBtn) {
+			sendBtn.disabled = true;
+			sendBtn.innerText = 'الرقم مقفل (' + minutes + ' دقيقة)';
+		}
+		const verifyBtn = document.getElementById('verify-btn');
+		const timerContainer = document.getElementById('timer-container');
+		const resendLink = document.getElementById('resend-link');
+		if (verifyBtn) {
+			verifyBtn.disabled = true;
+			verifyBtn.innerText = 'الرقم مقفل';
+		}
+		if (timerContainer) {
+			timerContainer.innerHTML = '🔒 الرقم مقفل. حاول بعد <strong>' + minutes + '</strong> دقيقة';
+			timerContainer.style.display = 'block';
+		}
+		if (resendLink) resendLink.style.display = 'none';
+	}
+
+	function clearLockUI() {
+		localStorage.removeItem('otp_lock_until');
+		const sendBtn = document.getElementById('send-btn');
+		if (sendBtn) {
+			sendBtn.disabled = false;
+			sendBtn.innerText = 'إرسال كود التحقق';
+		}
+		const verifyBtn = document.getElementById('verify-btn');
+		if (verifyBtn) {
+			verifyBtn.disabled = false;
+			verifyBtn.innerText = 'تأكيد الدخول';
+		}
+	}
+
+	// تحقق من القفل عند تحميل الصفحة
+	(function checkLockOnLoad() {
+		if (isPhoneLocked()) {
+			const mins = getLockRemainingMinutes();
+			if (mins > 0) showLockUI(mins);
+			else clearLockUI();
+		}
+	})();
+
+	// ═══════════════════════════════════════════════════════
+	// 📨 طلب OTP (محدّث مع حماية القفل)
+	// ═══════════════════════════════════════════════════════
 	async function requestOTP() {
+		if (isPhoneLocked()) {
+			const mins = getLockRemainingMinutes();
+			alert('🔒 الرقم مقفل. حاول بعد ' + mins + ' دقيقة.');
+			showLockUI(mins);
+			return;
+		}
+
 		const countryCode = document.getElementById('country_code').value;
 		const numberPart = document.getElementById('phone_number').value.trim().replace(/\D/g, '').replace(/^0+/, '');
 		const btn = document.getElementById('send-btn');
 
-		if (!numberPart) return alert("الرجاء إدخال رقم الجوال");
+		if (!numberPart) return alert('الرجاء إدخال رقم الجوال');
 
 		const phone = countryCode + numberPart;
 		document.getElementById('phone').value = phone;
 
 		btn.disabled = true;
-		btn.innerText = "جاري التحقق والإرسال...";
+		btn.innerText = 'جاري التحقق والإرسال...';
 
 		try {
 			const sb = supabase.createClient(SB_URL, SB_KEY);
 
 			const { data: createData, error: createError } = await sb.rpc('admin_create_user_by_phone', { input_phone: phone });
-
 			if (createError) {
-				console.error("خطأ أثناء تسجيل المستخدم أو التحقق منه:", createError);
+				console.error('خطأ أثناء تسجيل المستخدم أو التحقق منه:', createError);
 			}
 
 			const { error: otpError } = await sb.rpc('request_whatsapp_otp', { input_phone: phone });
-			if (otpError) throw otpError;
+
+			if (otpError) {
+				const errMsg = otpError.message || '';
+				if (errMsg.toLowerCase().includes('locked') || errMsg.includes('قفل') || errMsg.includes('locked until')) {
+					const lockTime = new Date();
+					lockTime.setMinutes(lockTime.getMinutes() + 15);
+					localStorage.setItem('otp_lock_until', lockTime.toISOString());
+					const mins = getLockRemainingMinutes();
+					alert('🔒 تم تجاوز عدد المحاولات. الرقم مقفل لمدة ' + mins + ' دقيقة.');
+					showLockUI(mins);
+					return;
+				}
+				throw otpError;
+			}
+
+			clearLockUI();
 
 			document.getElementById('step-1').style.display = 'none';
 			document.getElementById('step-2').style.display = 'block';
-			document.getElementById('target-phone').innerText = "تم الإرسال إلى: " + phone;
-			document.getElementById('otp').value = "";
+			document.getElementById('target-phone').innerText = 'تم الإرسال إلى: ' + phone;
+			document.getElementById('otp').value = '';
 
 			startTimer();
 
 		} catch (err) {
-			alert("خطأ: " + err.message);
+			alert('خطأ: ' + (err.message || err));
 			btn.disabled = false;
-			btn.innerText = "إعادة المحاولة";
+			btn.innerText = 'إعادة المحاولة';
 		}
 	}
 
+	// ═══════════════════════════════════════════════════════
+	// ✅ التحقق من OTP (محدّث مع حماية القفل)
+	// ═══════════════════════════════════════════════════════
 	async function verifyOTP() {
+		if (isPhoneLocked()) {
+			const mins = getLockRemainingMinutes();
+			alert('🔒 الرقم مقفل. حاول بعد ' + mins + ' دقيقة.');
+			showLockUI(mins);
+			return;
+		}
+
 		const code = document.getElementById('otp').value.trim();
 		const phone = document.getElementById('phone').value.trim();
 		const btn = document.getElementById('verify-btn');
 
-		if (!code) return alert("أدخل الكود أولاً");
+		if (!code) return alert('أدخل الكود أولاً');
 		btn.disabled = true;
-		btn.innerText = "جاري التحقق...";
+		btn.innerText = 'جاري التحقق...';
 
 		try {
 			const response = await fetch(
@@ -723,21 +1014,32 @@
 			const result = await response.json();
 
 			if (!response.ok) {
+				if (response.status === 429) {
+					const match = result.error ? result.error.match(/بعد (\d+) دقيقة/) : null;
+					const minutes = match ? parseInt(match[1]) : 15;
+					const lockTime = new Date();
+					lockTime.setMinutes(lockTime.getMinutes() + minutes);
+					localStorage.setItem('otp_lock_until', lockTime.toISOString());
+					alert('🔒 تم تجاوز عدد المحاولات. حاول بعد ' + minutes + ' دقيقة.');
+					showLockUI(minutes);
+					return;
+				}
 				throw new Error(result.error || 'فشل التحقق');
 			}
 
+			clearLockUI();
 			localStorage.setItem('auth_token', result.token);
 			localStorage.setItem('user_phone_display', phone);
 			localStorage.setItem('is_logged_in', 'true');
 			localStorage.removeItem('user_phone');
 
-			window.location.href = "dashboard.html";
+			window.location.href = 'dashboard.html';
 
 		} catch (err) {
 			console.error('Verification error:', err);
-			alert("فشل التحقق: " + err.message);
+			alert('فشل التحقق: ' + err.message);
 			btn.disabled = false;
-			btn.innerText = "تأكيد الدخول";
+			btn.innerText = 'تأكيد الدخول';
 		}
 	}
 </script>
