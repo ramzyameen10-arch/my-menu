@@ -65,6 +65,10 @@
 	}
 	.hero-inner{ position:relative; z-index:1; display:flex; align-items:center; gap:56px; }
 	.hero-copy{ flex:1.05; min-width:0; }
+	@media (max-width:900px){
+		.hero-inner{ flex-direction:column-reverse; gap:32px; }
+		.hero{ padding:24px 0 40px; }
+	}
 	.eyebrow{ display:inline-block; font-size:13px; font-weight:700; color:var(--green-deep); background:rgba(23,148,95,0.1); border:1px solid rgba(23,148,95,0.25); padding:6px 14px; border-radius:100px; margin-bottom:18px; }
 	h1{ font-family:var(--display); font-weight:400; font-size:clamp(2.1rem,4.6vw,3.3rem); line-height:1.18; color:var(--ink); margin:0 0 18px; }
 	.lead{ font-size:17px; color:var(--muted); max-width:52ch; margin:0 0 28px; line-height:1.85; }
@@ -76,16 +80,16 @@
 	.hero-tags{ display:flex; flex-wrap:wrap; gap:8px; }
 	.tag-pill{ font-size:12.5px; font-weight:700; color:var(--muted); background:var(--card); border:1px solid var(--border); padding:6px 12px; border-radius:100px; }
 
-	/* ---------- TICKET (signature element) ---------- */
-	.ticket{ position:relative; background:var(--card); border-radius:6px; box-shadow:var(--shadow); padding:22px 20px 26px; }
-	.ticket::before,.ticket::after{ content:""; position:absolute; right:0; left:0; height:14px; background-image:radial-gradient(circle at 12px 50%, var(--paper) 8px, transparent 8.5px); background-size:24px 14px; background-repeat:repeat-x; }
-	.ticket::before{ top:-7px; }
-	.ticket::after{ bottom:-7px; }
+	/* ---------- TICKET ---------- */
 	.hero-visual{ flex:.95; min-width:0; display:flex; justify-content:center; }
-	.ticket-hero{ width:100%; max-width:330px; transform:translateY(-18px) rotate(-2.5deg); opacity:0; animation:ticketIn .8s .15s cubic-bezier(.2,.8,.2,1) forwards; }
-	@keyframes ticketIn{ to{ transform:translateY(0) rotate(-2.5deg); opacity:1; } }
-	@media (prefers-reduced-motion:reduce){ .ticket-hero{ animation:none; opacity:1; transform:rotate(-2.5deg);} }
-	.stamp{ position:absolute; top:18px; left:-14px; background:transparent; border:2px dashed var(--stamp); color:var(--stamp); font-weight:700; font-size:11px; padding:5px 10px; border-radius:8px; transform:rotate(-10deg); white-space:nowrap; }
+	.login-card{
+		position:relative; width:100%; max-width:390px; background:var(--card);
+		border:1px solid var(--border); border-radius:20px; box-shadow:var(--shadow);
+		padding:32px 28px; opacity:0; transform:translateY(16px);
+		animation:cardIn .6s .1s ease forwards;
+	}
+	@keyframes cardIn{ to{ opacity:1; transform:translateY(0); } }
+	@media (prefers-reduced-motion:reduce){ .login-card{ animation:none; opacity:1; transform:none; } }
 
 	/* ---------- BUSINESS ROW ---------- */
 	.strip{ padding:10px 0 46px; }
@@ -119,9 +123,6 @@
 	.step p{ font-size:13.5px; color:var(--muted); margin:0; line-height:1.75; }
 
 	/* ---------- LOGIN ---------- */
-	.login-ticket{ width:100%; max-width:390px; padding:28px 24px 30px; }
-	.login-scissor{ display:flex; align-items:center; gap:8px; color:var(--muted); font-size:11.5px; font-weight:700; margin-bottom:18px; }
-	.login-scissor .line{ flex:1; border-top:1.5px dashed var(--border); }
 	.login-title{ font-family:var(--display); font-weight:400; font-size:1.5rem; color:var(--ink); margin:0 0 6px; text-align:center; }
 	.login-sub{ text-align:center; color:var(--muted); font-size:13.5px; margin:0 0 22px; }
 	label.field-label{ display:block; font-size:12.5px; font-weight:700; color:var(--ink-soft); margin-bottom:6px; }
@@ -131,6 +132,8 @@
 		background:var(--paper); color:var(--ink); margin-bottom:16px; transition:border-color .2s ease;
 	}
 	input[type="tel"]:focus, input[type="number"]:focus{ outline:none; border-color:var(--green); background:#fff; }
+	.phone-row{ display:flex; gap:8px; margin-bottom:16px; position:relative; }
+	.phone-row input[type="tel"]{ flex:1; min-width:0; margin:0; text-align:left; }
 	.btn-block{ width:100%; padding:14px; background:var(--green); color:#fff; border:none; border-radius:10px; cursor:pointer; font-size:15px; font-weight:700; transition:background .2s ease; }
 	.btn-block:hover{ background:var(--green-deep); }
 	.btn-block:disabled{ background:#B9C7BE; cursor:not-allowed; }
@@ -140,6 +143,43 @@
 	#resend-link{ color:var(--green-deep); cursor:pointer; display:none; text-decoration:underline; margin-top:10px; font-size:12.5px; text-align:center; font-weight:700; }
 	.change-number{ color:var(--stamp); cursor:pointer; margin-top:20px; font-size:12.5px; text-align:center; font-weight:700; }
 	.login-note{ display:flex; align-items:center; gap:8px; justify-content:center; margin-top:22px; font-size:12px; color:var(--muted); }
+
+	/* ---------- CUSTOM COUNTRY DROPDOWN ---------- */
+	.country-select-wrap{ flex:0 0 116px; min-width:0; position:relative; }
+	.country-trigger{
+		width:100%; height:100%; padding:0 10px; border:1.5px solid var(--border); border-radius:10px;
+		font-size:13px; font-family:var(--body); background:var(--paper); color:var(--ink);
+		cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:6px;
+		transition:border-color .2s ease; user-select:none;
+	}
+	.country-trigger:focus{ outline:none; border-color:var(--green); background:#fff; }
+	.country-trigger .arrow{ font-size:10px; color:var(--muted); transition:transform .2s ease; }
+	.country-trigger.open .arrow{ transform:rotate(180deg); }
+	.country-dropdown{
+		position:absolute; top:calc(100% + 6px); right:0; width:220px; max-height:320px;
+		background:var(--card); border:1px solid var(--border); border-radius:12px;
+		box-shadow:var(--shadow); overflow:hidden; display:none; z-index:60;
+	}
+	.country-dropdown.open{ display:block; }
+	.country-search{
+		width:100%; padding:10px 12px; border:none; border-bottom:1px solid var(--border);
+		font-size:13px; font-family:var(--body); background:var(--paper); color:var(--ink);
+		outline:none; direction:rtl;
+	}
+	.country-list{ max-height:270px; overflow-y:auto; padding:4px; }
+	.country-option{
+		padding:8px 10px; border-radius:8px; cursor:pointer; display:flex; align-items:center;
+		gap:10px; font-size:13px; transition:background .15s ease;
+	}
+	.country-option:hover, .country-option.active{ background:rgba(23,148,95,0.08); }
+	.country-option .flag-img{ width:20px; height:15px; border-radius:2px; object-fit:cover; display:block; }
+	.country-option .code{ font-family:var(--mono); font-weight:700; color:var(--ink); direction:ltr; unicode-bidi:embed; }
+	.country-group-label{
+		padding:6px 10px 2px; font-size:11px; font-weight:700; color:var(--muted);
+		text-transform:uppercase; letter-spacing:.5px;
+	}
+	/* الزائد على اليسار دائماً */
+	.code-ltr{ direction:ltr; display:inline-block; unicode-bidi:embed; }
 
 	/* ---------- FOOTER ---------- */
 	footer{ background:var(--ink); color:rgba(255,255,255,0.75); padding:40px 0 26px; margin-top:20px; }
@@ -184,15 +224,29 @@
 			</div>
 		</div>
 		<div class="hero-visual" id="login">
-			<div class="ticket ticket-hero login-ticket">
-				<span class="stamp">بدون كلمة مرور</span>
-				<div class="login-scissor">✂️ <span class="line"></span> اقطع هنا وابدأ <span class="line"></span></div>
-
+			<div class="login-card">
 				<div id="step-1">
 					<h3 class="login-title">تسجيل الدخول</h3>
 					<p class="login-sub">أدخل رقم واتسابك عشان نرسل لك كود التحقق</p>
-					<label class="field-label" for="phone">رقم الواتساب</label>
-					<input type="tel" id="phone" placeholder="9665XXXXXXXX" value="966552806414">
+					<label class="field-label" for="phone_number">رقم الواتساب</label>
+					<div class="phone-row">
+						<input type="tel" id="phone_number" inputmode="numeric" placeholder="5XXXXXXXX" value="552806414" maxlength="9">
+						
+						<!-- Custom Country Dropdown -->
+						<div class="country-select-wrap" id="countryWrap">
+							<div class="country-trigger" id="countryTrigger" tabindex="0" role="button" aria-haspopup="listbox" aria-expanded="false">
+								<img id="triggerFlag" src="https://flagcdn.com/w20/sa.png" width="20" height="15" style="border-radius:2px;object-fit:cover;" alt="">
+								<span id="triggerCode" class="code-ltr">+966</span>
+								<span class="arrow">▼</span>
+							</div>
+							<div class="country-dropdown" id="countryDropdown" role="listbox">
+								<input type="text" class="country-search" id="countrySearch" placeholder="ابحث برقم أو اسم..." autocomplete="off">
+								<div class="country-list" id="countryList"></div>
+							</div>
+						</div>
+						<input type="hidden" id="country_code" value="966">
+					</div>
+					<input type="hidden" id="phone">
 					<button id="send-btn" class="btn-block" onclick="requestOTP()">إرسال كود التحقق</button>
 				</div>
 
@@ -200,7 +254,7 @@
 					<h3 class="login-title">تحقق من الرمز</h3>
 					<p id="target-phone"></p>
 					<label class="field-label" for="otp">كود التحقق</label>
-					<input type="number" id="otp" placeholder="0000">
+					<input type="number" id="otp" placeholder="----">
 					<button id="verify-btn" class="btn-block" onclick="verifyOTP()">تأكيد الدخول</button>
 
 					<div class="timer-text" id="timer-container">يمكنك إعادة الإرسال خلال: <span id="seconds">60</span> ثانية</div>
@@ -320,12 +374,145 @@
 <script src="global.js"></script>
 
 <script>
-	// ============================================================
-	// ✅ عميل Supabase وآليات المصادقة (checkAuth/logout) موحّدة
-	//    وتُستمد من global.js لتفادي التكرار والتعارض بين الصفحات.
-	// ============================================================
 	document.getElementById('year').textContent = new Date().getFullYear();
 	document.getElementById('mobile-login-btn').style.display = window.innerWidth <= 640 ? 'inline-block' : 'none';
+
+	// ---------- ALL ARAB COUNTRIES ----------
+	const countryGroups = [
+		{
+			label: 'دول الخليج',
+			countries: [
+				{ code: '966', flag: 'sa', ph: '5XXXXXXXX', len: '9', keywords: 'saudi arabia sa السعودية سعودي' },
+				{ code: '971', flag: 'ae', ph: '5XXXXXXXX', len: '9', keywords: 'uae emirates الامارات اماراتي' },
+				{ code: '965', flag: 'kw', ph: 'XXXXXXXX', len: '8', keywords: 'kuwait الكويت كويتي' },
+				{ code: '974', flag: 'qa', ph: 'XXXXXXXX', len: '8', keywords: 'qatar قطر قطري' },
+				{ code: '973', flag: 'bh', ph: 'XXXXXXXX', len: '8', keywords: 'bahrain البحرين بحريني' },
+				{ code: '968', flag: 'om', ph: '9XXXXXXX', len: '8', keywords: 'oman عمان عماني' }
+			]
+		},
+		{
+			label: 'مصر والشام',
+			countries: [
+				{ code: '20',  flag: 'eg', ph: '1XXXXXXXXX', len: '10', keywords: 'egypt مصر مصري' },
+				{ code: '962', flag: 'jo', ph: '7XXXXXXXX', len: '9', keywords: 'jordan الاردن اردني' },
+				{ code: '964', flag: 'iq', ph: '7XXXXXXXXX', len: '10', keywords: 'iraq العراق عراقي' },
+				{ code: '961', flag: 'lb', ph: 'XXXXXXXX', len: '8', keywords: 'lebanon لبنان لبناني' },
+				{ code: '963', flag: 'sy', ph: '9XXXXXXXX', len: '9', keywords: 'syria سوريا سوري' },
+				{ code: '970', flag: 'ps', ph: '5XXXXXXXX', len: '9', keywords: 'palestine فلسطين فلسطيني' }
+			]
+		},
+		{
+			label: 'شمال أفريقيا',
+			countries: [
+				{ code: '213', flag: 'dz', ph: '5XXXXXXXX', len: '9', keywords: 'algeria الجزائر جزائري' },
+				{ code: '212', flag: 'ma', ph: '6XXXXXXXX', len: '9', keywords: 'morocco المغرب مغربي' },
+				{ code: '216', flag: 'tn', ph: '2XXXXXXX', len: '8', keywords: 'tunisia تونس تونسي' },
+				{ code: '218', flag: 'ly', ph: '9XXXXXXXX', len: '9', keywords: 'libya ليبيا ليبي' },
+				{ code: '249', flag: 'sd', ph: '9XXXXXXXX', len: '9', keywords: 'sudan السودان سوداني' },
+				{ code: '222', flag: 'mr', ph: '4XXXXXXX', len: '8', keywords: 'mauritania موريتانيا موريتاني' }
+			]
+		},
+		{
+			label: 'القرن الأفريقي واليمن',
+			countries: [
+				{ code: '967', flag: 'ye', ph: '7XXXXXXXX', len: '9', keywords: 'yemen اليمن يمني' },
+				{ code: '252', flag: 'so', ph: '6XXXXXXXX', len: '9', keywords: 'somalia الصومال صومالي' },
+				{ code: '253', flag: 'dj', ph: '7XXXXXXX', len: '8', keywords: 'djibouti جيبوتي' },
+				{ code: '269', flag: 'km', ph: '3XXXXXX', len: '7', keywords: 'comoros جزر القمر قمري' }
+			]
+		}
+	];
+
+	let selectedCountry = countryGroups[0].countries[0];
+
+	function flagUrl(code) {
+		return `https://flagcdn.com/w20/${code}.png`;
+	}
+
+	function renderCountryList(filter = '') {
+		const list = document.getElementById('countryList');
+		const q = filter.trim().toLowerCase();
+		list.innerHTML = '';
+
+		countryGroups.forEach(group => {
+			const matched = group.countries.filter(c =>
+				c.code.includes(q) ||
+				('+' + c.code).includes(q) ||
+				c.keywords.toLowerCase().includes(q)
+			);
+			if (!matched.length) return;
+
+			const label = document.createElement('div');
+			label.className = 'country-group-label';
+			label.textContent = group.label;
+			list.appendChild(label);
+
+			matched.forEach(c => {
+				const opt = document.createElement('div');
+				opt.className = 'country-option' + (c.code === selectedCountry.code ? ' active' : '');
+				opt.setAttribute('role', 'option');
+				opt.setAttribute('data-code', c.code);
+				opt.setAttribute('data-ph', c.ph);
+				opt.setAttribute('data-len', c.len);
+				opt.innerHTML = `<img class="flag-img" src="${flagUrl(c.flag)}" alt=""><span class="code">+${c.code}</span>`;
+				opt.onclick = () => selectCountry(c);
+				list.appendChild(opt);
+			});
+		});
+	}
+
+	function selectCountry(c) {
+		selectedCountry = c;
+		document.getElementById('triggerFlag').src = flagUrl(c.flag);
+		document.getElementById('triggerCode').textContent = '+' + c.code;
+		document.getElementById('country_code').value = c.code;
+
+		const numInput = document.getElementById('phone_number');
+		numInput.placeholder = c.ph;
+		numInput.maxLength = c.len;
+		numInput.value = '';
+
+		closeDropdown();
+		renderCountryList();
+	}
+
+	function openDropdown() {
+		const d = document.getElementById('countryDropdown');
+		const t = document.getElementById('countryTrigger');
+		d.classList.add('open');
+		t.classList.add('open');
+		t.setAttribute('aria-expanded', 'true');
+		document.getElementById('countrySearch').value = '';
+		document.getElementById('countrySearch').focus();
+		renderCountryList();
+	}
+
+	function closeDropdown() {
+		const d = document.getElementById('countryDropdown');
+		const t = document.getElementById('countryTrigger');
+		d.classList.remove('open');
+		t.classList.remove('open');
+		t.setAttribute('aria-expanded', 'false');
+	}
+
+	function toggleDropdown(e) {
+		e.stopPropagation();
+		const d = document.getElementById('countryDropdown');
+		if (d.classList.contains('open')) closeDropdown();
+		else openDropdown();
+	}
+
+	document.getElementById('countryTrigger').addEventListener('click', toggleDropdown);
+	document.getElementById('countryTrigger').addEventListener('keydown', (e) => {
+		if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleDropdown(e); }
+		if (e.key === 'Escape') closeDropdown();
+	});
+	document.getElementById('countrySearch').addEventListener('input', (e) => renderCountryList(e.target.value));
+	document.addEventListener('click', (e) => {
+		if (!document.getElementById('countryWrap').contains(e.target)) closeDropdown();
+	});
+
+	renderCountryList();
 
 	// كشف عن العناصر عند الظهور بالتمرير
 	(function revealOnScroll(){
@@ -366,33 +553,30 @@
 	}
 
 	async function requestOTP() {
-		const phone = document.getElementById('phone').value.trim();
+		const countryCode = document.getElementById('country_code').value;
+		const numberPart = document.getElementById('phone_number').value.trim().replace(/\D/g, '').replace(/^0+/, '');
 		const btn = document.getElementById('send-btn');
 
-		if (!phone) return alert("الرجاء إدخال الرقم");
+		if (!numberPart) return alert("الرجاء إدخال رقم الجوال");
+
+		const phone = countryCode + numberPart;
+		document.getElementById('phone').value = phone;
 
 		btn.disabled = true;
 		btn.innerText = "جاري التحقق والإرسال...";
 
 		try {
-			// ملاحظة: هذا الطلب عام (قبل تسجيل الدخول)، لذا نستخدم عميل Supabase
-			// "نظيف" بدون أي توكن مخزّن مسبقاً. استخدام getSupabaseClient() هنا
-			// كان يُرفق أحياناً توكن قديم منتهي (JWT expired) من جلسة سابقة على
-			// نفس الجهاز، فيسبب 401 Unauthorized عند نداء دوال الـ RPC العامة.
 			const sb = supabase.createClient(SB_URL, SB_KEY);
 
-			// 1. محاولة إضافة الرقم أولاً في جدول auth.users من خلال دالة الـ RPC الأمنة
 			const { data: createData, error: createError } = await sb.rpc('admin_create_user_by_phone', { input_phone: phone });
 
 			if (createError) {
 				console.error("خطأ أثناء تسجيل المستخدم أو التحقق منه:", createError);
 			}
 
-			// 2. إرسال كود التحقق OTP (سواء كان المستخدم جديد وتم إنشاؤه أو موجود مسبقاً)
 			const { error: otpError } = await sb.rpc('request_whatsapp_otp', { input_phone: phone });
 			if (otpError) throw otpError;
 
-			// الانتقال للخطوة الثانية
 			document.getElementById('step-1').style.display = 'none';
 			document.getElementById('step-2').style.display = 'block';
 			document.getElementById('target-phone').innerText = "تم الإرسال إلى: " + phone;
@@ -417,7 +601,6 @@
 		btn.innerText = "جاري التحقق...";
 
 		try {
-			// ✅ استدعاء Edge Function مباشرة (التحقق كله في الخادم)
 			const response = await fetch(
 				'https://wnvyqvwuzmxzzhilgidh.supabase.co/functions/v1/auth-session',
 				{
@@ -433,11 +616,10 @@
 				throw new Error(result.error || 'فشل التحقق');
 			}
 
-			// ✅ تخزين JWT Token
 			localStorage.setItem('auth_token', result.token);
 			localStorage.setItem('user_phone_display', phone);
 			localStorage.setItem('is_logged_in', 'true');
-			localStorage.removeItem('user_phone'); // حذف القديم
+			localStorage.removeItem('user_phone');
 
 			window.location.href = "dashboard.html";
 
@@ -448,9 +630,6 @@
 			btn.innerText = "تأكيد الدخول";
 		}
 	}
-
-	// ملاحظة: دالتا checkAuth() و logout() لهذه الصفحة تأتيان من global.js
-	// مباشرة (بدون تعريف محلي مكرر هنا) لضمان توحيد آلية المصادقة عبر الموقع.
 </script>
 </body>
 </html>
