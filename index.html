@@ -7,7 +7,7 @@
 <title>دكّانك | متجرك ومنيوهك الرقمي</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Tajawal:wght@400;500;700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Rakkas&family=Tajawal:wght@400;500;700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
 	:root{
 		--paper:#F2F4EE;
@@ -94,6 +94,50 @@
 	/* ---------- BUSINESS ROW ---------- */
 	.strip{ padding:10px 0 46px; }
 	.strip-inner{ display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+
+	/* ---------- AI DEMO ---------- */
+	.ai-demo{ padding:26px 0 60px; }
+	.ai-demo-inner{ display:flex; align-items:center; gap:56px; }
+	@media (max-width:900px){ .ai-demo-inner{ flex-direction:column; gap:32px; } }
+	.ai-demo-copy{ flex:1; min-width:0; }
+	.ai-demo-copy h2{ margin-top:6px; }
+	.ai-demo-points{ list-style:none; margin:20px 0 0; padding:0; font-size:14px; color:var(--ink-soft); }
+	.ai-demo-points li{ margin-bottom:10px; }
+	.ai-demo-visual{ flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; gap:14px; }
+
+	.compare-wrap{
+		position:relative; width:100%; max-width:340px; aspect-ratio:3/4;
+		border-radius:20px; overflow:hidden; box-shadow:var(--shadow);
+		background:var(--card); touch-action:pan-y;
+	}
+	.compare-layer{ position:absolute; inset:0; }
+	.compare-after{ padding:18px; }
+	.compare-before{ clip-path: inset(0 0 0 var(--reveal, 50%)); transition:clip-path .05s linear; }
+
+	.digital-menu-mock{ font-family:var(--body); height:100%; }
+	.dm-head{ display:flex; justify-content:space-between; align-items:center; font-weight:700; font-size:12.5px; color:var(--ink); padding-bottom:10px; margin-bottom:10px; border-bottom:1.5px solid var(--border); }
+	.dm-badge{ background:rgba(23,148,95,0.12); color:var(--green-deep); font-size:10.5px; font-weight:700; padding:3px 8px; border-radius:100px; }
+	.dm-cat{ font-size:11px; font-weight:700; color:var(--green-deep); margin:12px 0 6px; }
+	.dm-item{ display:flex; justify-content:space-between; font-size:12.5px; color:var(--ink-soft); background:var(--paper); border-radius:8px; padding:8px 10px; margin-bottom:6px; }
+	.dm-price{ font-family:var(--mono); font-weight:700; color:var(--ink); direction:ltr; }
+
+	.paper-menu-mock{
+		position:relative; height:100%; background:#F3EFE2; padding:26px 20px;
+		font-family:'Rakkas', var(--body); color:#3B3226; transform:rotate(-1.2deg);
+		box-shadow:inset 0 0 40px rgba(0,0,0,0.06);
+	}
+	.paper-stain{ position:absolute; top:14px; left:18px; width:46px; height:46px; border-radius:50%; border:3px solid rgba(120,90,50,0.15); }
+	.paper-title{ font-size:20px; text-align:center; margin-bottom:18px; border-bottom:2px dashed rgba(59,50,38,0.3); padding-bottom:10px; }
+	.paper-line{ font-size:14.5px; margin-bottom:14px; white-space:nowrap; overflow:hidden; }
+
+	.compare-handle{
+		position:absolute; top:50%; right:var(--reveal, 50%); transform:translate(50%, -50%);
+		width:34px; height:34px; border-radius:50%; background:#fff; color:var(--ink);
+		display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700;
+		box-shadow:0 4px 12px rgba(16,36,28,0.25); pointer-events:none; z-index:5;
+	}
+	.compare-range{ width:100%; max-width:340px; accent-color:var(--green); cursor:pointer; }
+	.compare-labels{ width:100%; max-width:340px; display:flex; justify-content:space-between; font-size:12px; font-weight:700; color:var(--muted); }
 
 	/* ---------- SECTIONS ---------- */
 	section{ padding:70px 0; }
@@ -188,6 +232,10 @@
 	.footer-bars{ display:flex; gap:2px; align-items:flex-end; height:20px; opacity:.5; }
 	.footer-bars span{ width:3px; background:var(--green-bright); }
 	.footer-note{ font-size:12.5px; color:rgba(255,255,255,0.45); text-align:center; margin-top:22px; }
+	.footer-legal{ display:flex; justify-content:center; align-items:center; gap:10px; margin-top:18px; font-size:12.5px; }
+	.footer-legal a{ color:rgba(255,255,255,0.7); text-decoration:none; }
+	.footer-legal a:hover{ color:#fff; text-decoration:underline; }
+	.footer-legal .dot{ color:rgba(255,255,255,0.3); }
 </style>
 </head>
 <body>
@@ -207,12 +255,12 @@
 <section class="hero" id="top">
 	<div class="wrap hero-inner">
 		<div class="hero-copy">
-			<span class="eyebrow">منصّة القوائم الرقمية للمتاجر والمطاعم</span>
-			<h1>افتح متجرك الرقمي برقم واتسابك، بس.</h1>
-			<p class="lead">قائمة منتجات، رمز QR على الطاولة، تتبّع للطلبات، وتوصيل بسعر مختلف لكل مدينة — كل هذا بدون كلمة مرور. تدخل بكود يوصلك على واتساب وخلاص.</p>
+			<span class="eyebrow">✨ مدعومة بالذكاء الاصطناعي</span>
+			<h1>صوّر منيوك الورقي... وخلّه رقمي في دقيقة.</h1>
+			<p class="lead">التقط صورة لصفحة المنيو اللي عندك، والذكاء الاصطناعي يقرأ الأصناف والأسعار ويبنيلك قائمة رقمية مرتبة برمز QR جاهز للطباعة — تراجعها وتنشرها، بدون ما تكتب منتج واحد بإيدك. والدخول؟ برقم واتسابك بس، بدون كلمة مرور.</p>
 			<div class="hero-actions">
-				<a href="#login" class="btn-primary">ابدأ الآن مجاناً</a>
-				<a href="#features" class="btn-ghost">شوف المزايا</a>
+				<a href="#login" class="btn-primary">حوّل منيوك الآن مجاناً</a>
+				<a href="#ai-demo" class="btn-ghost">شوف كيف تشتغل</a>
 			</div>
 			<div class="hero-tags">
 				<span class="tag-pill">🍽️ مطاعم</span>
@@ -269,8 +317,52 @@
 	</div>
 </section>
 
+<section id="ai-demo" class="ai-demo">
+	<div class="wrap ai-demo-inner">
+		<div class="ai-demo-copy">
+			<span class="section-eyebrow">من الورق إلى الشاشة</span>
+			<h2>اسحب وشوف الفرق بعينك</h2>
+			<p class="section-sub">هذا نفسه اللي يصير لمنيوك: تصوّره وأنت بمطبخك أو محلك، والذكاء الاصطناعي يقرأ كل صنف وسعره وينظمها لك بقائمة رقمية أنيقة خلال ثوانٍ.</p>
+			<ul class="ai-demo-points">
+				<li>✅ يقرأ الأصناف والأسعار حتى لو الخط بخط اليد</li>
+				<li>✅ يرتبها بتصنيفات تلقائياً</li>
+				<li>✅ تراجعها وتعدّل عليها قبل النشر</li>
+			</ul>
+		</div>
+		<div class="ai-demo-visual">
+			<div class="compare-wrap" id="compareWrap" style="--reveal:50%">
+				<div class="compare-layer compare-after">
+					<div class="digital-menu-mock">
+						<div class="dm-head"><span>📋 قائمة محمصة الرابية</span><span class="dm-badge">رقمي ✓</span></div>
+						<div class="dm-cat">المشروبات الساخنة</div>
+						<div class="dm-item"><span>قهوة عربية</span><span class="dm-price">12 ر.س</span></div>
+						<div class="dm-item"><span>لاتيه</span><span class="dm-price">16 ر.س</span></div>
+						<div class="dm-cat">الحلا</div>
+						<div class="dm-item"><span>كنافة بالجبن</span><span class="dm-price">18 ر.س</span></div>
+						<div class="dm-item"><span>تشيز كيك</span><span class="dm-price">22 ر.س</span></div>
+					</div>
+				</div>
+				<div class="compare-layer compare-before">
+					<div class="paper-menu-mock">
+						<div class="paper-stain"></div>
+						<div class="paper-title">منيو اليوم</div>
+						<div class="paper-line">قهوة عربية .... 12</div>
+						<div class="paper-line">لاتيه .......... 16</div>
+						<div class="paper-line">كنافة جبن ..... 18</div>
+						<div class="paper-line">تشيز كيك ..... 22</div>
+					</div>
+				</div>
+				<div class="compare-handle" id="compareHandle">↔</div>
+			</div>
+			<input type="range" id="compareRange" class="compare-range" min="0" max="100" value="50" aria-label="قارن بين المنيو الورقي والرقمي">
+			<div class="compare-labels"><span>📄 ورقي</span><span>📱 رقمي</span></div>
+		</div>
+	</div>
+</section>
+
 <section class="strip">
 	<div class="wrap strip-inner">
+		<span class="tag-pill">🤖 استيراد المنيو بالذكاء الاصطناعي</span>
 		<span class="tag-pill">📱 QR على كل طاولة</span>
 		<span class="tag-pill">🚚 توصيل حسب المدينة</span>
 		<span class="tag-pill">🕐 دوام وتوقيت مباشر</span>
@@ -287,6 +379,11 @@
 			<p class="section-sub">كل أداة هنا مصممة عشان تديرها بنفسك من جوالك، بدون تعقيد.</p>
 		</div>
 		<div class="features-grid" id="features-grid">
+			<div class="feature reveal">
+				<div class="feature-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6L12 3z"/><path d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 15z"/></svg></div>
+				<h3>استيراد المنيو بالذكاء الاصطناعي</h3>
+				<p>صوّر منيوك الورقي، والذكاء الاصطناعي يستخرج الأصناف والأسعار وينشئ قائمتك الرقمية تلقائياً.</p>
+			</div>
 			<div class="feature reveal">
 				<div class="feature-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect><path d="M7 14h.01M10 18h.01M7 18h.01M3 14h.01M3 18h.01"></path></svg></div>
 				<h3>قائمة رقمية بـ QR</h3>
@@ -334,25 +431,25 @@
 <section id="how">
 	<div class="wrap">
 		<div class="section-head">
-			<span class="section-eyebrow">ثلاث خطوات، وخلاص</span>
-			<h2>تدخل بدون تسجيل، وبدون كلمة مرور</h2>
-			<p class="section-sub">ما يحتاج بريد إلكتروني ولا نموذج طويل — رقم واتسابك يكفي.</p>
+			<span class="section-eyebrow">من الصورة إلى متجر جاهز</span>
+			<h2>ثلاث خطوات، وقائمتك رقمية</h2>
+			<p class="section-sub">ما يحتاج تكتب منتج واحد بإيدك، ولا بريد إلكتروني ولا نموذج طويل.</p>
 		</div>
 		<div class="steps">
 			<div class="step reveal">
 				<div class="step-num">01</div>
-				<h3>أدخل رقم الواتساب</h3>
-				<p>تكتب رقمك، وإحنا نرسل لك كود تحقق مباشرة على واتساب.</p>
+				<h3>صوّر منيوك الورقي</h3>
+				<p>بصورة واحدة من جوالك لصفحة المنيو أو لوحة الأسعار عندك.</p>
 			</div>
 			<div class="step reveal">
 				<div class="step-num">02</div>
-				<h3>أدخل الكود</h3>
-				<p>كود مكوّن من 4 أرقام، يصلك خلال ثوانٍ، تكتبه وتضغط تأكيد.</p>
+				<h3>الذكاء الاصطناعي يبنيها رقمياً</h3>
+				<p>يقرأ الأصناف والأسعار وينظمها بتصنيفات خلال ثوانٍ، وتراجعها قبل النشر.</p>
 			</div>
 			<div class="step reveal">
 				<div class="step-num">03</div>
-				<h3>أنشئ متجرك وابدأ</h3>
-				<p>تضيف اسم متجرك ومنتجاتك، وتبدأ تستقبل الطلبات فوراً.</p>
+				<h3>سجّل برقم واتسابك وانشرها</h3>
+				<p>كود تحقق على واتساب، وخلاص — قائمتك جاهزة برمز QR لعملائك.</p>
 			</div>
 		</div>
 	</div>
@@ -367,6 +464,9 @@
 			<span style="height:18px"></span><span style="height:9px"></span>
 		</div>
 	</div>
+	<div class="wrap footer-legal">
+		<a href="terms.html">الشروط والأحكام</a>
+	</div>
 	<div class="wrap footer-note">© <span id="year"></span> دكّانك — كل الحقوق محفوظة</div>
 </footer>
 
@@ -376,6 +476,16 @@
 <script>
 	document.getElementById('year').textContent = new Date().getFullYear();
 	document.getElementById('mobile-login-btn').style.display = window.innerWidth <= 640 ? 'inline-block' : 'none';
+
+	// ---------- AI DEMO COMPARE SLIDER ----------
+	(function initCompareSlider(){
+		const wrap = document.getElementById('compareWrap');
+		const range = document.getElementById('compareRange');
+		if (!wrap || !range) return;
+		range.addEventListener('input', () => {
+			wrap.style.setProperty('--reveal', range.value + '%');
+		});
+	})();
 
 	// ---------- ALL ARAB COUNTRIES ----------
 	const countryGroups = [
