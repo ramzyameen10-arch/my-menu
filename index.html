@@ -335,6 +335,7 @@
 	.footer-legal .dot{ color:rgba(255,255,255,0.3); }
 </style>
 <base target="_blank">
+<base target="_blank">
 </head>
 <body>
 <header class="nav">
@@ -396,7 +397,7 @@
 						<label for="termsCheck">أوافق على <a href="terms.html" target="_blank">الشروط والأحكام</a></label>
 					</div>
 
-					<button id="send-btn" class="btn-block" onclick="requestOTP()">إرسال كود التحقق</button>
+					<button id="send-btn" class="btn-block" onclick="requestOTP()" disabled style="opacity:0.5">إرسال كود التحقق</button>
 				</div>
 
 				<div id="step-2">
@@ -819,6 +820,17 @@
 
 	renderCountryList();
 
+	// ✅ تفعيل/تعطيل زر الإرسال بناءً على موافقة الشروط
+	(function initTermsToggle(){
+		const termsCheck = document.getElementById('termsCheck');
+		const sendBtn = document.getElementById('send-btn');
+		if (!termsCheck || !sendBtn) return;
+		termsCheck.addEventListener('change', function() {
+			sendBtn.disabled = !this.checked;
+			sendBtn.style.opacity = this.checked ? '1' : '0.5';
+		});
+	})();
+
 	// كشف عن العناصر عند الظهور بالتمرير
 	(function revealOnScroll(){
 		const items = document.querySelectorAll('.reveal');
@@ -923,6 +935,14 @@
 	// 📨 طلب OTP (محدّث مع حماية القفل)
 	// ═══════════════════════════════════════════════════════
 	async function requestOTP() {
+		// ✅ تحقق من الموافقة على الشروط والأحكام
+		const termsChecked = document.getElementById('termsCheck').checked;
+		if (!termsChecked) {
+			alert('الرجاء الموافقة على الشروط والأحكام أولاً');
+			document.getElementById('termsCheck').focus();
+			return;
+		}
+
 		if (isPhoneLocked()) {
 			const mins = getLockRemainingMinutes();
 			alert('🔒 الرقم مقفل. حاول بعد ' + mins + ' دقيقة.');
@@ -935,6 +955,15 @@
 		const btn = document.getElementById('send-btn');
 
 		if (!numberPart) return alert('الرجاء إدخال رقم الجوال');
+
+		// ✅ تحقق من طول الرقم حسب الدولة المختارة
+		if (numberPart.length < parseInt(selectedCountry.len)) {
+			alert('الرقم غير مكتمل. يرجى إدخال ' + selectedCountry.len + ' أرقام');
+			document.getElementById('phone_number').focus();
+			btn.disabled = false;
+			btn.innerText = 'إرسال كود التحقق';
+			return;
+		}
 
 		const phone = countryCode + numberPart;
 		document.getElementById('phone').value = phone;
