@@ -972,14 +972,11 @@
 		btn.innerText = 'جاري التحقق والإرسال...';
 
 		try {
-			const sb = supabase.createClient(SB_URL, SB_KEY);
+		
+		const sb = supabase.createClient(SB_URL, SB_KEY);
 
-			const { data: createData, error: createError } = await sb.rpc('admin_create_user_by_phone', { input_phone: phone });
-			if (createError) {
-				console.error('خطأ أثناء تسجيل المستخدم أو التحقق منه:', createError);
-			}
+        const { error: otpError } = await sb.rpc('request_whatsapp_otp', { input_phone: phone });
 
-			const { error: otpError } = await sb.rpc('request_whatsapp_otp', { input_phone: phone });
 
 			if (otpError) {
 				const errMsg = otpError.message || '';
