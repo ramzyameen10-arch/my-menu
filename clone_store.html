@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>نسخ منتجات | لوحة التاجر</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="global.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
@@ -86,8 +87,6 @@ body {
     position: relative;
 }
 
-/* Removed */
-
 .header-icon {
     width: 70px;
     height: 70px;
@@ -119,7 +118,6 @@ body {
     padding-top: 10px;
 }
 
-/* Main Action Buttons */
 .action-buttons {
     display: flex;
     flex-direction: row;
@@ -165,7 +163,6 @@ body {
     font-size: 18px;
 }
 
-/* Content Area */
 .content-area {
     display: none;
     animation: fadeIn 0.3s ease;
@@ -180,7 +177,6 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Form Groups */
 .form-group {
     margin-bottom: 20px;
     text-align: right;
@@ -211,7 +207,6 @@ body {
     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
-/* Search Box */
 .search-wrapper {
     position: relative;
 }
@@ -229,7 +224,6 @@ body {
     font-size: 16px;
 }
 
-/* Template List */
 .template-list {
     max-height: 220px;
     overflow-y: auto;
@@ -294,7 +288,6 @@ body {
     color: var(--gray);
 }
 
-/* Store URL Input */
 .url-input-group {
     display: flex;
     gap: 10px;
@@ -338,7 +331,6 @@ body {
     display: flex;
 }
 
-/* Product Search Results */
 .search-results {
     max-height: 300px;
     overflow-y: auto;
@@ -431,7 +423,6 @@ body {
     display: block;
 }
 
-/* Selected Product Card */
 .selected-card {
     background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
     border: 2px solid var(--success);
@@ -463,7 +454,6 @@ body {
     padding-right: 22px;
 }
 
-/* Buttons */
 .btn-primary {
     width: 100%;
     padding: 16px;
@@ -517,7 +507,6 @@ body {
     background: var(--primary-light);
 }
 
-/* Spinner */
 .spinner-wrapper {
     display: none;
     text-align: center;
@@ -543,7 +532,6 @@ body {
     100% { transform: rotate(360deg); }
 }
 
-/* Result */
 .result {
     margin-top: 20px;
     padding: 16px;
@@ -571,7 +559,6 @@ body {
     border: 1px solid #fca5a5;
 }
 
-/* Loading */
 .loading-text {
     text-align: center;
     padding: 30px;
@@ -585,7 +572,6 @@ body {
     animation: spin 1s linear infinite;
 }
 
-/* Description Text */
 .section-desc {
     background: #e8faf3;
     border: 1px solid #86efac;
@@ -605,7 +591,6 @@ body {
     color: #24b47e;
 }
 
-/* Responsive */
 @media (max-width: 480px) {
     .page-wrapper {
         padding: 10px;
@@ -624,7 +609,7 @@ body {
         font-size: 16px;
     }
 }
-/* ✅ NEW: Store Header */
+
 .store-header {
     background: linear-gradient(135deg, #24b47e 0%, #1a9c6a 100%);
     padding: 20px 25px 25px;
@@ -633,8 +618,6 @@ body {
     align-items: center;
     gap: 15px;
 }
-
-/* Removed white curve pseudo-element */
 
 .back-btn-header {
     position: absolute;
@@ -692,18 +675,99 @@ body {
     margin: 0;
 }
 
-/* Remove old card-header styles */
 .card-header { display: none; }
-
-/* Remove old back-btn styles */
 .back-btn { display: none; }
 
+#toast-notification {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    padding: 14px 28px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: bold;
+    z-index: 99999;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    animation: toastSlideIn 0.3s ease;
+    direction: rtl;
+    text-align: center;
+    min-width: 280px;
+}
+
+@keyframes toastSlideIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+@keyframes toastSlideOut {
+    from { opacity: 1; transform: translateX(-50%) translateY(0); }
+    to { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+}
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255,255,255,0.9);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    gap: 15px;
+}
+
+.loading-overlay.hidden {
+    display: none;
+}
+
+.loading-overlay .spinner {
+    width: 50px;
+    height: 50px;
+    border-width: 4px;
+}
+
+.loading-overlay p {
+    color: var(--gray);
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.access-denied {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--danger);
+}
+
+.access-denied i {
+    font-size: 60px;
+    margin-bottom: 15px;
+    display: block;
+}
+
+.access-denied h3 {
+    margin-bottom: 10px;
+    font-size: 18px;
+}
+
+.access-denied p {
+    color: var(--gray);
+    font-size: 14px;
+    margin-bottom: 20px;
+}
 </style>
-<base target="_blank">
 <base target="_blank">
 <base target="_blank">
 </head>
 <body>
+
+<div class="loading-overlay" id="loading-overlay">
+    <div class="spinner"></div>
+    <p>جاري التحقق من الصلاحيات...</p>
+</div>
 
 <div class="page-wrapper">
     <div class="card">
@@ -718,8 +782,7 @@ body {
             </div>
         </div>
 
-        <div class="card-body">
-            <!-- ✅ 3 Main Action Buttons (Horizontal) -->
+        <div class="card-body" id="main-content" style="display:none;">
             <div class="action-buttons">
                 <button class="action-btn active" id="btn-product" onclick="showSection('product')">
                     <i class="fas fa-search"></i>
@@ -735,13 +798,11 @@ body {
                 </button>
             </div>
 
-            <!-- Description -->
             <div class="section-desc" id="section-desc">
                 <i class="fas fa-info-circle"></i>
                 <span id="desc-text">ابحث عن منتج من أي متجر وانسخه إلى متجرك</span>
             </div>
 
-            <!-- ✅ Section 1: Templates -->
             <div class="content-area" id="section-templates">
                 <div class="form-group">
                     <label class="form-label">اختر قالب المتجر</label>
@@ -758,7 +819,6 @@ body {
                 </button>
             </div>
 
-            <!-- ✅ Section 2: Copy from Store -->
             <div class="content-area" id="section-store">
                 <div class="form-group">
                     <label class="form-label">رابط المتجر المصدر</label>
@@ -779,7 +839,6 @@ body {
                 </button>
             </div>
 
-            <!-- ✅ Section 3: Single Product Search -->
             <div class="content-area visible" id="section-product">
                 <div class="form-group">
                     <label class="form-label">البحث عن منتج (في جميع المتاجر)</label>
@@ -792,7 +851,6 @@ body {
                     <div class="search-results" id="search-results"></div>
                 </div>
 
-                <!-- Selected Product -->
                 <div class="selected-card" id="selected-product-card">
                     <div class="title">
                         <i class="fas fa-check-circle"></i> المنتج المختار
@@ -808,56 +866,159 @@ body {
                 </button>
             </div>
 
-            <!-- Back Button -->
             <button class="btn-secondary" onclick="goBack()">
                 <i class="fas fa-arrow-right"></i> رجوع للمنتجات
             </button>
 
-            <!-- Spinner -->
             <div class="spinner-wrapper" id="spinner-wrapper">
                 <div class="spinner"></div>
                 <p style="color: var(--gray); font-size: 14px; font-weight: 600;">جاري النسخ...</p>
             </div>
 
-            <!-- Result -->
             <div class="result" id="result"></div>
+        </div>
+
+        <div class="card-body" id="access-denied-content" style="display:none;">
+            <div class="access-denied">
+                <i class="fas fa-lock"></i>
+                <h3>⛔ الوصول مرفوض</h3>
+                <p>ليس لديك صلاحية الوصول لهذه الصفحة أو انتهت جلستك.</p>
+                <button class="btn-primary" onclick="window.location.href='index.html'">
+                    <i class="fas fa-sign-in-alt"></i> تسجيل الدخول
+                </button>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
 // ==================== CONFIG ====================
-const userPhone = localStorage.getItem('user_phone');
 const storeId = new URLSearchParams(window.location.search).get('store_id');
 
-if (!userPhone) {
-    window.location.href = 'index.html';
-}
-
-if (!storeId) {
-    alert('معرف المتجر غير موجود في الرابط');
-    window.location.href = 'index.html';
-}
-
-if (storeId) {
-    document.getElementById('back-link').href = 'manage_products.html?store_id=' + storeId;
-}
-
-const SB_URL = 'https://wnvyqvwuzmxzzhilgidh.supabase.co';
-const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indudnlxdnd1em14enpoaWxnaWRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MTg1MDEsImV4cCI6MjA5MTQ5NDUwMX0.AyD4CYqA0cz9mC-bcOt16uUpueL_cAWT26Q92l574r0';
-const _supabase = supabase.createClient(SB_URL, SB_KEY);
+// ✅ عميل Supabase من global.js
+const _sb = getSupabaseClient();
 
 // ==================== STATE ====================
 let currentSection = null;
 let extractedStoreId = null;
 let selectedProduct = null;
 let searchTimeout = null;
+let currentUser = null;
+let userPhone = '';
+
+// ===== Toast Notifications =====
+function showToast(message, type = 'info'){
+    const existing = document.getElementById('toast-notification');
+    if(existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.id = 'toast-notification';
+
+    const bgColor = type === 'success' ? '#24b47e' : type === 'error' ? '#e74c3c' : '#2f3542';
+
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: ${bgColor};
+        color: white;
+        padding: 14px 28px;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: bold;
+        z-index: 99999;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        animation: toastSlideIn 0.3s ease;
+        direction: rtl;
+        text-align: center;
+        min-width: 280px;
+    `;
+    toast.innerText = message;
+
+    if(!document.getElementById('toast-animations')){
+        const style = document.createElement('style');
+        style.id = 'toast-animations';
+        style.innerHTML = `
+            @keyframes toastSlideIn {
+                from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+                to { opacity: 1; transform: translateX(-50%) translateY(0); }
+            }
+            @keyframes toastSlideOut {
+                from { opacity: 1; transform: translateX(-50%) translateY(0); }
+                to { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.animation = 'toastSlideOut 0.3s ease forwards';
+        setTimeout(() => toast.remove(), 300);
+    }, 4000);
+}
+
+// ===== Page Initialization with Security =====
+async function initPage(){
+    document.getElementById('loading-overlay').classList.remove('hidden');
+    document.getElementById('main-content').style.display = 'none';
+    document.getElementById('access-denied-content').style.display = 'none';
+
+    const user = await checkAuth();
+    if (!user) {
+        document.getElementById('loading-overlay').classList.add('hidden');
+        document.getElementById('access-denied-content').style.display = 'block';
+        showToast('⛔ يرجى تسجيل الدخول أولاً', 'error');
+        setTimeout(() => { window.location.href = 'index.html'; }, 3000);
+        return;
+    }
+
+    currentUser = user;
+    userPhone = user.phone || '';
+
+    if (userPhone) {
+        localStorage.setItem('user_phone', userPhone);
+    }
+
+    if(!storeId){
+        document.getElementById('loading-overlay').classList.add('hidden');
+        document.getElementById('access-denied-content').style.display = 'block';
+        showToast('❌ رقم المتجر غير موجود في الرابط', 'error');
+        setTimeout(() => { window.location.href = 'dashboard.html'; }, 3000);
+        return;
+    }
+
+    const isOwner = await verifyStoreOwnership(storeId, currentUser.id);
+    if(!isOwner){
+        document.getElementById('loading-overlay').classList.add('hidden');
+        document.getElementById('access-denied-content').style.display = 'block';
+        showToast('❌ ليس لديك صلاحية الوصول لهذا المتجر', 'error');
+        setTimeout(() => { window.location.href = 'dashboard.html'; }, 3000);
+        return;
+    }
+
+    document.getElementById('loading-overlay').classList.add('hidden');
+    document.getElementById('main-content').style.display = 'block';
+
+    if (storeId) {
+        document.getElementById('back-link').href = 'manage_products.html?store_id=' + storeId;
+    }
+
+    await loadStoreInfo();
+
+    setTimeout(() => {
+        const searchInput = document.getElementById('product-search');
+        if (searchInput) searchInput.focus();
+    }, 300);
+}
 
 // ==================== LOAD STORE INFO ====================
 async function loadStoreInfo() {
     if (!storeId) return;
     try {
-        const { data: store, error } = await _supabase
+        const { data: store, error } = await _sb
             .from('store_settings')
             .select('store_name, logo_url')
             .eq('id', parseInt(storeId))
@@ -880,22 +1041,18 @@ async function loadStoreInfo() {
 
 // ==================== SECTION SWITCHING ====================
 function showSection(section) {
-    // Hide all sections
     document.querySelectorAll('.content-area').forEach(s => s.classList.remove('visible'));
     document.querySelectorAll('.action-btn').forEach(b => b.classList.remove('active'));
 
-    // Show selected section
     document.getElementById('section-' + section).classList.add('visible');
     document.getElementById('btn-' + section).classList.add('active');
     currentSection = section;
 
-    // Update description text
     const descText = document.getElementById('desc-text');
     if (descText) {
         switch(section) {
             case 'product':
                 descText.textContent = 'ابحث عن منتج من أي متجر وانسخه إلى متجرك';
-                // Focus on search input
                 setTimeout(() => {
                     const searchInput = document.getElementById('product-search');
                     if (searchInput) searchInput.focus();
@@ -912,7 +1069,6 @@ function showSection(section) {
 
     hideResult();
 
-    // Load data if needed
     if (section === 'templates') {
         loadTemplates();
     }
@@ -929,7 +1085,7 @@ async function loadTemplates() {
     `;
 
     try {
-        const { data: templates, error } = await _supabase
+        const { data: templates, error } = await _sb
             .from('store_settings')
             .select('id, store_name, store_activity')
             .eq('is_system_template', true);
@@ -978,7 +1134,7 @@ function selectTemplate(id, element) {
 async function cloneFromTemplate() {
     const templateId = document.getElementById('selected-template-id').value;
     if (!templateId) {
-        showResult('❌ يرجى اختيار قالب أولاً', false);
+        showToast('❌ يرجى اختيار قالب أولاً', 'error');
         return;
     }
     await doClone(parseInt(templateId), 'template');
@@ -998,18 +1154,23 @@ function extractStoreSlug(url) {
     }
 }
 
+// ✅ استخدام store_public_info View للبحث عن المتاجر الأخرى (متاح للجميع)
 async function resolveStoreIdFromSlug(slug) {
     if (!slug) return null;
     try {
-        const { data, error } = await _supabase
-            .from('store_settings')
+        const { data, error } = await _sb
+            .from('store_public_info')
             .select('id, store_name')
             .eq('store_slug', slug)
-            .single();
+            .maybeSingle();
 
-        if (error || !data) return null;
-        return { id: data.id, name: data.store_name };
+        if (error) {
+            console.error('resolveStoreIdFromSlug error:', error);
+            return null;
+        }
+        return data ? { id: data.id, name: data.store_name } : null;
     } catch (e) {
+        console.error('resolveStoreIdFromSlug exception:', e);
         return null;
     }
 }
@@ -1025,14 +1186,14 @@ async function extractStore() {
         badge.classList.remove('visible');
         extractedStoreId = null;
         cloneBtn.disabled = true;
-        showResult('❌ الرابط غير صحيح. يجب أن ينتهي بـ view_menu.html?s=...', false);
+        showToast('❌ الرابط غير صحيح. يجب أن ينتهي بـ ?s=...', 'error');
         return;
     }
 
     const storeInfo = await resolveStoreIdFromSlug(slug);
     if (storeInfo) {
         extractedStoreId = storeInfo.id;
-        badgeText.textContent = 'متجر:  ' + storeInfo.name;
+        badgeText.textContent = 'متجر: ' + storeInfo.name;
         badge.classList.add('visible');
         cloneBtn.disabled = false;
         hideResult();
@@ -1040,13 +1201,13 @@ async function extractStore() {
         extractedStoreId = null;
         badge.classList.remove('visible');
         cloneBtn.disabled = true;
-        showResult('❌ لم يتم العثور على المتجر', false);
+        showToast('❌ لم يتم العثور على المتجر', 'error');
     }
 }
 
 async function cloneFromStore() {
     if (!extractedStoreId) {
-        showResult('❌ يرجى التحقق من الرابط أولاً', false);
+        showToast('❌ يرجى التحقق من الرابط أولاً', 'error');
         return;
     }
     await doClone(extractedStoreId, 'store');
@@ -1074,8 +1235,7 @@ async function searchProduct() {
         `;
 
         try {
-            // Search in ALL stores
-            const { data: products, error } = await _supabase
+            const { data: products, error } = await _sb
                 .from('products')
                 .select('id, product_name, price, sale_price, barcode, description, store_id')
                 .or(`product_name.ilike.%${query}%,barcode.ilike.%${query}%`)
@@ -1093,9 +1253,8 @@ async function searchProduct() {
                 return;
             }
 
-            // Fetch images
             const productIds = products.map(p => p.id);
-            const { data: images } = await _supabase
+            const { data: images } = await _sb
                 .from('product_images')
                 .select('product_id, image_url')
                 .in('product_id', productIds);
@@ -1107,10 +1266,10 @@ async function searchProduct() {
                 });
             }
 
-            // Fetch store names
+            // ✅ استخدام store_public_info لجلب أسماء المتاجر
             const storeIds = [...new Set(products.map(p => p.store_id))];
-            const { data: stores } = await _supabase
-                .from('store_settings')
+            const { data: stores } = await _sb
+                .from('store_public_info')
                 .select('id, store_name')
                 .in('id', storeIds);
 
@@ -1173,7 +1332,7 @@ function selectProduct(id, name, price, salePrice, barcode, imageUrl, sourceStor
 
 async function cloneSingleProduct() {
     if (!selectedProduct) {
-        showResult('❌ يرجى اختيار منتج أولاً', false);
+        showToast('❌ يرجى اختيار منتج أولاً', 'error');
         return;
     }
     await doClone(selectedProduct.sourceStoreId, 'single', selectedProduct.id);
@@ -1182,7 +1341,7 @@ async function cloneSingleProduct() {
 // ==================== CLONE ACTION ====================
 async function doClone(sourceId, type, productId = null) {
     if (parseInt(sourceId) === parseInt(storeId)) {
-        showResult('❌ لا يمكن نسخ المتجر إلى نفسه', false);
+        showToast('❌ لا يمكن نسخ المتجر إلى نفسه', 'error');
         return;
     }
 
@@ -1196,7 +1355,7 @@ async function doClone(sourceId, type, productId = null) {
     hideResult();
 
     try {
-        const { data: profile, error: profError } = await _supabase
+        const { data: profile, error: profError } = await _sb
             .from('profiles')
             .select('id')
             .eq('phone_number', userPhone)
@@ -1208,20 +1367,28 @@ async function doClone(sourceId, type, productId = null) {
 
         let response, data;
 
-        response = await fetch(SB_URL + '/functions/v1/clone-store', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + SB_KEY
-            },
-            body: JSON.stringify({
-                source_store_id: parseInt(sourceId),
-                target_store_id: parseInt(storeId),
-                user_id: profile.id,
-                copy_type: 'independent',
-                product_id: productId ? parseInt(productId) : null
-            })
-        });
+        const SB_URL = 'https://wnvyqvwuzmxzzhilgidh.supabase.co';
+        const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indudnlxdnd1em14enpoaWxnaWRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MTg1MDEsImV4cCI6MjA5MTQ5NDUwMX0.AyD4CYqA0cz9mC-bcOt16uUpueL_cAWT26Q92l574r0';
+
+
+
+const userToken = localStorage.getItem('auth_token');  // ✅ توكن المستخدم الحقيقي
+
+response = await fetch(SB_URL + '/functions/v1/clone-store', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + userToken   // ✅ التوكن الحقيقي، مو anon key
+    },
+    body: JSON.stringify({
+        source_store_id: parseInt(sourceId),
+        target_store_id: parseInt(storeId),
+        copy_type: 'independent',
+        product_id: productId ? parseInt(productId) : null
+    })
+});
+
+
 
         data = await response.json();
 
@@ -1267,15 +1434,7 @@ function showResult(message, isSuccess) {
 
 // ==================== INIT ====================
 document.addEventListener('DOMContentLoaded', () => {
-    loadStoreInfo();
-
-    // Auto-focus search input on page load
-    setTimeout(() => {
-        const searchInput = document.getElementById('product-search');
-        if (searchInput) {
-            searchInput.focus();
-        }
-    }, 300);
+    initPage();
 });
 </script>
 
