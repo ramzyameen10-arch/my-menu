@@ -760,7 +760,6 @@ body {
 }
 </style>
 <base target="_blank">
-<base target="_blank">
 </head>
 <body>
 
@@ -905,6 +904,16 @@ let selectedProduct = null;
 let searchTimeout = null;
 let currentUser = null;
 let userPhone = '';
+
+// ==================== SECURITY HELPERS ====================
+// ✅ دالة تهريب HTML عامة على مستوى الصفحة بالكامل — تُستخدم من أي دالة تحقن
+// نصوص مصدرها قاعدة البيانات (منتجات، قوالب، أسماء متاجر، ...) داخل HTML
+// لمنع ثغرات XSS الناتجة عن حقن أكواد جافاسكربت عبر تلك النصوص.
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str ?? '';
+    return div.innerHTML;
+}
 
 // ===== Toast Notifications =====
 function showToast(message, type = 'info'){
@@ -1102,14 +1111,15 @@ async function loadTemplates() {
             return;
         }
 
+        // ✅ استخدام escapeHtml() لتنظيف أي نص مصدره قاعدة البيانات قبل حقنه بـ HTML
         list.innerHTML = templates.map(t => `
-            <div class="template-item" onclick="selectTemplate(${t.id}, this)" data-id="${t.id}">
+            <div class="template-item" onclick="selectTemplate(${parseInt(t.id)}, this)" data-id="${parseInt(t.id)}">
                 <div class="template-icon">
                     <i class="fas fa-layer-group"></i>
                 </div>
                 <div class="template-info">
-                    <div class="template-name">${t.store_name}</div>
-                    <div class="template-desc">${t.store_activity || 'قالب نظامي'}</div>
+                    <div class="template-name">${escapeHtml(t.store_name)}</div>
+                    <div class="template-desc">${escapeHtml(t.store_activity || 'قالب نظامي')}</div>
                 </div>
             </div>
         `).join('');
@@ -1280,33 +1290,57 @@ async function searchProduct() {
                 });
             }
 
+            // ✅ بناء نتائج البحث باستخدام data-* attributes + escapeHtml()
+            // بدل حقن القيم مباشرة داخل onclick (كان هذا مصدر ثغرة XSS)
             const fallback = 'https://via.placeholder.com/50?text=+';
             resultsDiv.innerHTML = products.map(p => {
                 const displayPrice = (p.sale_price > 0 ? p.sale_price : p.price).toFixed(2);
                 const img = imageMap[p.id] || fallback;
                 const storeName = storeMap[p.store_id] || 'متجر غير معروف';
-                const safeName = p.product_name.replace(/'/g, "\'");
-                const safeBarcode = (p.barcode || '').replace(/'/g, "\'");
-                const safeImg = img.replace(/'/g, "\'");
-                const safeStore = storeName.replace(/'/g, "\'");
+
                 return `
-                    <div class="product-item" onclick="selectProduct(${p.id}, '${safeName}', ${p.price}, ${p.sale_price || 0}, '${safeBarcode}', '${safeImg}', ${p.store_id}, '${safeStore}')" id="prod-item-${p.id}">
-                        <img src="${img}" class="product-img" onerror="this.src='${fallback}'">
+                    <div class="product-item"
+                         data-id="${p.id}"
+                         data-name="${escapeHtml(p.product_name)}"
+                         data-price="${p.price}"
+                         data-sale-price="${p.sale_price || 0}"
+                         data-barcode="${escapeHtml(p.barcode || '')}"
+                         data-img="${escapeHtml(img)}"
+                         data-store-id="${p.store_id}"
+                         data-store-name="${escapeHtml(storeName)}"
+                         id="prod-item-${p.id}">
+                        <img src="${escapeHtml(img)}" class="product-img" onerror="this.src='${fallback}'">
                         <div class="product-info">
-                            <div class="product-name">${p.product_name}</div>
+                            <div class="product-name">${escapeHtml(p.product_name)}</div>
                             <div class="product-price">${displayPrice} ر.س</div>
-                            <div class="product-store"><i class="fas fa-store"></i> ${storeName}</div>
-                            ${p.barcode ? `<div class="product-barcode"><i class="fas fa-barcode"></i> ${p.barcode}</div>` : ''}
+                            <div class="product-store"><i class="fas fa-store"></i> ${escapeHtml(storeName)}</div>
+                            ${p.barcode ? `<div class="product-barcode"><i class="fas fa-barcode"></i> ${escapeHtml(p.barcode)}</div>` : ''}
                         </div>
                     </div>
                 `;
             }).join('');
 
+            // ✅ ربط الأحداث عبر addEventListener بدل onclick inline
+            resultsDiv.querySelectorAll('.product-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    selectProduct(
+                        parseInt(item.dataset.id),
+                        item.dataset.name,
+                        parseFloat(item.dataset.price),
+                        parseFloat(item.dataset.salePrice),
+                        item.dataset.barcode,
+                        item.dataset.img,
+                        parseInt(item.dataset.storeId),
+                        item.dataset.storeName
+                    );
+                });
+            });
+
         } catch (err) {
             resultsDiv.innerHTML = `
                 <div class="no-results" style="color: var(--danger)">
                     <i class="fas fa-exclamation-circle"></i>
-                    ${err.message}
+                    ${escapeHtml(err.message)}
                 </div>
             `;
         }
@@ -1368,27 +1402,25 @@ async function doClone(sourceId, type, productId = null) {
         let response, data;
 
         const SB_URL = 'https://wnvyqvwuzmxzzhilgidh.supabase.co';
-        const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indudnlxdnd1em14enpoaWxnaWRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MTg1MDEsImV4cCI6MjA5MTQ5NDUwMX0.AyD4CYqA0cz9mC-bcOt16uUpueL_cAWT26Q92l574r0';
 
+        // ✅ استخدام توكن المستخدم الحقيقي (auth_token) بدل anon key الثابت،
+        // و حذف user_id من جسم الطلب — Edge Function صارت تستخرج هوية المستخدم
+        // بنفسها من التوكن الموقّع وتتحقق من ملكية المتجر داخلياً.
+        const userToken = localStorage.getItem('auth_token');
 
-
-const userToken = localStorage.getItem('auth_token');  // ✅ توكن المستخدم الحقيقي
-
-response = await fetch(SB_URL + '/functions/v1/clone-store', {
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + userToken   // ✅ التوكن الحقيقي، مو anon key
-    },
-    body: JSON.stringify({
-        source_store_id: parseInt(sourceId),
-        target_store_id: parseInt(storeId),
-        copy_type: 'independent',
-        product_id: productId ? parseInt(productId) : null
-    })
-});
-
-
+        response = await fetch(SB_URL + '/functions/v1/clone-store', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + userToken
+            },
+            body: JSON.stringify({
+                source_store_id: parseInt(sourceId),
+                target_store_id: parseInt(storeId),
+                copy_type: 'independent',
+                product_id: productId ? parseInt(productId) : null
+            })
+        });
 
         data = await response.json();
 
